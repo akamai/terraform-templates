@@ -1,0 +1,140 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - integration
+      #- main
+      #- master
+    # paths:
+    #   - '**.tf'
+    #   - '**.tfvars'
+    #   - '.github/workflows/pr-validation.yml'
+
+env:
+  TF_VERSION: '1.12.1'
+
+jobs:
+  terraform-checks:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        run: |
+          echo "Checking Terraform formatting..."
+          terraform fmt -check -recursive
+        continue-on-error: false
+
+      - name: Terraform Validate - AAP Configuration
+        working-directory: ./new-aap-configuration
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - AAP/ASM Configuration
+        working-directory: ./new-aapasm-configuration
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - Property
+        working-directory: ./new-property
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Init TFLint
+        run: tflint --init
+
+      - name: Run TFLint - AAP Configuration
+        working-directory: ./new-aap-configuration
+        run: tflint --recursive
+
+      - name: Run TFLint - AAP/ASM Configuration
+        working-directory: ./new-aapasm-configuration
+        run: tflint --recursive
+
+      - name: Run TFLint - Property
+        working-directory: ./new-property
+        run: tflint --recursive
+
+      - name: Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Setup terraform-docs
+        uses: terraform-docs/gh-actions@v1.2.0
+        with:
+          working-dir: .
+          output-file: README.md
+          output-method: inject
+          git-push: false
+
+      - name: Generate terraform-docs for AAP Configuration
+        uses: terraform-docs/gh-actions@v1.2.0
+        with:
+          working-dir: ./new-aap-configuration
+          output-file: README.md
+          output-method: inject
+          git-push: false
+
+      - name: Generate terraform-docs for AAP/ASM Configuration
+        uses: terraform-docs/gh-actions@v1.2.0
+        with:
+          working-dir: ./new-aapasm-configuration
+          output-file: README.md
+          output-method: inject
+          git-push: false
+
+      - name: Generate terraform-docs for Property
+        uses: terraform-docs/gh-actions@v1.2.0
+        with:
+          working-dir: ./new-property
+          output-file: README.md
+          output-method: inject
+          git-push: false
+
+      - name: Check for documentation changes
+        id: docs_check
+        run: |
+          if [[ -n $(git status -s) ]]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Documentation needs to be updated"
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "Documentation is up to date"
+          fi
+
+      - name: Commit and push documentation updates
+        if: steps.docs_check.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "docs: auto-update terraform-docs [skip ci]"
+          git push
