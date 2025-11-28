@@ -91,7 +91,7 @@
 
 
 module "property" {
-  source = "git::ssh://git@git.source.akamai.com:7999/gss-devops/ps-terraform-templates-modules.git//delivery?ref=v1.1.0"
+  source = "git::ssh://git@git.source.akamai.com:7999/gss-devops/ps-terraform-templates-modules.git//delivery?ref=v1.1.1"
 
   contract_id = var.contract_id
   group_id    = var.group_id

@@ -5,7 +5,7 @@
 This is a **dual-repository Terraform infrastructure** for Akamai Professional Services:
 
 - **`ps-terraform-templates/`** (this repo): Consumer-facing templates for AAP, AAP+ASM, and Property Manager configurations
-- **`ps-terraform-templates-modules/`**: Reusable Terraform modules sourced via Git SSH (e.g., `git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//aap/security?ref=v1.1.0`)
+- **`ps-terraform-templates-modules/`**: Reusable Terraform modules sourced via Git SSH (e.g., `git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1`)
 
 ### Module Architecture Pattern
 
@@ -166,7 +166,7 @@ Example: `feat: add support for custom rate policies in AAP module`
 
 When referencing modules in `main.tf`, always use tagged versions:
 ```hcl
-source = "git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//aap/security?ref=v1.1.0"
+source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
 ```
 
 **Never use `ref=main` in production templates.**

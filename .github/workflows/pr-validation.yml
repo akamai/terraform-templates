@@ -17,7 +17,7 @@ env:
 jobs:
   terraform-checks:
     name: Terraform Validation
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latestß
     
     steps:
       - name: Checkout code
@@ -82,18 +82,10 @@ jobs:
           output: 'trivy-results.sarif'
 
       - name: Upload Trivy results to GitHub Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: 'trivy-results.sarif'
-
-      - name: Setup terraform-docs
-        uses: terraform-docs/gh-actions@v1.2.0
-        with:
-          working-dir: .
-          output-file: README.md
-          output-method: inject
-          git-push: false
 
       - name: Generate terraform-docs for AAP Configuration
         uses: terraform-docs/gh-actions@v1.2.0
