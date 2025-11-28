@@ -1,0 +1,118 @@
+# -------------------------------------------------
+# Common Variables
+# -------------------------------------------------
+edgerc_path    = "~/.edgerc"
+edgerc_section = "default"
+environment    = "dev"
+group_name     = "My Group"
+config_name    = "dev-example-appsec"
+description    = "Application security configuration"
+hostnames      = ["dev.example.com"]
+
+# -------------------------------------------------
+# Advanced settings
+# -------------------------------------------------
+inspection_size = 32
+
+# -------------------------------------------------
+# Protections
+# -------------------------------------------------
+enable_waf       = true
+enable_ip_geo    = true
+enable_malware   = false
+enable_rate      = true
+enable_slow_post = true
+enable_botman    = true
+
+# -------------------------------------------------
+# Client Lists
+#
+# You can specify your existent client list IDs by setting create_client_lists=false, use the below powershell command to list client lists
+# and adding each ID to the correct parameter.
+#
+# Get-ClientList -section {edgerc_section} | Select-Object listId
+#
+# If you need to create all new lists
+# set create_client_lists=true. The other input parameters
+# will be ignored
+# -------------------------------------------------
+create_client_lists = true
+# IP/Geo Firewall
+# client_lists_ipblock           = ["215434_MYTFWAFIPBLO"]
+# client_lists_ipblock_exception = ["214942_MYTFWAFSECURIT"]
+# client_lists_geoblock          = ["215431_MYTFWAFGEOBL"]
+# Bypass Lists
+# client_lists_securitybypass = ["214942_MYTFWAFSECURIT"]
+# client_lists_rcbypass       = ["214942_MYTFWAFSECURIT"]
+# client_lists_pragmabypass   = ["214942_MYTFWAFSECURIT"]
+# client_lists_reputationbypass = ["214942_MYTFWAFSECURIT"]
+
+# -------------------------------------------------
+# Specifics for the Security Policy
+# -------------------------------------------------
+# Dos Protection
+dos_origin_error_action       = "alert"
+dos_post_page_requests_action = "alert"
+dos_page_view_requests_action = "alert"
+slow_post_action              = "alert"
+
+# Web Application Firewall (WAF) Actions
+waf_policy_action   = "alert"
+waf_wat_action      = "alert"
+waf_protocol_action = "alert"
+waf_sql_action      = "alert"
+waf_xss_action      = "alert"
+waf_cmd_action      = "alert"
+waf_lfi_action      = "alert"
+waf_rfi_action      = "alert"
+waf_platform_action = "alert"
+penalty_box_action  = "alert"
+
+# Bot Management General Settings
+# Check whether the account is entitled to BVM (Bot Visibility
+# and Management) or BMS (Bot Management Standard) and set 
+# botman_type to "bvm" or "bms"
+botman_type = "bvm"
+add_akamai_bot_header     = false
+enable_active_detections  = true
+enable_browser_validation = false
+remove_botman_cookies     = true
+third_party_proxy         = false
+
+# Bot Category Actions
+bot_site_monitoring_and_web_development = "monitor"
+bot_academic_or_research                = "monitor"
+bot_job_search_engine                   = "monitor"
+bot_artificial_intelligence_ai          = "monitor"
+bot_online_advertising                  = "monitor"
+bot_ecommerce_search_engine             = "monitor"
+bot_web_search_engine                   = "monitor"
+bot_enterprise_data_aggregator          = "monitor"
+bot_financial_services                  = "monitor"
+bot_social_media_or_blog                = "monitor"
+bot_web_archiver                        = "monitor"
+bot_business_intelligence               = "monitor"
+bot_news_aggregator                     = "monitor"
+bot_rss_feed_reader                     = "monitor"
+bot_financial_account_aggregator        = "monitor"
+bot_media_or_entertainment_search       = "monitor"
+bot_seo_analytics_or_marketing          = "monitor"
+
+# Bot Transparent Detections Actions
+bot_impersonators_of_known_bots            = "monitor"
+bot_development_frameworks                 = "monitor"
+bot_http_libraries                         = "monitor"
+bot_web_services_libraries                 = "monitor"
+bot_open_source_crawlersscraping_platforms = "monitor"
+bot_headless_browsersautomation_tools      = "monitor"
+bot_declared_bots_keyword_match            = "monitor"
+bot_aggressive_web_crawlers                = "monitor"
+bot_browser_impersonator                   = "monitor"
+bot_web_scraper_reputation                 = "monitor"
+
+# Bot Active Detections Actions
+bot_cookie_integrity_failed                       = "monitor"
+bot_session_validation                            = "monitor"
+bot_client_disabled_javascript_noscript_triggered = "monitor"
+bot_javascript_fingerprint_anomaly                = "monitor"
+bot_javascript_fingerprint_not_received           = "monitor"

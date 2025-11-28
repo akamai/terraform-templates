@@ -1,0 +1,23 @@
+repos:
+  - repo: https://github.com/terraform-docs/terraform-docs
+    rev: "v0.20.0"
+    hooks:
+      - id: terraform-docs-go
+        args: [./new-aap-configuration]
+      - id: terraform-docs-go
+        args: [./new-aapasm-configuration]
+      - id: terraform-docs-go
+        args: [./new-property]
+
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: "v1.98.1"
+    hooks:
+      - id: terraform_fmt
+        args: [--args=-write=true]
+      - id: terraform_tflint
+        args:
+          - --hook-config=--delegate-chdir
+      - id: terraform_trivy
+        args: 
+          - config . --severity CRITICAL
+      - id: terraform_validate
