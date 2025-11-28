@@ -17,7 +17,7 @@ env:
 jobs:
   terraform-checks:
     name: Terraform Validation
-    runs-on: ubuntu-latestß
+    runs-on: ubuntu-latest
     
     steps:
       - name: Checkout code
