@@ -1,11 +1,22 @@
 # PS Terraform Templates - AI Coding Instructions
 
+## Project Overview
+
+This repository provides **production-ready Terraform templates** for deploying Akamai security and delivery configurations. It's designed for Akamai Professional Services teams to quickly onboard customer properties with best-practice configurations.
+
+**Current Version:** 1.2.0 (Terraform >=1.9.0, Akamai Provider ~>9.0)
+
 ## Project Architecture
 
 This is a **dual-repository Terraform infrastructure** for Akamai Professional Services:
 
 - **`ps-terraform-templates/`** (this repo): Consumer-facing templates for AAP, AAP+ASM, and Property Manager configurations
 - **`ps-terraform-templates-modules/`**: Reusable Terraform modules sourced via Git SSH (e.g., `git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1`)
+
+**Three Template Types:**
+1. **`new-aap-configuration/`** - App & API Protector (AAP) with optional Bot Manager
+2. **`new-aapasm-configuration/`** - AAP + Advanced Security Module (ASM) with Client Reputation
+3. **`new-property/`** - Property Manager for ION/ION Premier/DSA delivery configurations
 
 ### Module Architecture Pattern
 
@@ -137,6 +148,23 @@ This is expected—AAP auto-creates Rate Control Policies. The `deploy.ps1` scri
 
 ## Contributing Standards
 
+### CI/CD Workflows
+
+The repository has two GitHub Actions workflows:
+
+1. **PR Validation** (`.github/workflows/pr-validation.yml`) - Runs on PRs to `integration` branch:
+   - `terraform fmt -check` - Validates formatting
+   - `terraform validate` - Validates all three templates
+   - `tflint` - Lints Terraform code
+   - `trivy` - Security scanning
+   - `terraform-docs` - Auto-generates README documentation
+
+2. **Release Automation** (`.github/workflows/release.yml`) - Runs on push to `integration`:
+   - Analyzes commits for semantic versioning
+   - Updates `VERSION` file
+   - Creates git tags
+   - Generates changelog entries
+
 ### Pre-Commit Requirements
 
 Install these tools before contributing:
@@ -153,12 +181,13 @@ pre-commit run --all-files
 ### Semantic Commit Messages
 
 PR titles or commits MUST use semantic prefixes for changelog generation:
-- `feat:` - New features
-- `fix:` - Bug fixes
-- `improvement:` - Enhancements
-- `docs:` - Documentation
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)
+- `improvement:` - Enhancements (patch version bump)
+- `docs:` - Documentation (patch version bump)
 - `refactor:` - Code restructuring
 - `chore:` - Maintenance (skipped in changelog)
+- `feat!:` or `BREAKING CHANGE:` - Major version bump
 
 Example: `feat: add support for custom rate policies in AAP module`
 
@@ -263,3 +292,25 @@ Key outputs:
 4. **Client Lists require 20-char prefix** - first 20 chars of `config_name` used automatically
 5. **Activation resources are lifecycle-managed** - use `activate_to_*_exists` flags to prevent recreation
 6. **PowerShell script requires Akamai PS module v2+** for `Get-AccountSwitchKey` commands
+7. **State files are NOT gitignored** - they're intentionally tracked per environment for team collaboration
+8. **`.tfvars` files ARE gitignored** - contain sensitive customer data; use `.tfvars.dist` as templates
+
+## PowerShell Helper Commands
+
+The Akamai PowerShell module provides utilities for configuration discovery:
+
+```powershell
+# Get account switch key for multi-account access
+Get-AccountSwitchKey "Account Name"
+
+# List contracts
+Get-Contract -Section "default"
+
+# List groups
+Get-Group -Section "default"
+
+# List CPS enrollments (certificates)
+Get-CPSEnrollment -Section "default"
+```
+
+These commands require **Akamai PowerShell v2.2.0+** and valid `.edgerc` credentials.

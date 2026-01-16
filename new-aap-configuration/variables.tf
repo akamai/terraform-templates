@@ -475,3 +475,8 @@ variable "bot_javascript_fingerprint_not_received" {
   description = "Bot Active Detections Actions: JavaScript Fingerprint Not Received"
   type        = string
 }
+
+variable "dummy_variable" {
+  description = "Dummy Test Variable"
+  type        = string
+}
