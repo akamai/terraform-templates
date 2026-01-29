@@ -1,3 +1,5 @@
+[![Release to Prod](https://github.com/akamai/terraform-templates/actions/workflows/release.yml/badge.svg)](https://github.com/akamai/terraform-templates/actions/workflows/release.yml)
+
 # Professional Services Terraform Templates
 
 Streamline your Akamai deployment with production-ready Terraform templates for delivery and security configurations. This repository provides automated, best-practice implementations for Application Security (AAP/AAP+ASM) and Property Manager configurations.
