@@ -1,7 +1,7 @@
 ## ----------------------------------------------------------------------------
 ## EdgeGrid Variables
 ## ----------------------------------------------------------------------------
-
+edgerc_path    = "~/.edgerc"
 edgerc_section = "default"
 
 ## ----------------------------------------------------------------------------
@@ -16,9 +16,22 @@ group_id    = "grp_groupID"
 ## ----------------------------------------------------------------------------
 product_id             = "Site_Accel"
 name                   = "<Config Name>"
-hostnames              = ["qa.example.com"]
+hostnames              = ["qa.example.com", "qa-api.example.com"]
 etls                   = true
-default_origin         = "your.origindomain"
+default_origin         = "qa-origin.example.com"
+# Set additional_origins=null if no additional origins are needed. In a similar fashion, set path_match or hostname_match to null if not needed.
+additional_origins = {
+  "api_origin" = {
+    origin_name    = "qa-api-origin.example.com"
+    hostname_match = ["qa-api.example.com"]
+    path_match     = ["/api/*"]
+  },
+  "images_origin" = {
+    origin_name    = "qa-images-origin.example.com"
+    hostname_match = null
+    path_match     = ["/images/*"]
+  }
+}
 sure_route_test_object = "/terraform/srto.html"
 td_region              = "CH2"
 cpcode_name            = "cpcode_name"

@@ -33,20 +33,35 @@ Deactivates and destroys all the resources.
 .PARAMETER Debug
 Enables debug logging. Saved in ./akamai_tf.log
 
+.PARAMETER SkipValidation
+Skips product ID validation. Use this if product IDs have changed or for testing purposes.
+
 .PARAMETER Help
 Displays detailed help information about the script.
 
 .EXAMPLE
-PS> .\deploy.ps1 aap -Env prod -Save -Notes "Some user user notes" 
+PS> .\deploy.ps1 aap -Env prod -Save -Notes "Some user user notes"
+Create/Save AAP configuration for prod environment without activations, and add custom version and activation notes
 
 .EXAMPLE
 PS> .\deploy.ps1 aapasm -Env dev -ActivateStaging -Debug
+Create and Activate to staging network an AAP+ASM configuration for the dev environment with debug logging
 
 .EXAMPLE
-PS> .\deploy.ps1 pm -Env qa -ActivateProduction -Notes "Some user user notes" 
+PS> .\deploy.ps1 pm -Env qa -ActivateProduction -Notes "Some user user notes"
+Create and Activate to production network a property manager configuration for qa QA environment, and add custom version and activation notes
 
 .EXAMPLE
 PS> .\deploy.ps1 pm -Env prod -ActivateStaging -ActivateProduction
+Create and Activate to both staging and production networks simultaneously a property manager configuration for the prod environment
+
+.EXAMPLE
+PS> .\deploy.ps1 aap -Env dev -Save -Dry
+Preview changes with Terraform plan without applying (dry run)
+
+.EXAMPLE
+PS> .\deploy.ps1 aap -Env dev -Save -SkipValidation
+Create/Save AAP configuration while skipping product ID validation
 
 .LINK
 https://git.source.akamai.com/projects/GSS-DEVOPS/repos/ps-terraform-templates/browse
@@ -54,13 +69,13 @@ https://git.source.akamai.com/projects/GSS-DEVOPS/repos/ps-terraform-templates/b
 
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
-    [Parameter(Position = 0, Mandatory = $true)]
+    [Parameter(Position = 0, Mandatory = $false)]
     [ValidateNotNullOrEmpty()]
     [ValidateSet("aap", "aapasm", "pm")]
     [string]
     $TemplateType,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $false)]
     [Alias("Env")]
     [string]
     $Environment,
@@ -95,6 +110,10 @@ Param(
 
     [Parameter()]
     [switch]
+    $SkipValidation,
+
+    [Parameter()]
+    [switch]
     $Help
 )
 
@@ -102,10 +121,25 @@ Param(
 # Start timing the script execution
 $ScriptStartTime = Get-Date
 
+# Handle common help invocation patterns
+if ($args -contains "Help" -or $args -contains "-Help" -or $args -contains "--help" -or $args -contains "help" -or $args -contains "-h") {
+    Get-Help $PSCommandPath -Full
+    exit 0
+}
+
 # Display help if requested
 if ($Help) {
     Get-Help $PSCommandPath -Full
     exit 0
+}
+
+# Validate required parameters
+if (-not $TemplateType) {
+    throw "TemplateType is required. Available values: aap, aapasm, pm"
+}
+
+if (-not $Environment) {
+    throw "Environment parameter is required. Use -Env <environment>"
 }
 
 # Map the TemplateType to the actual template folder
@@ -130,6 +164,182 @@ if (-not (Test-Path "./$TemplateFolder/environments/$Environment/$Environment.tf
 # Validate that at least one parameter is provided
 if ($PSCmdlet.ParameterSetName -eq '__AllParameterSets') {
     throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
+}
+
+# Function to extract tfvars values
+function Get-TfVarValue {
+    param (
+        [string]$FilePath,
+        [string]$VarName
+    )
+    
+    $content = Get-Content -Path $FilePath -Raw
+    
+    # Pattern to match both quoted and unquoted values
+    # Matches: var = "value" OR var = value
+    $quotedPattern = "$VarName\s*=\s*`"([^`"]+)`""
+    $unquotedPattern = "$VarName\s*=\s*(\S+)"
+    
+    # Try quoted pattern first
+    if ($content -match $quotedPattern) {
+        return $matches[1]
+    }
+    # Try unquoted pattern (for booleans, numbers, etc.)
+    elseif ($content -match $unquotedPattern) {
+        return $matches[1]
+    }
+    
+    return $null
+}
+
+# Function to validate product IDs for AAP/AAPASM/PM templates
+function Test-AkamaiProductId {
+    param (
+        [string]$TemplateType,
+        [string]$TfVarsPath
+    )
+    
+    # Skip validation for templates that don't require it
+    if ($TemplateType -notin @("aap", "aapasm", "pm")) {
+        Write-Host "Skipping product validation for template type: $TemplateType" -ForegroundColor Yellow
+        return $true
+    }
+    
+    Write-Host "Validating Akamai product ID for template: $TemplateType" -ForegroundColor Cyan
+    
+    # Extract edgerc values from tfvars
+    $edgercPath = Get-TfVarValue -FilePath $TfVarsPath -VarName "edgerc_path"
+    $edgercSection = Get-TfVarValue -FilePath $TfVarsPath -VarName "edgerc_section"
+    
+    if (-not $edgercPath -or -not $edgercSection) {
+        Write-Warning "Could not extract edgerc_path or edgerc_section from $TfVarsPath"
+        throw "Missing edgerc configuration in tfvars file"
+    }
+    
+    Write-Host "Using EdgeRC: $edgercPath, Section: $edgercSection" -ForegroundColor Gray
+    
+    # For PM template, check if secure_by_default validation is needed
+    $secureByDefault = $false
+    if ($TemplateType -eq "pm") {
+        $secureByDefaultValue = Get-TfVarValue -FilePath $TfVarsPath -VarName "secure_by_default"
+        Write-Host "Secure by Default value: $secureByDefaultValue" -ForegroundColor Gray
+        if ($secureByDefaultValue -eq "true") {
+            $secureByDefault = $true
+            Write-Host "Secure by Default enabled - validating product ID M-LC-168555" -ForegroundColor Cyan
+        } else {
+            Write-Host "Secure by Default not enabled - skipping product validation for PM template" -ForegroundColor Yellow
+            return $true
+        }
+    }
+    
+    # Get contracts
+    try {
+        $contracts = Get-Contract -Section $edgercSection -EdgeRCFile $edgercPath -Depth TOP
+        
+        if (-not $contracts -or $contracts.Count -eq 0) {
+            throw "No contracts found for section: $edgercSection. Check the account_key in your $edgercPath file is correct."
+        }
+        
+        Write-Host "Found $($contracts.Count) contract(s)" -ForegroundColor Gray
+        
+        # Define valid product IDs and names for each template type
+        $validProductIds = @{
+            "aap"    = @(
+                @{Id = "M-LC-169584"; Name = "App & API Protector - Included delivery"}
+                @{Id = "M-LC-169585"; Name = "App & API Protector - Included advanced delivery"}
+            )
+            "aapasm" = @(
+                @{Id = "M-LC-169586"; Name = "App & API Protector with Advanced Security Management - Included delivery"}
+                @{Id = "M-LC-169587"; Name = "App & API Protector with Advanced Security Management - Included advanced delivery"}
+            )
+            "pm"     = @(
+                @{Id = "M-LC-168555"; Name = "Default DV - SNI"}
+            )
+        }
+        
+        $expectedProducts = $validProductIds[$TemplateType]
+        $foundValidProduct = $false
+        
+        # Check products for each contract
+        foreach ($contractId in $contracts) {
+            
+            Write-Host "Checking products for contract: $contractId" -ForegroundColor Gray
+            
+            if ([string]::IsNullOrWhiteSpace($contractId)) {
+                Write-Warning "Could not extract contract ID from contract object"
+                continue
+            }
+            
+            try {
+                $products = Get-ProductsPerContract -ContractID $contractId -Section $edgercSection -EdgeRCFile $edgercPath
+                
+                if ($products) {
+                    Write-Host "  Products found for contract ${contractId}:" -ForegroundColor Gray
+                    
+                    # Debug: Show first product structure
+                    # if ($products.Count -gt 0) {
+                    #     Write-Host "  [Debug] First product properties: $($products[0] | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name)" -ForegroundColor DarkGray
+                    # }
+                    
+                    foreach ($product in $products) {
+                        # Try different property names for product ID
+                        $productId = $product.marketingProductId 
+                        
+                        # Try different property names for product name
+                        $productName = $product.marketingProductName
+                        
+                        if ($productId) {
+                            Write-Host "    - $productId ($productName)" -ForegroundColor Gray
+                            
+                            # Check if product ID matches any expected product
+                            $matchedProduct = $expectedProducts | Where-Object { $_.Id -eq $productId }
+                            if ($matchedProduct) {
+                                Write-Host "✓ Valid product ID found: $productId ($productName) for template: $TemplateType" -ForegroundColor Green
+                                $foundValidProduct = $true
+                                break
+                            }
+                        }
+                    }
+                }
+                else {
+                    Write-Host "  No products found for contract ${contractId}" -ForegroundColor Yellow
+                }
+            }
+            catch {
+                Write-Warning "Failed to get products for contract ${contractId}: $($_.Exception.Message)"
+            }
+            
+            if ($foundValidProduct) {
+                break
+            }
+        }
+        
+        if (-not $foundValidProduct) {
+            $expectedList = ($expectedProducts | ForEach-Object { "$($_.Id) ($($_.Name))" }) -join ", "
+            throw "Product validation failed: No valid product ID found for template '$TemplateType'. Expected one of: $expectedList"
+        }
+        
+        return $true
+    }
+    catch {
+        Write-Error "Product validation failed: $_"
+        throw $_
+    }
+}
+
+# Validate product ID before proceeding with Terraform
+if (-not $SkipValidation) {
+    $tfVarsPath = "./$TemplateFolder/environments/$Environment/$Environment.tfvars"
+    try {
+        $null = Test-AkamaiProductId -TemplateType $TemplateType -TfVarsPath $tfVarsPath
+    }
+    catch {
+        Write-Error "Deployment aborted due to product validation failure"
+        exit 1
+    }
+}
+else {
+    Write-Host "Skipping product ID validation (SkipValidation flag set)" -ForegroundColor Yellow
 }
 
 # Request the version/activation notes if Save or Activate parameters are used. For now the version notes and activation notes are the same.

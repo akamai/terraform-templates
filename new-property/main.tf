@@ -91,7 +91,7 @@
 
 
 module "property" {
-  source = "git::ssh://git@git.source.akamai.com:7999/gss-devops/ps-terraform-templates-modules.git//delivery?ref=v1.1.0"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=v1.0.0"
 
   contract_id = var.contract_id
   group_id    = var.group_id
@@ -99,12 +99,14 @@ module "property" {
 
   product_id             = var.product_id
   name                   = var.name
-  version_notes          = var.version_notes
+  version_notes          = "${var.version_notes}${var.dummy_test}"
   hostnames              = var.hostnames
   etls                   = var.etls
   default_origin         = var.default_origin
+  additional_origins     = var.additional_origins
   sure_route_test_object = var.sure_route_test_object
   td_region              = var.td_region
+  enable_mPulse          = var.enable_mPulse
 
   notification_emails             = var.emails
   activate_to_staging             = var.activate_to_staging
@@ -130,7 +132,4 @@ module "property" {
   providers = {
     akamai = akamai
   }
-}
-terraform {
-  backend "local" {}
 }

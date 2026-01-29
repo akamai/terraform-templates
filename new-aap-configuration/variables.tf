@@ -77,6 +77,13 @@ variable "version_notes" {
 variable "hostnames" {
   description = "Hostnames to protect by the security config"
   type        = list(string)
+
+  validation {
+    condition = alltrue([
+      for h in var.hostnames : h == lower(h)
+    ])
+    error_message = "All hostnames must be lowercase."
+  }
 }
 
 variable "emails" {
