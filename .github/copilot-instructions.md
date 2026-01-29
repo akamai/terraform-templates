@@ -11,7 +11,7 @@ This repository provides **production-ready Terraform templates** for Akamai Pro
 This is a **dual-repository Terraform infrastructure**:
 
 - **`ps-terraform-templates/`** (this repo): Consumer-facing templates for AAP, AAP+ASM, and Property Manager configurations
-- **`terraform-templates-modules/`**: Reusable Terraform modules sourced via Git SSH (e.g., `git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/security?ref=v1.1.1`)
+- **`terraform-templates-modules/`**: Reusable Terraform modules sourced via Git SSH (e.g., `git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1`)
 
 ### Module Architecture Pattern
 
@@ -226,7 +226,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md#commit-conventions) for full details.
 
 Always pin modules to specific versions:
 ```hcl
-source = "git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/security?ref=v1.1.1"
+source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
 ```
 
 **Never use `ref=main` in production templates.**

@@ -227,7 +227,7 @@ This repository uses **three automated workflows** that execute in sequence:
 
 For Terraform to access the `terraform-templates-modules` repository SSH access is required. See for example the module reference in the `new-aap-configuration/main.tf`:
 ```
-source = "git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/security?ref=v1.2.3"
+source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.2.3"
 ```
 
 Setup SSH for GitHub module access:
@@ -378,7 +378,7 @@ Always pin modules to specific versions using Git tags:
 
 ```hcl
 module "security" {
-  source = "git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/security?ref=v1.1.1"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
   # ...
 }
 ```
