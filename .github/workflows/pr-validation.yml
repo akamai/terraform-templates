@@ -1,0 +1,142 @@
+name: Integration PR Validation
+
+on:
+  pull_request:
+    branches:
+      - integration
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - '**.ps1'
+      - 'tests/**'
+      - '.github/workflows/**.yml'
+
+env:
+  TF_VERSION: '1.12.1'
+
+jobs:
+  terraform-checks:
+    name: Terraform PR Checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH for GitHub module access
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+          git config --global url."git@github.com:".insteadOf "http://github.com/"
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Terraform Format Check
+        run: |
+          echo "Checking Terraform formatting..."
+          terraform fmt -check -recursive
+        continue-on-error: false
+
+      - name: Terraform Validate - AAP Configuration
+        working-directory: ./new-aap-configuration
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - AAP/ASM Configuration
+        working-directory: ./new-aapasm-configuration
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - Property
+        working-directory: ./new-property
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Init TFLint
+        run: tflint --init
+
+      - name: Run TFLint - AAP Configuration
+        working-directory: ./new-aap-configuration
+        run: tflint --recursive
+
+      - name: Run TFLint - AAP/ASM Configuration
+        working-directory: ./new-aapasm-configuration
+        run: tflint --recursive
+
+      - name: Run TFLint - Property
+        working-directory: ./new-property
+        run: tflint --recursive
+
+      - name: Run Trivy Security Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      # Note: SARIF upload requires GitHub Advanced Security (available in organization repos)
+      # This step will fail for personal/private repos but is kept for when repo moves to organization
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v4
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        with:
+          sarif_file: 'trivy-results.sarif'
+        continue-on-error: true
+
+  powershell-tests:
+    name: Deployment Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        shell: pwsh
+        run: |
+          $PSVersionTable
+
+      - name: Install Pester
+        shell: pwsh
+        run: |
+          Install-Module -Name Pester -Force -SkipPublisherCheck -Scope CurrentUser
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          Import-Module Pester
+          $config = New-PesterConfiguration
+          $config.Run.Path = './tests'
+          $config.Output.Verbosity = 'Detailed'
+          $config.TestResult.Enabled = $true
+          $config.TestResult.OutputPath = 'test-results.xml'
+          $config.TestResult.OutputFormat = 'NUnitXml'
+          Invoke-Pester -Configuration $config
+
+      - name: Upload Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: test-results.xml
+          check_name: Deployment Test Results

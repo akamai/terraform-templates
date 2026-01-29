@@ -1,23 +1,44 @@
+default_install_hook_types:
+  - pre-commit
+  - commit-msg
+  
 repos:
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.3.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
+
   - repo: https://github.com/terraform-docs/terraform-docs
     rev: "v0.20.0"
     hooks:
       - id: terraform-docs-go
         args: [./new-aap-configuration]
+        stages: [pre-commit]
       - id: terraform-docs-go
         args: [./new-aapasm-configuration]
+        stages: [pre-commit]
       - id: terraform-docs-go
         args: [./new-property]
+        stages: [pre-commit]
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.98.1"
     hooks:
       - id: terraform_fmt
         args: [--args=-write=true]
+        stages: [pre-commit]
       - id: terraform_tflint
         args:
           - --hook-config=--delegate-chdir
+        stages: [pre-commit]
       - id: terraform_trivy
         args: 
           - config . --severity CRITICAL
+        stages: [pre-commit]
       - id: terraform_validate
+        args:
+          # Re-install source modules when there are changes to module versions
+          - --hook-config=--retry-once-with-cleanup=true
+        stages: [pre-commit]

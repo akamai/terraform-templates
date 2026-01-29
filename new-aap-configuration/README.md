@@ -176,10 +176,10 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//aap/activate-security | v1.1.0 |
-| <a name="module_botman"></a> [botman](#module\_botman) | git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//aap/bot-manager | v1.1.0 |
-| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//aap/client-lists | v1.1.0 |
-| <a name="module_security"></a> [security](#module\_security) | git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//aap/security | v1.1.0 |
+| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/activate-security | v1.5.0 |
+| <a name="module_botman"></a> [botman](#module\_botman) | git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/bot-manager | v1.5.0 |
+| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/client-lists | v1.5.0 |
+| <a name="module_security"></a> [security](#module\_security) | git::ssh://git@github.com/jaescalo/terraform-templates-modules.git//aap/security | v1.5.0 |
 
 ## Inputs
 
