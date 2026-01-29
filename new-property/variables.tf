@@ -58,6 +58,13 @@ variable "version_notes" {
 variable "hostnames" {
   description = "List of hostnames."
   type        = list(string)
+
+  validation {
+    condition = alltrue([
+      for h in var.hostnames : h == lower(h)
+    ])
+    error_message = "All hostnames must be lowercase."
+  }
 }
 
 variable "etls" {
@@ -68,6 +75,15 @@ variable "etls" {
 variable "default_origin" {
   description = "Default origin server for all properties"
   type        = string
+}
+
+variable "additional_origins" {
+  description = "Additional origins for the property. For now the match is only by hostname."
+  type = map(object({
+    origin_name    = string
+    hostname_match = list(string)
+    path_match     = list(string)
+  }))
 }
 
 variable "sure_route_test_object" {
@@ -83,6 +99,12 @@ variable "td_region" {
   EOD
   type        = string
   default     = "CH2"
+}
+
+variable "enable_mPulse" {
+  description = "Boolean tod ecide whether to inject the mpulse behavior"
+  type        = bool
+  default     = true
 }
 
 ## ----------------------------------------------------------------------------
@@ -308,4 +330,9 @@ variable "ip_behavior" {
     condition     = length(regexall("^(IPV4|IPV6_COMPLIANCE|IPV6_PERFORMANCE)$", var.ip_behavior)) > 0
     error_message = "ERROR: Valid types are IPV4, IPV6_COMPLIANCE or IPV6_PERFORMANCE."
   }
+}
+
+variable "dummy_test" {
+  type    = string
+  default = "dummy_test"
 }

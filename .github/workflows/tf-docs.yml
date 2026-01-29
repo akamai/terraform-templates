@@ -1,0 +1,49 @@
+name: Terraform Docs
+
+on:
+  push:
+    branches:
+      - integration
+    paths:
+      - '**.tf'
+      - '**.terraform-docs.yml'
+      - '.github/workflows/**.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Terraform Docs Update
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate terraform-docs for AAP Configuration
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-aap-configuration
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
+      - name: Generate terraform-docs for AAP/ASM Configuration
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-aapasm-configuration
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
+      - name: Generate terraform-docs for Property
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-property
+          output-file: README.md
+          output-method: inject
+          git-push: true

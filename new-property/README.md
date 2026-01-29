@@ -98,6 +98,11 @@ module "example" {
   	 source  = "<module-location>"
   
 	 # Required variables
+  	 additional_origins  = <map(object({
+    origin_name    = string
+    hostname_match = list(string)
+    path_match     = list(string)
+  }))>
   	 contract_id  = <string>
   	 default_origin  = <string>
   	 edgerc_section  = <string>
@@ -116,8 +121,10 @@ module "example" {
   	 certificate_id  = <number> | default: null
   	 cpcode_name  = <string> | default: null
   	 customer_email  = <string> | default: null
+  	 dummy_test  = <string> | default: "dummy_test"
   	 edgerc_path  = <string> | default: "~/.edgerc"
   	 ehn_domain  = <string> | default: null
+  	 enable_mPulse  = <bool> | default: true
   	 ip_behavior  = <string> | default: "IPV6_COMPLIANCE"
   	 noncompliance_reason  = <list(string)> | default: []
   	 other_noncompliance_reason  = <string> | default: null
@@ -147,12 +154,13 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@git.source.akamai.com:7999/gss-devops/ps-terraform-templates-modules.git//delivery | v1.1.0 |
+| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | v1.0.0 |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
+| <a name="input_additional_origins"></a> [additional\_origins](#input\_additional\_origins) | Additional origins for the property. For now the match is only by hostname. | <pre>map(object({<br/>    origin_name    = string<br/>    hostname_match = list(string)<br/>    path_match     = list(string)<br/>  }))</pre> | n/a | yes |
 | <a name="input_contract_id"></a> [contract\_id](#input\_contract\_id) | Contract ID for property/config creation | `string` | n/a | yes |
 | <a name="input_default_origin"></a> [default\_origin](#input\_default\_origin) | Default origin server for all properties | `string` | n/a | yes |
 | <a name="input_edgerc_section"></a> [edgerc\_section](#input\_edgerc\_section) | Section in the .edgerc file.<br/><br/>    For professional services, it is recommended to create a new section for<br/>    each account managed. | `string` | n/a | yes |
@@ -169,8 +177,10 @@ No resources.
 | <a name="input_certificate_id"></a> [certificate\_id](#input\_certificate\_id) | Certificate enrollment id. Only applicable if enhanced\_tls is true, and secure\_by\_default<br/>is false.<br/><br/>Can be retrieved using AkamaiPowershell or the Akamai CPS CLI. | `number` | `null` | no |
 | <a name="input_cpcode_name"></a> [cpcode\_name](#input\_cpcode\_name) | Default CP Code name. Will be the property name (var.name) if null. | `string` | `null` | no |
 | <a name="input_customer_email"></a> [customer\_email](#input\_customer\_email) | Email address of the customer that acknowledged, tested and accepted the change | `string` | `null` | no |
+| <a name="input_dummy_test"></a> [dummy\_test](#input\_dummy\_test) | n/a | `string` | `"dummy_test"` | no |
 | <a name="input_edgerc_path"></a> [edgerc\_path](#input\_edgerc\_path) | Path to the .edgerc file. | `string` | `"~/.edgerc"` | no |
 | <a name="input_ehn_domain"></a> [ehn\_domain](#input\_ehn\_domain) | EdgeHostname domain, e.g. edgesuite.net or edgekey.net. Will default to one or<br/>the other, based on the value of etls variable. | `string` | `null` | no |
+| <a name="input_enable_mPulse"></a> [enable\_mPulse](#input\_enable\_mPulse) | Boolean tod ecide whether to inject the mpulse behavior | `bool` | `true` | no |
 | <a name="input_ip_behavior"></a> [ip\_behavior](#input\_ip\_behavior) | EdgeHostname IP behaviour. | `string` | `"IPV6_COMPLIANCE"` | no |
 | <a name="input_noncompliance_reason"></a> [noncompliance\_reason](#input\_noncompliance\_reason) | Allowed values for noncompliance\_reason are "NO\_PRODUCTION\_TRAFFIC", "EMERGENCY", "NONE". (OR null for the customer, as None will require the complaince block) | `list(string)` | `[]` | no |
 | <a name="input_other_noncompliance_reason"></a> [other\_noncompliance\_reason](#input\_other\_noncompliance\_reason) | Describes the reason why the activation must occur immediately, out of compliance with the standard procedure | `string` | `null` | no |

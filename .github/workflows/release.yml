@@ -1,0 +1,61 @@
+name: Release to Prod
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Conventional Changelog Action
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          output-file: "CHANGELOG.md"
+          skip-version-file: true
+          skip-commit: true
+          skip-tag: true
+          preset: "angular"
+          tag-prefix: "v"
+          release-count: 0
+          create-summary: true
+
+      - name: Update VERSION file
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git stash
+          git pull --rebase origin ${{ github.ref_name }}
+          git stash pop || true
+          echo "${{ steps.changelog.outputs.version }}" > VERSION
+          git add VERSION CHANGELOG.md
+          git commit -m "chore(release): ${{ steps.changelog.outputs.version }} [skip ci]"
+          git tag -a "${{ steps.changelog.outputs.tag }}" -m "Release ${{ steps.changelog.outputs.tag }}"
+          git push --follow-tags
+
+      # Create GitHub release with auto-generated changelog if there are releasable commits (feat:, fix:, feat!:)
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        with:
+          tag_name: ${{ steps.changelog.outputs.tag }}
+          name: ${{ steps.changelog.outputs.tag }}
+          body: ${{ steps.changelog.outputs.clean_changelog }}
+          draft: false
+          prerelease: false
