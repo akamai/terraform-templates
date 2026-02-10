@@ -98,8 +98,14 @@ git checkout -b feat/add-custom-rate-policies
 
 - Follow Terraform best practices
 - Update the tests suites accordingly (new templates, deployment script)
-- Update the Github Workflows if needed (add new templates to terraform-docs, terraform validate, tflint steps)
-- Update documentation (`main.tf` comments, `.tfvars.dist` examples)
+- Include new templates in the Github Workflows if needed:
+   - terraform validate
+   - tflint
+   - terraform-docs
+- Update documentation:
+   - `main.tf` comments 
+   - `.tfvars.dist` examples
+   - Include new templates in the `.pre-commit-config.yaml`
 - Test locally using `deploy.ps1`
 - Pre-commit hooks will auto-run on `git commit` (formats code, updates `README.md`)
    - Or run manually: `pre-commit run --all-files`
