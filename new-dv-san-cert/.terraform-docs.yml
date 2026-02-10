@@ -1,0 +1,68 @@
+header-from: main.tf
+footer-from: ""
+formatter: markdown table
+recursive:
+  enabled: false
+  path: ""
+content: |-
+
+  {{ .Header }}
+
+  # Usage
+  Basic usage of this module is as follows:
+
+  ```hcl
+  module "example" {
+    {{"\t"}} source  = "<module-location>"
+  {{- if .Module.RequiredInputs }}
+    {{"\n\t"}} # Required variables
+    {{- range .Module.RequiredInputs }}
+    {{"\t"}} {{ .Name }}  = <{{ .Type }}>
+    {{- end }}
+    {{- end }}
+  {{- if .Module.OptionalInputs }}
+    {{"\n\t"}} # Optional variables
+    {{- range .Module.OptionalInputs }}
+    {{"\t"}} {{ .Name }}  = <{{ .Type }}> | default: {{ .GetValue | printf "%s" }}
+    {{- end }}
+    {{- end }}
+  }
+   ```
+
+  {{ .Requirements }}
+
+  {{ .Resources }}
+
+  {{ .Modules }}
+
+  {{ .Inputs }}
+
+  {{ .Outputs }}
+
+output:
+  file: README.md
+  mode: replace
+  template: |-
+    <!-- BEGIN_TF_DOCS -->
+    {{ .Content }}
+    <!-- END_TF_DOCS -->
+output-values:
+  enabled: false
+  from: ""
+sort:
+  enabled: true
+  by: required
+settings:
+  anchor: true
+  color: true
+  default: true
+  description: true
+  escape: true
+  hide-empty: false
+  html: true
+  indent: 2
+  lockfile: true
+  read-comments: true
+  required: true
+  sensitive: true
+  type: true

@@ -47,3 +47,19 @@ jobs:
           output-file: README.md
           output-method: inject
           git-push: true
+
+      - name: Generate terraform-docs for CPS - SAN Cert
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-dv-san-cert
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
+      - name: Generate terraform-docs for CPS - Third Party Cert
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-third-party-cert
+          output-file: README.md
+          output-method: inject
+          git-push: true
