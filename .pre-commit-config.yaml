@@ -22,7 +22,13 @@ repos:
       - id: terraform-docs-go
         args: [./new-property]
         stages: [pre-commit]
-
+      - id: terraform-docs-go
+        args: [./new-dv-san-cert]
+        stages: [pre-commit]
+      - id: terraform-docs-go
+        args: [./new-third-party-cert]
+        stages: [pre-commit]
+        
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.98.1"
     hooks:

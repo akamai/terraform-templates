@@ -2,14 +2,14 @@
 
 # Professional Services Terraform Templates
 
-Streamline your Akamai deployment with production-ready Terraform templates for delivery and security configurations. This repository provides automated, best-practice implementations for Application Security (AAP/AAP+ASM) and Property Manager configurations.
+Streamline your Akamai deployment with production-ready Terraform templates for delivery and security configurations, certificates and more. This repository provides automated, best-practice implementations for such configurations.
 
 ## Overview
 
-The [ps-terraform-templates repository](https://git.source.akamai.com/projects/GSS-DEVOPS/repos/ps-terraform-templates/browse) enables rapid deployment of Akamai configurations through:
+The contents of this repository enables rapid deployment of Akamai configurations through:
 - ✅ Pre-built, validated Terraform modules
 - ✅ Automated deployment scripts with built-in validation
-- ✅ Multi-environment support (dev, qa, prod)
+- ✅ Multi-environment support (e.g. dev, qa, prod)
 - ✅ Product ID validation for security configurations
 - ✅ Integrated activation workflows
 
@@ -22,10 +22,6 @@ The [ps-terraform-templates repository](https://git.source.akamai.com/projects/G
 - PowerShell 7+ (for deployment automation)
 - Akamai PowerShell module 2.2.0
 - Git
-
-**Platform-Specific Setup:**
-- **macOS**: [Setup Guide](https://git.source.akamai.com/users/joanders/repos/goldload-gs-macos/browse)
-- **Windows**: [Setup Guide](https://ac-aloha.akamai.com/home/ls/community/apj-services-community/post/4240930785053181)
 
 ## Repository Structure
 
@@ -84,8 +80,8 @@ account_key = your_account_switch_key  # Optional, for account switching
 ### 2. Clone Repository
 
 ```bash
-git clone ssh://git@git.source.akamai.com:7999/gss-devops/ps-terraform-templates.git
-cd ps-terraform-templates
+git clone https://github.com/akamai/terraform-templates.git
+cd terraform-templates
 ```
 
 ## Available Templates
@@ -112,16 +108,26 @@ Delivery configuration templates for:
 - DSA (Dynamic Site Accelerator)
 - ION Standard
 
+### 🔑 new-dv-san-cert
+Certificate Provisioning System for:
+- DV San Certificate
+
+### 🔑 new-third-party-cert
+Certificate Provisioning System for:
+- Third Party Certificate
+
 ## Usage
 
 ### Deployment Workflow
 
 The `deploy.ps1` script automates the entire deployment lifecycle with built-in validation:
 
+#### Security and Delivery Templates (AAP, AAP+ASM, PM)
+
 | Parameter | Description |
 |-----------|-------------|
 | First Argument | Template to deploy: `aap`, `aapasm`, or `pm` |
-| `-Env` | Target environment: `dev`, `qa`, or `prod` |
+| `-Env` | Target environment: `dev`, `qa`, `prod`, etc. |
 | `-Save` | Save configuration without activation |
 | `-ActivateStaging` | Activate to Akamai staging network |
 | `-ActivateProduction` | Activate to Akamai production network |
@@ -131,6 +137,20 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-SkipValidation` | Skip product ID validation |
 | `-Help` | Display detailed help information |
+
+#### Certificate Provisioning System (CPS) Templates
+
+| Parameter | Description |
+|-----------|-------------|
+| First Argument | `cps` - Certificate Provisioning System |
+| `-CpsType` | Certificate type: `dv-san-cert` or `third-party-cert` |
+| `-CreateCert` | Certificate identifier to create |
+| `-UploadCert` | Certificate identifier to upload (third-party only) |
+| `-DestroyCert` | Certificate identifier to destroy |
+| `-Debug` | Enable detailed logging to `akamai_tf.log` |
+| `-Help` | Display detailed help information |
+
+> **Note:** CPS templates do not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation` parameters.
 
 ### Configuration
 
@@ -178,6 +198,18 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Skip product ID validation
 .\deploy.ps1 aapasm -Env qa -Save -SkipValidation
+
+# Create a DV SAN certificate
+.\deploy.ps1 cps -CpsType dv-san-cert -CreateCert cert1
+
+# Create a third-party certificate
+.\deploy.ps1 cps -CpsType third-party-cert -CreateCert cert1
+
+# Upload a third-party certificate (after creating)
+.\deploy.ps1 cps -CpsType third-party-cert -UploadCert cert1
+
+# Destroy a certificate
+.\deploy.ps1 cps -CpsType dv-san-cert -DestroyCert cert1
 ```
 
 ## Troubleshooting
@@ -261,25 +293,9 @@ terraform {
 3. ✅ Rotate API credentials regularly
 4. ✅ Never commit credentials to version control
 
-## Resources & Support
-
-### Documentation
-- [Akamai Terraform Provider](https://techdocs.akamai.com/terraform/docs/overview)
-- [EMEA Professional Services DevOps Trainings](https://ac-aloha.akamai.com/home/ls/content/5535721256386560/emea-ps-devops-2023)
-- [Terraform Best Practices](https://developer.hashicorp.com/terraform/cloud-docs/recommended-practices)
-
-### Support Channels
-- [Webex Space: Terraform Templates Support](webexteams://im?space=52d5bcf0-42d2-11f0-9dd9-91df9cb369f0)
-- Open an issue in this repository
-- Contact Professional Services Terraform Templates team
-
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
-- Submitting bug reports
-- Proposing new features
-- Code style and standards
-- Pull request process
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on collaborating to this repository.
 
 ## Changelog
 
@@ -287,5 +303,4 @@ See [CHANGELOG.md](CHANGELOG.md) for version history and release notes.
 
 ---
 
-**Maintained by:** Akamai Professional Services - Terraform templates Team  
-**License:** Internal Use Only 
+**Maintained by:** Akamai Professional Services - Terraform Templates Team

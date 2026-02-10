@@ -6,7 +6,7 @@
  *
  * ## Authentication
  *
- * Please refer to [DevOps Harmony / Setting up OpenAPI/EdgeGrid for PS](https://collaborate.akamai.com/confluence/pages/viewpage.action?pageId=748278616)
+ * Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/overview) and [Terraform Alternative authentication](https://techdocs.akamai.com/terraform/docs/gs-authentication) for more details on how to authenticate to Akamai when using Terraform.
  * 
  * ## Usage
  * 
@@ -14,7 +14,7 @@
  * 
  * ```bash
  * > git clone <git url>
- * > cd ps-terraform-templates/new-aap-configuration/
+ * > cd terraform-templates/new-aapasm-configuration/
  * ```
  * 
  * 2. Inside the `./environments` folder is where you create/delete the subdirectories and files to support more environments if needed. Refer to the examples inside the `./environments` folder. If you only need a single environment just leave a single directory (you can name it "prod"). The environment name must also be used as prefix in the `tfvars` filename. In our example for "prod" the `tfvars` file will be `prod.tfvars`. Remove the .dist extension from the `tfvars` filenames you plan to reuse and specify the required values for the different parameters.
@@ -68,10 +68,6 @@
  * ```hcl
  * │ Error: Title: Internal Server Error; Type: https://problems.luna.akamaiapis.net/appsec-configuration/error-types/INTERNAL-SERVER-ERROR; Detail: Error occurred while processing the request.
  * ```
- * 
- * ## Future Improvements
- *
- * As of March 2025 API Definitions are not supported by the Akamai provider. As soon as it becomes available work will start to integrate it to this project.
  * 
  */
 
