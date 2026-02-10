@@ -106,7 +106,7 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_third-party-cert"></a> [third-party-cert](#module\_third-party-cert) | git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//third-party-cert | v1.3.0 |
+| <a name="module_third-party-cert"></a> [third-party-cert](#module\_third-party-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert | v1.1.0 |
 
 ## Inputs
 
