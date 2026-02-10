@@ -67,7 +67,7 @@ Update the placeholders (<...>) with actual customer or project-specific values 
 
 module "dv-san-cert" {
   #source = "../dv-san-cert"
-  source = "git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//dv-san-cert?ref=v1.3.0"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.1.0"
 
   common_name                           = var.common_name
   allow_duplicate_common_name           = var.allow_duplicate_common_name

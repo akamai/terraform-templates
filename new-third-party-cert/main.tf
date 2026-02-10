@@ -64,7 +64,7 @@ trust_chain_ecdsa_pem = ""
 */
 
 module "third-party-cert" {
-  source = "git::ssh://git.source.akamai.com/scm/gss-devops/ps-terraform-templates-modules.git//third-party-cert?ref=v1.3.0"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.1.0"
   #source = "../third-party-cert"
 
   //enrollment_id                        = var.enrollment_id
