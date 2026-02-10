@@ -81,7 +81,7 @@ data "akamai_contract" "contract" {
 
 module "client-lists" {
   count               = var.create_client_lists ? 1 : 0
-  source              = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/client-lists?ref=v1.0.0"
+  source              = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/client-lists?ref=v1.1.0"
   client_lists_prefix = substr(var.config_name, 0, 20)
   config_name         = var.config_name
   contract_id         = trimprefix(data.akamai_contract.contract.id, "ctr_")
@@ -101,7 +101,7 @@ locals {
 }
 
 module "security" {
-  source        = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/security?ref=v1.0.0"
+  source        = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/security?ref=v1.1.0"
   hostnames     = var.hostnames
   config_name   = var.config_name
   description   = var.description
@@ -156,7 +156,7 @@ module "security" {
 
 module "client-reputation" {
   count              = var.enable_client_reputation ? 1 : 0
-  source             = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation?ref=v1.0.0"
+  source             = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation?ref=v1.1.0"
   config_id          = module.security.config_id
   security_policy_id = module.security.security_policy_id
 
@@ -186,7 +186,7 @@ module "client-reputation" {
 
 module "botman" {
   count              = var.enable_botman ? 1 : 0
-  source             = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager?ref=v1.0.0"
+  source             = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager?ref=v1.1.0"
   botman_type        = var.botman_type
   config_id          = module.security.config_id
   security_policy_id = module.security.security_policy_id
@@ -239,7 +239,7 @@ module "botman" {
 }
 
 module "activate-security" {
-  source                          = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security?ref=v1.0.0"
+  source                          = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security?ref=v1.1.0"
   config_name                     = var.config_name
   config_id                       = module.security.config_id
   activate_to_staging             = var.activate_to_staging

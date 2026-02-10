@@ -65,6 +65,18 @@ jobs:
           terraform init -backend=false
           terraform validate
 
+      - name: Terraform Validate - CPS - SAN Cert
+        working-directory: ./new-dv-san-cert
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - CPS - Third Party Cert
+        working-directory: ./new-third-party-cert
+        run: |
+          terraform init -backend=false
+          terraform validate
+
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
         with:
@@ -83,6 +95,14 @@ jobs:
 
       - name: Run TFLint - Property
         working-directory: ./new-property
+        run: tflint --recursive
+
+      - name: Run TFLint - CPS - SAN Cert
+        working-directory: ./new-dv-san-cert
+        run: tflint --recursive
+
+      - name: Run TFLint - CPS - Third Party Cert
+        working-directory: ./new-third-party-cert
         run: tflint --recursive
 
       - name: Run Trivy Security Scan
