@@ -1,6 +1,68 @@
 <!-- BEGIN_TF_DOCS -->
 
+# Akamai DV SAN Certificate Enrollment Module
 
+This Terraform module automates the creation and management of **Akamai Certificate Provisioning System (CPS)** enrollments for **Domain Validated (DV)** certificates with **Subject Alternative Names (SANs)**.
+
+The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations, After creation, the module automatically outputs DNS and HTTP challenge details into [dns-challenges.txt] and [http-challenges.txt]
+
+## Prerequisites
+
+- Terraform v1.4+  
+- Akamai Terraform Provider installed  
+- Access to an Akamai account with CPS permissions  
+- `.edgerc` file configured with proper credentials
+- **Recommendation**: Use a dedicated .edgerc section per account for clean separation.
+
+## Project Structure
+
+├── provider.tf
+├── main.tf
+├── variables.tf
+├── terraform.tfvars
+├── files.tf
+└── dns-challenges.txt / http-challenges.txt
+
+### File Overview
+
+| File | Description |
+|------|--------------|
+| **main.tf** | Core Terraform logic for Akamai CPS enrollment and configuration. |
+| **variables.tf** | Declares all configurable variables with types and descriptions. |
+| **terraform.tfvars** | Example values for user configuration (to be customized). |
+| **files.tf** | Writes DNS and HTTP challenge details to local text files for validation. |
+| **dns-challenges.txt** | contains DNS validation records (CNAME or TXT values),Generated at root after apply
+| **http-challenges.txt** |contains HTTP validation tokens and paths,Generated at root after apply
+
+**Usage**
+- Update your terraform.tfvars with project-specific values.
+- Initialize Terraform: **terraform init**
+- Review the plan: **terraform plan**
+- Apply the configuration: **terraform apply**
+- After successful execution, check the root folder for **dns-challenges.txt** and **http-challenges.txt**
+
+**Output artifacts**
+- After successful enrollment creation in CPS, two files will be written at the root:
+    [dns-challenges.txt] → contains all DNS-based validation records
+    [http-challenges.txt] → contains all HTTP-based validation details
+
+- Each file includes the domain, path (or CNAME), and target value to be configured for CPS validation.
+
+- Files are created at the root path (where Terraform is executed) and not inside the module.This separation ensures output visibility and avoids overwriting module files.
+
+**terraform.tfvars**
+- This file defines all input variables used by the DV SAN Certificate module.
+Update the placeholders (<...>) with actual customer or project-specific values before running Terraform.
+
+## Note
+
+- Set [acknowledge\_pre\_verification\_warnings] = [true] only after confirming CPS warnings are acceptable.
+
+- If you don’t set this flag to true, Terraform will fail the run with a error message such as **Enrollment cannot proceed until you acknowledge pre-verification warnings**
+
+- Only set it to false if you want to manually review and accept warnings through the Akamai Control Center UI before proceeding.
+
+- [sni\_only] = set it to [true] or [false] depending on the requirement.
 
 # Usage
 Basic usage of this module is as follows:

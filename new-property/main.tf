@@ -3,7 +3,7 @@
  *
  * ## Authentication
  *
- * Please refer to [DevOps Harmony / Setting up OpenAPI/EdgeGrid for PS](https://collaborate.akamai.com/confluence/pages/viewpage.action?pageId=748278616)
+ * Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/overview) and [Terraform Alternative authentication](https://techdocs.akamai.com/terraform/docs/gs-authentication) for more details on how to authenticate to Akamai when using Terraform.
  * 
  * ## Usage Instructions
  *  Akamai Terraform Deployment Guide
@@ -11,10 +11,12 @@
  *      DSA, IOn and ION Premier: new-property
  *
  *  ### Step 1: Download the Templates
- *   1. Go to the Akamai GIT repository:  https://git.source.akamai.com/projects/GSS-DEVOPS/repos/ps-terraform-templates/browse
- *      Branch Name : main
- *
- *   2. Download the template: new-property
+ *  Clone the repository, using following command:
+ * 
+ *  ```bash
+ *  > git clone <git url>
+ *  > cd terraform-templates/new-property/
+ *  ```
  *
  *  ### Step 2: Update `terraform.tfvars`
  *  Update the `terraform.tfvars` file with the required details:

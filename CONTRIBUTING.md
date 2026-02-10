@@ -1,17 +1,46 @@
 # Contributing
 
-When contributing to this repository, please first discuss the change you wish to make via issue preferably ([GS Terraform Templates Request](https://gsinput.akamai.com/GS_TERRAFORM_REQUEST_FORM)), email, or any other method with the owners of this repository before making a change.
+When contributing to this repository, please first discuss the change you wish to make via issue preferably a GitHub Issue, email, or any other method with the owners of this repository before making a change.
 
 ## Table of Contents
 
 - [Prerequisites](#prerequisites)
-- [Branching Strategy](#branching-strategy)
+  - [Setup Pre-Commit Hooks](#setup-pre-commit-hooks)
 - [Development Workflow](#development-workflow)
+  - [1. Create Feature Branch](#1-create-feature-branch)
+  - [2. Make Changes](#2-make-changes)
+  - [3. Commit with Conventional Commits](#3-commit-with-conventional-commits)
+  - [4. Push and Create Pull Request](#4-push-and-create-pull-request)
+  - [5. Integration Testing](#5-integration-testing)
+  - [6. Promote to Production](#6-promote-to-production)
 - [GitHub Workflows](#github-workflows)
+  - [1. PR Validation](#1-pr-validation-githubworkflowspr-validationyml)
+  - [2. Terraform Docs Automation](#2-terraform-docs-automation-githubworkflowstf-docsyml)
+  - [3. Release Automation](#3-release-automation-githubworkflowsreleaseyml)
+  - [Setting Up Required Secrets](#setting-up-required-secrets)
+- [Branching Strategy](#branching-strategy)
+  - [Branch Purposes](#branch-purposes)
+  - [Branch Protection Rules](#branch-protection-rules)
+  - [Branch Naming Convention](#branch-naming-convention)
 - [Commit Conventions](#commit-conventions)
+  - [Format](#format)
+  - [Types](#types)
+  - [Breaking Changes](#breaking-changes)
+  - [Scopes (Optional)](#scopes-optional)
+  - [Examples](#examples)
 - [Pull Request Process](#pull-request-process)
+  - [Creating a Pull Request](#creating-a-pull-request)
+  - [PR Checklist](#pr-checklist)
 - [Module Versioning](#module-versioning)
+  - [Using Modules in Templates](#using-modules-in-templates)
+  - [Updating Module Versions](#updating-module-versions)
 - [Testing](#testing)
+  - [Local Testing](#local-testing)
+  - [Debug Mode](#debug-mode)
+  - [Terraform Commands](#terraform-commands)
+- [Versioning and Changelog](#versioning-and-changelog)
+  - [Automated Process](#automated-process)
+  - [Manual Override (Emergency Only)](#manual-override-emergency-only)
 
 ## Prerequisites
 
@@ -26,6 +55,8 @@ When contributing to this repository, please first discuss the change you wish t
 
 ### Setup Pre-Commit Hooks
 
+The `pre-commit` hooks and checks will run automatically whenever a there is a commit to the repository (i.e. `git commit`).
+
 **You must install pre-commit hooks** to ensure code quality before committing:
 
 ```bash
@@ -36,7 +67,7 @@ This installs hooks for both `pre-commit` and `commit-msg` stages:
 - **Pre-commit stage**: Formats code, generates docs, runs linting
 - **Commit-msg stage**: Validates conventional commit message format
 
-To manually run all checks:
+**OPTIONAL**. To manually run all `pre-commit` checks:
 
 ```bash
 pre-commit run --all-files   
@@ -46,77 +77,16 @@ pre-commit run --all-files
 - Code formatting (`terraform fmt`)
 - Up-to-date documentation (`terraform-docs`)
 - Linting best practices (`tflint`)
+- Security scanning (`trivy`)
 - **Conventional commit message format** - Validates at commit time before you push
-- The PR validation workflow will **fail** if any of the above checks are caught
 
-Pre-commit hooks catch these issues locally before the PR validation workflow runs. 
-
-## Branching Strategy
-
-This repository uses a **three-stage branching model** with automated CI/CD:
-
-```
-feature branch → integration (PR validation + auto-docs) → main (release automation)
-```
-
-### Branch Purposes
-
-| Branch | Purpose | Triggers |
-|--------|---------|----------|
-| **Feature branches** | Active development work | Nothing |
-| **`integration`** | Pre-release testing and validation | **PR validation workflow** (on PR) + **Terraform Docs workflow** (on merge) |
-| **`main`/`master`** | Production-ready code | **Release automation workflow** |
-
-### Branch Protection Rules
-
-**Required for `integration` branch:**
-- Require pull request reviews before merging
-- Require status checks to pass (PR validation workflow)
-- Require branches to be up to date before merging
-
-**Required for `main` branch:**
-- All of the above, plus:
-- Restrict push access (only allow merges from `integration`)
-- Require linear history (squash or rebase merges)
-
-### Branch Naming Convention
-
-Use descriptive branch names that match [commit types](#commit-conventions) for consistency:
-
-**Format:** `<type>/<short-description>` or `<type>/<issue>-<short-description>`
-
-**Examples:**
-```bash
-# New features
-feat/custom-rate-policies
-feat/DOHRMY-126-botman-integration
-
-# Bug fixes
-fix/rate-policy-import
-fix/DOHRMY-456-state-file-conflict
-
-# Documentation
-docs/update-readme-examples
-
-# Refactoring
-refactor/module-structure
-
-# Chores
-chore/new-release-version
-```
-
-**Guidelines:**
-- Use lowercase with hyphens (kebab-case)
-- Be descriptive but concise (3-5 words max)
-- Include issue/ticket number when applicable
-- Match the commit type you'll use later
-- Avoid special characters except hyphens and forward slashes
+Pre-commit hooks catch these issues locally before the PR validation workflow runs. The [PR validation workflow](#1-pr-validation-githubworkflowspr-validationyml) will **fail** if any of the above checks are caught.
 
 ## Development Workflow
 
 ### 1. Create Feature Branch
 
-Always branch from `integration`, not `main`. See [Branch Naming Convention](#branch-naming-convention) above for required format.
+Always branch from `integration`, not `main`. See [Branch Naming Convention](#branch-naming-convention) for required format.
 
 ```bash
 git checkout integration
@@ -127,14 +97,16 @@ git checkout -b feat/add-custom-rate-policies
 ### 2. Make Changes
 
 - Follow Terraform best practices
+- Update the tests suites accordingly (new templates, deployment script)
+- Update the Github Workflows if needed (add new templates to terraform-docs, terraform validate, tflint steps)
 - Update documentation (`main.tf` comments, `.tfvars.dist` examples)
 - Test locally using `deploy.ps1`
 - Pre-commit hooks will auto-run on `git commit` (formats code, updates `README.md`)
-- Or run manually: `pre-commit run --all-files`
+   - Or run manually: `pre-commit run --all-files`
 
 ### 3. Commit with Conventional Commits
 
-See [Commit Conventions](#commit-conventions) below for required format.
+See [Commit Conventions](#commit-conventions) for required format.
 
 ```bash
 git add .
@@ -244,6 +216,67 @@ Setup SSH for GitHub module access:
 3. Add **private key** (`deploy_key`) to this repository:
    - Settings → Secrets and variables → Actions
    - New repository secret: `DEPLOY_KEY`
+
+## Branching Strategy
+
+This repository uses a **three-stage branching model** with automated CI/CD:
+
+```
+feature branch → integration (PR validation + auto-docs) → main (release automation)
+```
+
+### Branch Purposes
+
+| Branch | Purpose | Triggers |
+|--------|---------|----------|
+| **Feature branches** | Active development work | Nothing |
+| **`integration`** | Pre-release testing and validation | **PR validation workflow** (on PR) + **Terraform Docs workflow** (on merge) |
+| **`main`/`master`** | Production-ready code | **Release automation workflow** |
+
+### Branch Protection Rules
+
+**Required for `integration` branch:**
+- Require pull request reviews before merging
+- Require status checks to pass (PR validation workflow)
+- Require branches to be up to date before merging
+
+**Required for `main` branch:**
+- All of the above, plus:
+- Restrict push access (only allow merges from `integration`)
+- Require linear history (squash or rebase merges)
+
+### Branch Naming Convention
+
+Use descriptive branch names that match [commit types](#commit-conventions) for consistency:
+
+**Format:** `<type>/<short-description>` or `<type>/<issue>-<short-description>`
+
+**Examples:**
+```bash
+# New features
+feat/custom-rate-policies
+feat/DOHRMY-126-botman-integration
+
+# Bug fixes
+fix/rate-policy-import
+fix/DOHRMY-456-state-file-conflict
+
+# Documentation
+docs/update-readme-examples
+
+# Refactoring
+refactor/module-structure
+
+# Chores
+chore/new-release-version
+```
+
+**Guidelines:**
+- Use lowercase with hyphens (kebab-case)
+- Be descriptive but concise (3-5 words max)
+- Include issue/ticket number when applicable
+- Match the commit type you'll use later
+- Avoid special characters except hyphens and forward slashes
 
 ## Commit Conventions
 
@@ -363,6 +396,7 @@ Before submitting, ensure:
 - [ ] Conventional commit format used (at least one semantic commit)
 - [ ] Documentation updated (`main.tf`, inline comments, `.tfvars.dist`)
 - [ ] Tested with `deploy.ps1` for affected templates
+- [ ] Test scenarios updated or created for the affected templates
 - [ ] Module version references are pinned (never use `ref=main`)
 - [ ] PR validation workflow passes (all checks green)
 
@@ -473,8 +507,6 @@ If automation fails, manually update:
 ## Questions or Issues?
 
 - Open an issue: [GitHub Issues](https://github.com/jaescalo/terraform-templates/issues)
-- Request features: [GS Terraform Templates Request Form](https://gsinput.akamai.com/GS_TERRAFORM_REQUEST_FORM)
-- Support: [Webex Space: Terraform Templates Support](webexteams://im?space=52d5bcf0-42d2-11f0-9dd9-91df9cb369f0)
 
 ---
 
