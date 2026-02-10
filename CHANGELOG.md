@@ -1,3 +1,17 @@
+# [1.1.0](https://github.com/akamai/terraform-templates/compare/v1.0.0...v1.1.0) (2026-02-10)
+
+
+### Bug Fixes
+
+* **cps:** updated module reference to v1.0.0 ([0edf6ab](https://github.com/akamai/terraform-templates/commit/0edf6abd667f68b2285581af4d8b7de12fd3b154))
+
+
+### Features
+
+* **cps:** new templates for dv-san and third-party certs ([2600ce4](https://github.com/akamai/terraform-templates/commit/2600ce4f653bd831c0ae480418d1a511cdee41f0))
+
+
+
 # [1.0.0](https://github.com/akamai/terraform-templates/compare/v0.1.0...v1.0.0) (2026-01-29)
 
 
