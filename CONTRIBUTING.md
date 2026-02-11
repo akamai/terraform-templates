@@ -55,8 +55,6 @@ When contributing to this repository, please first discuss the change you wish t
 
 ### Setup Pre-Commit Hooks
 
-The `pre-commit` hooks and checks will run automatically whenever a there is a commit to the repository (i.e. `git commit`).
-
 **You must install pre-commit hooks** to ensure code quality before committing:
 
 ```bash
@@ -67,7 +65,7 @@ This installs hooks for both `pre-commit` and `commit-msg` stages:
 - **Pre-commit stage**: Formats code, generates docs, runs linting
 - **Commit-msg stage**: Validates conventional commit message format
 
-**OPTIONAL**. To manually run all `pre-commit` checks:
+To manually run all checks:
 
 ```bash
 pre-commit run --all-files   
@@ -79,8 +77,9 @@ pre-commit run --all-files
 - Linting best practices (`tflint`)
 - Security scanning (`trivy`)
 - **Conventional commit message format** - Validates at commit time before you push
+- The PR validation workflow will **fail** if any of the above checks are caught
 
-Pre-commit hooks catch these issues locally before the PR validation workflow runs. The [PR validation workflow](#1-pr-validation-githubworkflowspr-validationyml) will **fail** if any of the above checks are caught.
+Pre-commit hooks catch these issues locally before the PR validation workflow runs. 
 
 ## Development Workflow
 
@@ -402,7 +401,7 @@ Before submitting, ensure:
 - [ ] Conventional commit format used (at least one semantic commit)
 - [ ] Documentation updated (`main.tf`, inline comments, `.tfvars.dist`)
 - [ ] Tested with `deploy.ps1` for affected templates
-- [ ] Test scenarios updated or created for the affected templates
+- [ ] Test suite/scenarios updated or created for the affected templates
 - [ ] Module version references are pinned (never use `ref=main`)
 - [ ] PR validation workflow passes (all checks green)
 
@@ -512,8 +511,8 @@ If automation fails, manually update:
 
 ## Questions or Issues?
 
-- Open an issue: [GitHub Issues](https://github.com/jaescalo/terraform-templates/issues)
+- Open an issue: [GitHub Issues](https://github.com/akamai/terraform-templates/issues)
 
 ---
 
-Thank you for contributing to PS Terraform Templates!
+Thank you for contributing to the Terraform Templates!
