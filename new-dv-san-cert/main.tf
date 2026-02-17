@@ -66,8 +66,7 @@
 
 
 module "dv-san-cert" {
-  #source = "../dv-san-cert"
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.1.0"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.1.2"
 
   common_name                           = var.common_name
   allow_duplicate_common_name           = var.allow_duplicate_common_name
@@ -135,13 +134,5 @@ module "dv-san-cert" {
   }
 
   contract_id = var.contract_id
-  /*
-  providers = {
-    akamai = akamai
-  }
-*/
-}
-terraform {
-  backend "local" {}
-}
 
+}

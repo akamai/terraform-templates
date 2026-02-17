@@ -6,6 +6,9 @@ When contributing to this repository, please first discuss the change you wish t
 
 - [Prerequisites](#prerequisites)
   - [Setup Pre-Commit Hooks](#setup-pre-commit-hooks)
+- [Repository Architecture](#repository-architecture)
+  - [Modular Design](#modular-design)
+  - [Directory Structure](#directory-structure)
 - [Development Workflow](#development-workflow)
   - [1. Create Feature Branch](#1-create-feature-branch)
   - [2. Make Changes](#2-make-changes)
@@ -81,6 +84,59 @@ pre-commit run --all-files
 
 Pre-commit hooks catch these issues locally before the PR validation workflow runs. 
 
+## Repository Architecture
+
+### Modular Design
+
+This repository uses a **modular PowerShell architecture** to manage Terraform deployments. The `deploy.ps1` script orchestrates template-specific handlers through a clean separation of concerns:
+
+**Core Components:**
+- **`lib/core/`** - Shared functionality used across all templates
+  - `TerraformRunner.psm1` - Terraform execution wrapper (init, plan, apply, destroy)
+  - `Validation.psm1` - Product ID validation and tfvars parsing
+  - `Logger.psm1` - Logging and output formatting
+
+- **`lib/templates/`** - Template-specific handlers (one per template type)
+  - `AAP.psm1` - App & API Protector configuration handler
+  - `AAPASM.psm1` - AAP + Advanced Security Management handler  
+  - `PropertyManager.psm1` - Property Manager configuration handler
+  - `CPS.psm1` - Certificate Provisioning System handler
+
+- **`deploy.ps1`** - Main orchestration script
+  - Maps template types to handlers via hashtables
+  - Loads appropriate template module dynamically
+  - Delegates all template-specific logic to modules
+
+**Design Principles:**
+- **Separation of Concerns** - Template-specific quirks isolated in template modules
+- **DRY (Don't Repeat Yourself)** - Common Terraform operations in core modules
+- **Extensibility** - Add new templates by creating a new template module
+- **Testability** - Each module can be tested independently
+
+### Directory Structure
+
+```
+terraform-templates/
+├── deploy.ps1                    # Main orchestration script
+├── lib/                          # PowerShell module library
+│   ├── core/                     # Shared functionality
+│   │   ├── TerraformRunner.psm1  # Terraform execution wrapper
+│   │   ├── Validation.psm1       # Product/tfvars validation
+│   │   └── Logger.psm1           # Logging utilities
+│   └── templates/                # Template-specific handlers
+│       ├── AAP.psm1              # AAP template handler
+│       ├── AAPASM.psm1           # AAP+ASM template handler
+│       ├── PropertyManager.psm1  # Property Manager handler
+│       └── CPS.psm1              # CPS handler
+├── tests/
+│   ├── deploy.Tests.ps1          # Deploy script tests
+│   └── lib-modules.Tests.ps1     # Module unit tests
+├── new-aap-configuration/        # AAP template files
+├── new-aapasm-configuration/     # AAP+ASM template files
+├── new-property/                 # Property Manager template files
+└── new-*-cert/                   # CPS certificate templates
+```
+
 ## Development Workflow
 
 ### 1. Create Feature Branch
@@ -108,6 +164,69 @@ git checkout -b feat/add-custom-rate-policies
 - Test locally using `deploy.ps1`
 - Pre-commit hooks will auto-run on `git commit` (formats code, updates `README.md`)
    - Or run manually: `pre-commit run --all-files`
+
+#### Adding New Templates
+
+To add a new template type (e.g., EdgeWorkers, ImageManager):
+
+1. **Create template module** in `lib/templates/`:
+   ```powershell
+   # lib/templates/EdgeWorkers.psm1
+   using module ../core/TerraformRunner.psm1
+   using module ../core/Validation.psm1
+   using module ../core/Logger.psm1
+
+   class EdgeWorkersTemplate {
+       [string]$TemplateName
+       [string]$Environment
+       [string]$TemplateFolder
+       
+       EdgeWorkersTemplate([string]$env, [string]$folder) {
+           $this.TemplateName = "EdgeWorkers"
+           $this.Environment = $env
+           $this.TemplateFolder = $folder
+       }
+       
+       [void]ValidatePrerequisites([hashtable]$params) {
+           # Validation logic
+       }
+       
+       [hashtable]BuildTerraformVars([hashtable]$params) {
+           # Build runtime variables
+           return @{}
+       }
+       
+       [void]Deploy([hashtable]$params) {
+           # Deploy logic using core modules
+       }
+       
+       [void]Destroy([hashtable]$params) {
+           # Destroy logic
+       }
+   }
+   
+   Export-ModuleMember -Variable EdgeWorkersTemplate
+   ```
+
+2. **Update deploy.ps1**:
+   - Add to `ValidateSet` in `TemplateType` parameter
+   - Add to `$templateModuleMap` hashtable
+   - Add to `$templateFolderMap` hashtable
+   - Add switch case in template routing section
+
+3. **Create tests** in `tests/lib-modules.Tests.ps1`:
+   ```powershell
+   Describe "Template Module - EdgeWorkers" {
+       It "Should load EdgeWorkers template module" {
+           { Import-Module "$RepoRoot/lib/templates/EdgeWorkers.psm1" -Force } | Should -Not -Throw
+       }
+   }
+   ```
+
+4. **Update documentation**:
+   - Update this file (CONTRIBUTING.md) if needed
+   - Add template-specific guidance to README.md
+   - Create migration examples
 
 ### 3. Commit with Conventional Commits
 
@@ -446,6 +565,30 @@ When module repository changes (it follows the same release process):
    ```
 
 ## Testing
+
+### Module Testing
+
+Run Pester tests for the modular architecture:
+
+```bash
+# Install Pester if not already installed
+Install-Module -Name Pester -Force -SkipPublisherCheck
+
+# Run all tests
+pwsh -Command "Invoke-Pester -Path ./tests/"
+
+# Run specific test file
+pwsh -Command "Invoke-Pester -Path ./tests/lib-modules.Tests.ps1"
+
+# Run with detailed output
+pwsh -Command "Invoke-Pester -Path ./tests/lib-modules.Tests.ps1 -Output Detailed"
+```
+
+**Test Coverage:**
+- Core module loading (`TerraformRunner.psm1`, `Validation.psm1`, `Logger.psm1`)
+- Template module loading (AAP, AAPASM, PropertyManager, CPS)
+- Function exports and imports
+- Integration with `deploy.ps1`
 
 ### Local Testing
 

@@ -12,7 +12,7 @@ sans = [
   "<san3>",
 ]
 
-secure_network = "<enhanced/standard-tls>"
+secure_network = "<enhanced-tls/standard-tls>"
 
 sni_only = true
 
