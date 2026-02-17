@@ -6,7 +6,7 @@ contract_id = "ctr_contactID"
 common_name                 = "<comman_name>"
 allow_duplicate_common_name = false
 sans                        = ["example.com", "example1.com"]
-secure_network              = "<standard-tls/Enhanced-tls>"
+secure_network              = "<standard-tls/enhanced-tls>"
 sni_only                    = true
 acknowledge_pre_verification_warnings = true
 auto_approve_warnings       = []
@@ -95,7 +95,7 @@ certificate_rsa_pem = "rsa_certificate.pem"
 
 trust_chain_rsa_pem = "rsa_certificate_ca.pem"
 
-#Whether to acknowledge post-verification warnings defined in auto_approve_warnings. Provide true to acknowledge them.
+# Whether to acknowledge post-verification warnings defined in auto_approve_warnings. Provide true to acknowledge them.
 
 acknowledge_post_verification_warnings = true
 
