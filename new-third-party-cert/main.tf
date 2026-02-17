@@ -64,8 +64,7 @@
 */
 
 module "third-party-cert" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.1.0"
-  #source = "../third-party-cert"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.1.2"
 
   //enrollment_id                        = var.enrollment_id
   common_name                           = var.common_name
@@ -152,9 +151,4 @@ module "third-party-cert" {
   // auto_approve_warnings                  = var.auto_approve_warnings
   acknowledge_change_management = var.acknowledge_change_management
   wait_for_deployment           = var.wait_for_deployment
-
-
-}
-terraform {
-  backend "local" {}
 }

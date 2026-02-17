@@ -151,7 +151,7 @@ module "example" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
-| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | 9.1.0 |
+| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 9.0 |
 | <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.6 |
 
 ## Resources
@@ -165,7 +165,7 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_third-party-cert"></a> [third-party-cert](#module\_third-party-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert | v1.1.0 |
+| <a name="module_third-party-cert"></a> [third-party-cert](#module\_third-party-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert | v1.1.2 |
 
 ## Inputs
 
