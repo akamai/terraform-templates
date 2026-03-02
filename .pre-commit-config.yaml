@@ -28,7 +28,11 @@ repos:
       - id: terraform-docs-go
         args: [./new-third-party-cert]
         stages: [pre-commit]
-        
+      - id: terraform-docs-go
+        args: [./new-edns]
+        stages: [pre-commit]
+          
+
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.98.1"
     hooks:
