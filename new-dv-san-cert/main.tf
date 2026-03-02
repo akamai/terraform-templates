@@ -66,7 +66,7 @@
 
 
 module "dv-san-cert" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.1.2"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.2.0"
 
   common_name                           = var.common_name
   allow_duplicate_common_name           = var.allow_duplicate_common_name
