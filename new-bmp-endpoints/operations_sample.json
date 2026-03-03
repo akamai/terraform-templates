@@ -1,0 +1,98 @@
+{
+  "_README": "This is a sample operations file. Copy this file, rename it, and modify it for your API. Delete this _README field and any operations you do not need. Refer to operations.txt for detailed guidance on each field.",
+
+  "operations": {
+
+    "/resource_path1": {
+
+      "operation_name1": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["body", "username"],
+            "location": "BODY"
+          },
+          "password": {
+            "path": ["body", "password"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ]
+      },
+
+      "operation_name2": {
+        "method": "POST",
+        "purpose": "ACCOUNT_CREATION",
+        "parameters": {
+          "userEmail": {
+            "path": ["body", "email"],
+            "location": "BODY",
+            "usedForLogin": true
+          }
+        },
+        "successConditions": [
+          {
+            "headerName": "x-status",
+            "positiveMatch": true,
+            "suppressFromClientResponse": false,
+            "type": "HEADER_VALUE",
+            "valueCase": false,
+            "valueWildcard": false,
+            "values": ["success"]
+          }
+        ]
+      }
+    },
+
+    "/resource_path2": {
+
+      "operation_name3": {
+        "method": "POST",
+        "purpose": "SEARCH"
+      },
+
+      "operation_name4": {
+        "method": "POST",
+        "purpose": "ACCOUNT_VERIFICATION",
+        "parameters": {
+          "username": {
+            "path": ["body", "username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200", "201"]
+          }
+        ]
+      },
+
+      "operation_name5": {
+        "method": "POST",
+        "purpose": "PASSWORD_RESET",
+        "parameters": {
+          "username": {
+            "path": ["body", "username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ]
+      }
+    }
+  }
+}

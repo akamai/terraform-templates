@@ -95,7 +95,7 @@ https://github.com/akamai/terraform-templates
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("aap", "aapasm", "pm", "cps")]
+    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp")]
     [string]$TemplateType,
 
     [Parameter(Mandatory = $false)]
@@ -105,6 +105,26 @@ Param(
     [Parameter(Mandatory = $false)]
     [Alias("Env")]
     [string]$Environment,
+
+    # --- BMP: API-scope actions ---
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [switch]$SaveApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateStagingApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateProductionApi,
+
+    # --- BMP: SEC-scope actions ---
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [switch]$SaveSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateStagingSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateProductionSec,
 
     [Parameter(Mandatory = $false)]
     [Alias("Cert")]
@@ -128,10 +148,16 @@ Param(
     [Parameter(ParameterSetName = 'cps-destroy')]
     [string]$DestroyCert,
 
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
     [Parameter(ParameterSetName = 'save')]
     [Parameter(ParameterSetName = 'activate')]
     [switch]$Dry,
 
+    [Parameter(ParameterSetName = 'bmp-sec-save')]  
+    [Parameter(ParameterSetName = 'bmp-sec-activate')] 
     [Parameter(ParameterSetName = 'activate')]
     [Parameter(ParameterSetName = 'save')]
     [Alias("Notes")]
@@ -167,6 +193,7 @@ $templateModuleMap = @{
     "aapasm" = "AAPASM"
     "pm"     = "PropertyManager"
     "cps"    = "CPS"
+    "bmp"    = "BMP" 
 }
 
 $moduleName = $templateModuleMap[$TemplateType]
@@ -183,6 +210,7 @@ $templateFolderMap = @{
     "aap"    = "new-aap-configuration"
     "aapasm" = "new-aapasm-configuration"
     "pm"     = "new-property"
+    "bmp"    = "new-bmp-endpoints"
 }
 
 if ($TemplateType -eq "cps") {
@@ -319,6 +347,43 @@ try {
                 "destroy" { $template.DestroyCert() }
             }
         }
+
+        "BMP" {
+            if (-not $Environment) {
+                throw "Environment parameter required for BMP template. Use: -Env <environment>"
+            }
+
+            $template = New-BMPTemplate -Environment $Environment -TemplateFolder $TemplateFolder
+
+            if ($Destroy) {
+                $template.Destroy()
+            }
+            elseif ( $ActivateStaging -or $ActivateProduction -or
+                    $SaveApi -or $ActivateStagingApi -or $ActivateProductionApi -or
+                    $SaveSec -or $ActivateStagingSec -or $ActivateProductionSec) {
+                $template.Deploy(@{
+                    # Global scope
+                    ActivateStaging    = $ActivateStaging.IsPresent
+                    ActivateProduction = $ActivateProduction.IsPresent
+                    # API scope
+                    SaveApi               = $SaveApi.IsPresent
+                    ActivateStagingApi    = $ActivateStagingApi.IsPresent
+                    ActivateProductionApi = $ActivateProductionApi.IsPresent
+                    # SEC scope
+                    SaveSec               = $SaveSec.IsPresent
+                    ActivateStagingSec    = $ActivateStagingSec.IsPresent
+                    ActivateProductionSec = $ActivateProductionSec.IsPresent
+                    # Common
+                    VersionNotes       = $VersionNotes
+                    Dry                = $Dry.IsPresent
+                    SkipValidation     = $SkipValidation.IsPresent
+                    Debug              = $PSBoundParameters.ContainsKey('Debug')
+                })
+            }
+            else {
+                throw "Please specify at least one parameter: -Save, -SaveApi, -SaveSec, -ActivateStaging[Api|Sec], -ActivateProduction[Api|Sec], or -Destroy"
+            }
+        }        
         
         default {
             throw "Unknown template module: $moduleName"

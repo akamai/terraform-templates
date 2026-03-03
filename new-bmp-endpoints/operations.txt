@@ -1,0 +1,297 @@
+================================================================================
+                     OPERATIONS JSON — REFERENCE GUIDE
+================================================================================
+
+This guide explains every field available in the operations JSON file.
+Use operations_sample.json as a starting point and refer here for details.
+
+================================================================================
+  FILE STRUCTURE
+================================================================================
+
+{
+  "operations": {
+    "/<resource_path>": {
+      "<operation_name>": {
+        "method": "...",
+        "purpose": "...",
+        "parameters": { ... },         // optional
+        "successConditions": [ ... ]   // optional
+      }
+    }
+  }
+}
+
+- Each resource path (e.g., /login) must match a path in your API schema (.yml).
+- Each operation must have a unique name within its resource path.
+
+================================================================================
+  REQUIRED FIELDS
+================================================================================
+
+method
+------
+  The HTTP method for this operation.
+  Values: "POST" | "GET" | "PUT" | "DELETE" | "PATCH"
+
+  Example:
+    "method": "POST"
+
+
+purpose
+-------
+  Defines what type of transaction this operation represents.
+  Bot Manager uses this to apply the correct detection and protection logic.
+
+  Values:
+    "LOGIN"                  — User authentication / sign-in
+    "ACCOUNT_CREATION"       — New user registration
+    "ACCOUNT_VERIFICATION"   — Verify if an account exists (e.g., email check)
+    "PASSWORD_RESET"         — Password reset or recovery flow
+    "SEARCH"                 — Search or lookup (no specific bot protection purpose)
+
+  Example:
+    "purpose": "LOGIN"
+
+================================================================================
+  OPTIONAL FIELDS
+================================================================================
+
+parameters
+----------
+  Defines which request parameters Bot Manager should inspect.
+  Each parameter is keyed by a descriptive name.
+
+  Structure:
+    "parameters": {
+      "<parameter_name>": {
+        "path": ["<key1>", "<key2>", ...],
+        "location": "BODY" | "HEADER" | "QUERY" | "COOKIE",
+        "usedForLogin": true | false          // optional
+      }
+    }
+
+  Fields:
+    path       — Array of keys describing the path to the value in the request.
+                 For a JSON body like {"user": {"name": "alice"}},
+                 the path to "name" would be ["user", "name"].
+
+    location   — Where in the HTTP request this parameter is found:
+                   "BODY"   — In the request body (JSON, XML, form data)
+                   "HEADER" — In an HTTP request header
+                   "QUERY"  — In a URL query parameter
+                   "COOKIE" — In a cookie
+
+    usedForLogin — (Optional) Set to true if this parameter serves as the
+                   login identifier (e.g., email or username used for auth).
+                   Only relevant for ACCOUNT_CREATION purpose.
+                   Default: false
+
+  Examples:
+
+    # Simple body parameter
+    "parameters": {
+      "username": {
+        "path": ["body", "username"],
+        "location": "BODY"
+      }
+    }
+
+    # Parameter used as login identifier
+    "parameters": {
+      "userEmail": {
+        "path": ["body", "email"],
+        "location": "BODY",
+        "usedForLogin": true
+      }
+    }
+
+    # Header parameter
+    "parameters": {
+      "apiToken": {
+        "path": ["X-API-Token"],
+        "location": "HEADER"
+      }
+    }
+
+
+successConditions
+-----------------
+  Array of conditions that define what constitutes a successful response.
+  Bot Manager uses these to distinguish legitimate transactions from attacks.
+
+  Two types are supported: HTTP_STATUS and HEADER_VALUE.
+
+
+  --- Type: HTTP_STATUS ---
+
+  Matches against the HTTP response status code.
+
+  Fields:
+    type           — "HTTP_STATUS"
+    positiveMatch  — true: success when status matches
+                     false: success when status does NOT match
+    values         — Array of status codes as strings
+
+  Example:
+    {
+      "positiveMatch": true,
+      "type": "HTTP_STATUS",
+      "values": ["200"]
+    }
+
+  Example (multiple status codes):
+    {
+      "positiveMatch": true,
+      "type": "HTTP_STATUS",
+      "values": ["200", "201", "204"]
+    }
+
+  Example (negative match — success is anything except 401/403):
+    {
+      "positiveMatch": false,
+      "type": "HTTP_STATUS",
+      "values": ["401", "403"]
+    }
+
+
+  --- Type: HEADER_VALUE ---
+
+  Matches against a specific HTTP response header value.
+
+  Fields:
+    type                        — "HEADER_VALUE"
+    headerName                  — Name of the response header to inspect
+    positiveMatch               — true: success when header matches
+                                  false: success when header does NOT match
+    values                      — Array of header values to match against
+    valueCase                   — true: case-sensitive matching
+                                  false: case-insensitive matching
+    valueWildcard               — true: values support wildcard patterns
+                                  false: exact match only
+    suppressFromClientResponse  — true: strip this header before sending
+                                        the response to the client
+                                  false: leave the header intact
+
+  Example:
+    {
+      "headerName": "x-auth-status",
+      "positiveMatch": true,
+      "suppressFromClientResponse": false,
+      "type": "HEADER_VALUE",
+      "valueCase": false,
+      "valueWildcard": false,
+      "values": ["success"]
+    }
+
+  Example (wildcard matching):
+    {
+      "headerName": "x-result",
+      "positiveMatch": true,
+      "suppressFromClientResponse": true,
+      "type": "HEADER_VALUE",
+      "valueCase": false,
+      "valueWildcard": true,
+      "values": ["success*"]
+    }
+
+
+  --- Multiple conditions ---
+
+  You can combine multiple conditions in the array.
+  All conditions must be met for the response to be considered successful.
+
+  "successConditions": [
+    {
+      "positiveMatch": true,
+      "type": "HTTP_STATUS",
+      "values": ["200"]
+    },
+    {
+      "headerName": "x-auth-status",
+      "positiveMatch": true,
+      "suppressFromClientResponse": false,
+      "type": "HEADER_VALUE",
+      "valueCase": false,
+      "valueWildcard": false,
+      "values": ["authenticated"]
+    }
+  ]
+
+================================================================================
+  COMMON PATTERNS
+================================================================================
+
+1. Simple search endpoint (no parameters or success conditions needed):
+
+    "/search": {
+      "search_op": {
+        "method": "POST",
+        "purpose": "SEARCH"
+      }
+    }
+
+2. Login with username/password and status code check:
+
+    "/login": {
+      "user_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["test","username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ]
+      }
+    }
+
+3. Account creation with header-based success detection:
+
+    "/register": {
+      "create_account": {
+        "method": "POST",
+        "purpose": "ACCOUNT_CREATION",
+        "parameters": {
+          "email": {
+            "path": ["user", "email"],
+            "location": "BODY",
+            "usedForLogin": true
+          }
+        },
+        "successConditions": [
+          {
+            "headerName": "x-registration-status",
+            "positiveMatch": true,
+            "suppressFromClientResponse": true,
+            "type": "HEADER_VALUE",
+            "valueCase": false,
+            "valueWildcard": false,
+            "values": ["created"]
+          }
+        ]
+      }
+    }
+
+
+
+================================================================================
+  TIPS
+================================================================================
+
+- Resource paths must match exactly with the paths in your API schema (.yml).
+- Operation names must be unique within a resource path.
+- If you have multiple APIs, create a separate operations file for each
+  (e.g., operations-api1.json, operations-api2.json).
+- The "parameters" and "successConditions" sections are optional.
+  For simple endpoints like search, you only need "method" and "purpose".
+- When using HEADER_VALUE conditions, set suppressFromClientResponse to true
+  if the header is only used for Bot Manager detection and should not be
+  visible to the end user.
