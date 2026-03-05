@@ -1,98 +1,121 @@
 {
-  "_README": "This is a sample operations file. Copy this file, rename it, and modify it for your API. Delete this _README field and any operations you do not need. Refer to operations.txt for detailed guidance on each field.",
+  "_README": [
+    "INSTRUCTIONS:",
+    "1. Copy this file and rename it (e.g., operations-myapi.json)",
+    "2. Replace resource paths (e.g. /login) with your actual API paths — must match paths in your .yml schema",
+    "3. Replace operation names (e.g. user_login) with a unique name per operation",
+    "4. Delete any operations you do not need",
+    "5. Delete ALL _README and _comment fields before using"
+  ],
 
   "operations": {
 
-    "/resource_path1": {
+    "/search": {
+      "_comment": "MINIMAL EXAMPLE: only method + purpose required for simple endpoints",
+      "search_op": {
+        "method": "POST",
+        "_comment_method": "Valid values: POST | GET | PUT | DELETE | PATCH",
+        "purpose": "SEARCH",
+        "_comment_purpose": "Valid values: LOGIN | ACCOUNT_CREATION | ACCOUNT_VERIFICATION | PASSWORD_RESET | SEARCH"
+      }
+    },
 
-      "operation_name1": {
+    "/login": {
+      "_comment": "LOGIN: single body parameter + HTTP status success check",
+      "user_login": {
         "method": "POST",
         "purpose": "LOGIN",
         "parameters": {
+          "_comment": "Only ONE parameter is supported per operation",
           "username": {
-            "path": ["body", "username"],
-            "location": "BODY"
-          },
-          "password": {
-            "path": ["body", "password"],
-            "location": "BODY"
-          }
-        },
-        "successConditions": [
-          {
-            "positiveMatch": true,
-            "type": "HTTP_STATUS",
-            "values": ["200"]
-          }
-        ]
-      },
-
-      "operation_name2": {
-        "method": "POST",
-        "purpose": "ACCOUNT_CREATION",
-        "parameters": {
-          "userEmail": {
-            "path": ["body", "email"],
+            "path": ["application/json", "username"],
+            "_comment_path": "Always 2 elements for JSON, XML, and URL-encoded body: ['content_type', 'parameter_name']. Examples: ['application/json', 'username'], ['application/xml', 'username'], ['application/urlencoded', 'username']",
             "location": "BODY",
-            "usedForLogin": true
+            "_comment_location": "Valid values: BODY | HEADER | QUERY | COOKIE"
           }
         },
         "successConditions": [
           {
-            "headerName": "x-status",
+            "type": "HTTP_STATUS",
             "positiveMatch": true,
-            "suppressFromClientResponse": false,
-            "type": "HEADER_VALUE",
-            "valueCase": false,
-            "valueWildcard": false,
-            "values": ["success"]
+            "_comment_positiveMatch": "true = success when status matches | false = success when status does NOT match",
+            "values": ["200"]
           }
         ]
       }
     },
 
-    "/resource_path2": {
-
-      "operation_name3": {
+    "/register": {
+      "_comment": "ACCOUNT_CREATION: use usedForLogin:true on the field that identifies the user",
+      "create_account": {
         "method": "POST",
-        "purpose": "SEARCH"
-      },
+        "purpose": "ACCOUNT_CREATION",
+        "parameters": {
+          "email": {
+            "path": ["application/json", "email"],
+            "location": "BODY",
+            "usedForLogin": true,
+            "_comment_usedForLogin": "true if this field is the login identifier (email or username). Only applies to ACCOUNT_CREATION"
+          }
+        },
+        "successConditions": [
+          {
+            "type": "HEADER_VALUE",
+            "headerName": "x-registration-status",
+            "positiveMatch": true,
+            "values": ["created"],
+            "valueCase": false,
+            "_comment_valueCase": "true = case-sensitive | false = case-insensitive",
+            "valueWildcard": false,
+            "_comment_valueWildcard": "true = wildcard patterns allowed (e.g. 'success*') | false = exact match",
+            "suppressFromClientResponse": false,
+            "_comment_suppress": "true = strip this header before sending response to client"
+          }
+        ]
+      }
+    },
 
-      "operation_name4": {
+    "/verify-account": {
+      "_comment": "ACCOUNT_VERIFICATION: negative match example — success = anything except 401 or 403",
+      "verify_account": {
         "method": "POST",
         "purpose": "ACCOUNT_VERIFICATION",
         "parameters": {
-          "username": {
-            "path": ["body", "username"],
+          "email": {
+            "path": ["application/json", "email"],
             "location": "BODY"
           }
         },
         "successConditions": [
           {
-            "positiveMatch": true,
             "type": "HTTP_STATUS",
-            "values": ["200", "201"]
+            "positiveMatch": false,
+            "values": ["401", "403"]
           }
         ]
-      },
+      }
+    },
 
-      "operation_name5": {
+    "/reset-password": {
+      "_comment": "PASSWORD_RESET: no successConditions needed if you only care about method + purpose",
+      "password_reset": {
         "method": "POST",
         "purpose": "PASSWORD_RESET",
         "parameters": {
           "username": {
-            "path": ["body", "username"],
+            "path": ["application/json", "username"],
             "location": "BODY"
           }
         },
         "successConditions": [
           {
-            "positiveMatch": true,
             "type": "HTTP_STATUS",
-            "values": ["200"]
+            "positiveMatch": true,
+            "values": ["200", "204"]
           }
         ]
       }
     }
+
   }
 }

@@ -59,22 +59,29 @@ purpose
 
 parameters
 ----------
-  Defines which request parameters Bot Manager should inspect.
-  Each parameter is keyed by a descriptive name.
+  Defines which request parameter Bot Manager should inspect.
+  Only ONE parameter is supported per operation.
 
   Structure:
     "parameters": {
       "<parameter_name>": {
-        "path": ["<key1>", "<key2>", ...],
+        "path": ["<content_type>", "<parameter_name>"],
         "location": "BODY" | "HEADER" | "QUERY" | "COOKIE",
         "usedForLogin": true | false          // optional
       }
     }
 
+  NOTE: Only a single parameter entry is allowed. Do not add multiple keys.
+
   Fields:
-    path       — Array of keys describing the path to the value in the request.
-                 For a JSON body like {"user": {"name": "alice"}},
-                 the path to "name" would be ["user", "name"].
+    path       — Always 2 elements: ["content_type", "parameter_name"].
+                 The first element is the body content type, the second is the parameter name
+                 as defined in the schema properties. Applies to JSON, XML, and URL-encoded bodies.
+
+                 Examples:
+                   ["application/json", "username"]
+                   ["application/xml", "username"]
+                   ["application/urlencoded", "username"]
 
     location   — Where in the HTTP request this parameter is found:
                    "BODY"   — In the request body (JSON, XML, form data)
@@ -89,18 +96,18 @@ parameters
 
   Examples:
 
-    # Simple body parameter
+    # Simple body parameter (JSON)
     "parameters": {
       "username": {
-        "path": ["body", "username"],
+        "path": ["application/json", "username"],
         "location": "BODY"
       }
     }
 
-    # Parameter used as login identifier
+    # Parameter used as login identifier (JSON)
     "parameters": {
       "userEmail": {
-        "path": ["body", "email"],
+        "path": ["application/json", "email"],
         "location": "BODY",
         "usedForLogin": true
       }

@@ -9,13 +9,13 @@ or activate to both networks simultaneously. Also supports certificate managemen
 This script uses a modular architecture with template handlers in lib/templates/ and shared functionality in lib/core/.
 
 .PARAMETER TemplateType
-Specifies the template type. Available values: aap, aapasm, pm, cps
+Specifies the template type. Available values: aap, aapasm, pm, cps, bmp
 
 .PARAMETER CpsType
 Specifies the CPS certificate type when TemplateType is 'cps'. Available values: dv-san-cert, third-party-cert
 
 .PARAMETER Environment
-The environment to deploy to (e.g., prod, dev, qa). Used for aap, aapasm, and pm templates.
+The environment to deploy to (e.g., prod, dev, qa). Used for aap, aapasm, pm, and bmp templates.
 
 .PARAMETER CertNumber
 The certificate identifier. Used for CPS templates.
@@ -31,6 +31,24 @@ Activates the Akamai resource to the staging network.
 
 .PARAMETER ActivateProduction
 Activates the Akamai resource to the production network.
+
+.PARAMETER SaveApi
+[BMP only — Phase 1] Saves the API definition without activating. Cannot be combined with -ActivateStagingApi or -ActivateProductionApi.
+
+.PARAMETER ActivateStagingApi
+[BMP only — Phase 1] Activates the API definition to the staging network. Can be combined with -ActivateProductionApi. Cannot be combined with -SaveApi.
+
+.PARAMETER ActivateProductionApi
+[BMP only — Phase 1] Activates the API definition to the production network. Can be combined with -ActivateStagingApi. Cannot be combined with -SaveApi.
+
+.PARAMETER SaveSec
+[BMP only — Phase 2] Saves the security configuration without activating. Requires Phase 1 to be activated first. Cannot be combined with -ActivateStagingSec or -ActivateProductionSec.
+
+.PARAMETER ActivateStagingSec
+[BMP only — Phase 2] Activates the security configuration to the staging network. Requires API definition activated to staging first. Can be combined with -ActivateProductionSec. Cannot be combined with -SaveSec.
+
+.PARAMETER ActivateProductionSec
+[BMP only — Phase 2] Activates the security configuration to the production network. Requires API definition activated to production first. Can be combined with -ActivateStagingSec. Cannot be combined with -SaveSec.
 
 .PARAMETER CreateCert
 Creates a new certificate (CPS only).
@@ -87,6 +105,38 @@ Upload a third-party certificate
 .EXAMPLE
 PS> .\deploy.ps1 cps -CpsType dv-san-cert -DestroyCert cert1
 Destroy a certificate
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -SaveApi
+[BMP Phase 1] Save the API definition for the dev environment without activating
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateStagingApi
+[BMP Phase 1] Activate the API definition to staging for the dev environment
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateProductionApi
+[BMP Phase 1] Activate the API definition to production for the dev environment
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateStagingApi -ActivateProductionApi
+[BMP Phase 1] Activate the API definition to both staging and production simultaneously
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -SaveSec -Notes "JIRA-123: initial setup"
+[BMP Phase 2] Save the security configuration (requires Phase 1 activated first)
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateStagingSec
+[BMP Phase 2] Activate the security configuration to staging (requires API activated to staging first)
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateProductionSec
+[BMP Phase 2] Activate the security configuration to production (requires API activated to production first)
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -Destroy
+Tear down the entire BMP configuration for the dev environment
 
 .LINK
 https://github.com/akamai/terraform-templates

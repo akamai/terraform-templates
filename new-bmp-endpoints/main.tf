@@ -1,5 +1,3 @@
-
-
 /** 
  * # Bot Manager Premier (BMP) — Terraform Templates
  * 
@@ -146,7 +144,7 @@
  *         "purpose": "LOGIN",
  *         "parameters": {
  *           "username": {
- *             "path": ["body", "username"],
+ *             "path": ["application/json", "username"],
  *             "location": "BODY"
  *           }
  *         },
@@ -170,7 +168,7 @@
  *         "purpose": "ACCOUNT_CREATION",
  *         "parameters": {
  *           "userEmail": {
- *             "path": ["body", "email"],
+ *             "path": ["application/json", "email"],
  *             "location": "BODY",
  *             "usedForLogin": true
  *           }
@@ -257,14 +255,20 @@
  * ### Step 6: Deploy
  * 
  * Run the two-phase deployment:
- * 
+ *
  * ```powershell
- * # Phase 1 — Save and activate the API definition to staging
- * .\deploy.ps1 bmp -Env qa -SaveApi -ActivateStagingApi
- * 
- * # Phase 2 — Save and activate the security config to staging
- * .\deploy.ps1 bmp -Env qa -SaveSec -ActivateStagingSec
- * 
+ * # Phase 1 — Save the API definition
+ * .\deploy.ps1 bmp -Env qa -SaveApi
+ *
+ * # Phase 1 — Activate the API definition to staging
+ * .\deploy.ps1 bmp -Env qa -ActivateStagingApi
+ *
+ * # Phase 2 — Save the security config
+ * .\deploy.ps1 bmp -Env qa -SaveSec
+ *
+ * # Phase 2 — Activate the security config to staging
+ * .\deploy.ps1 bmp -Env qa -ActivateStagingSec
+ *
  * # When ready for production:
  * .\deploy.ps1 bmp -Env qa -ActivateProductionApi
  * .\deploy.ps1 bmp -Env qa -ActivateProductionSec
@@ -355,16 +359,18 @@
  * .\deploy.ps1 bmp -Env qa -SaveApi
  * ```
  * 
- * **Save and activate to staging:**
- * 
+ * **Save, then activate to staging:**
+ *
  * ```powershell
- * .\deploy.ps1 bmp -Env qa -SaveApi -ActivateStagingApi
+ * .\deploy.ps1 bmp -Env qa -SaveApi
+ * .\deploy.ps1 bmp -Env qa -ActivateStagingApi
  * ```
- * 
- * **Save and activate to production:**
- * 
+ *
+ * **Save, then activate to production:**
+ *
  * ```powershell
- * .\deploy.ps1 bmp -Env qa -SaveApi -ActivateProductionApi
+ * .\deploy.ps1 bmp -Env qa -SaveApi
+ * .\deploy.ps1 bmp -Env qa -ActivateProductionApi
  * ```
  * 
  * **Activate to both networks:**
@@ -443,16 +449,22 @@
  * A full first-time deployment follows these steps in order:
  * 
  * ```powershell
- * # 1. Save and activate the API definition to staging
- * .\deploy.ps1 bmp -Env qa -SaveApi -ActivateStagingApi
- * 
- * # 2. Save and activate the security config to staging
- * .\deploy.ps1 bmp -Env qa -SaveSec -ActivateStagingSec
- * 
- * # 3. Validate on staging, then activate API definition to production
+ * # 1. Save the API definition
+ * .\deploy.ps1 bmp -Env qa -SaveApi
+ *
+ * # 2. Activate the API definition to staging
+ * .\deploy.ps1 bmp -Env qa -ActivateStagingApi
+ *
+ * # 3. Save the security config
+ * .\deploy.ps1 bmp -Env qa -SaveSec
+ *
+ * # 4. Activate the security config to staging
+ * .\deploy.ps1 bmp -Env qa -ActivateStagingSec
+ *
+ * # 5. Validate on staging, then activate API definition to production
  * .\deploy.ps1 bmp -Env qa -ActivateProductionApi
- * 
- * # 4. Activate security config to production
+ *
+ * # 6. Activate security config to production
  * .\deploy.ps1 bmp -Env qa -ActivateProductionSec
  * ```
  * 
