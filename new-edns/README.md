@@ -272,7 +272,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_edns"></a> [edns](#module\_edns) | git::ssh://git@git.source.akamai.com:7999/gss-devops/ps-terraform-templates-modules.git//new-edns | v1.2.4 |
+| <a name="module_edns"></a> [edns](#module\_edns) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//new-edns | v1.2.0 |
 
 ## Inputs
 
