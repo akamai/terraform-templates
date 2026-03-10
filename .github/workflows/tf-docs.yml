@@ -63,3 +63,11 @@ jobs:
           output-file: README.md
           output-method: inject
           git-push: true
+
+      - name: Generate terraform-docs for EDNS
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-edns
+          output-file: README.md
+          output-method: inject
+          git-push: true
