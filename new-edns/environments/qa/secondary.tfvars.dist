@@ -1,0 +1,73 @@
+## ----------------------------------------------------------------------------
+# Provider auth (Akamai EdgeGrid)
+## ----------------------------------------------------------------------------
+
+# Path to .edgerc (null = default ~/.edgerc)
+edgerc_path = "~/.edgerc"
+
+# Section name in .edgerc
+edgerc_section = "default"
+
+## ----------------------------------------------------------------------------
+# Zone settings
+## ----------------------------------------------------------------------------
+
+# DNS zone name (SECONDARY usually mirrors PRIMARY name or env variant)
+zone_name = "zone-name-secondary"
+
+# Zone type: PRIMARY or SECONDARY
+zone_type = "SECONDARY"
+
+# Akamai contract and group
+contract_id = "ctr_X-XXX" # your contract ID
+group_id    = "grp_XXX"   # your group ID
+
+## ----------------------------------------------------------------------------
+# SECONDARY: Master servers (REQUIRED)
+# Use IPs resolved from PRIMARY nameservers
+# (terraform output authorities_plus_custom_ns_ips)
+## ----------------------------------------------------------------------------
+
+# masters = [
+#   "203.0.113.53",
+#   "203.0.113.54"
+# ]
+
+## ----------------------------------------------------------------------------
+# SECONDARY: TSIG for AXFR/IXFR (optional but recommended)
+# Leave commented if masters do not require TSIG
+## ----------------------------------------------------------------------------
+
+# tsig_key = {
+#   name      = "transfer-key"
+#   algorithm = "hmac-sha256"
+#   secret    = "a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6"
+# }
+
+## ----------------------------------------------------------------------------
+# SOA (MUST be null for SECONDARY)
+# SOA is replicated from the master automatically
+## ----------------------------------------------------------------------------
+
+soa = null
+
+## ----------------------------------------------------------------------------
+# DNS records
+# MUST remain EMPTY for SECONDARY
+# All data is transferred from PRIMARY via AXFR/IXFR
+## ----------------------------------------------------------------------------
+
+a_records       = []
+aaaa_records    = []
+cname_records   = []
+txt_records     = []
+ns_records      = []
+ptr_records     = []
+loc_records     = []
+spf_records     = []
+rp_records      = []
+hinfo_records   = []
+
+mx_records      = []
+srv_records     = []
+caa_records     = []

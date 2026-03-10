@@ -59,6 +59,10 @@ Uploads a certificate (CPS third-party only).
 .PARAMETER DestroyCert
 Destroys a certificate (CPS only).
 
+.PARAMETER ZoneType
+Specifies Edge DNS zone type. Available values: primary, secondary.
+Used only when TemplateType is 'edns'.
+
 .PARAMETER Dry
 Outputs the terraform plan and performs no actions.
 
@@ -138,6 +142,14 @@ PS> .\deploy.ps1 bmp -Env dev -ActivateProductionSec
 PS> .\deploy.ps1 bmp -Env dev -Destroy
 Tear down the entire BMP configuration for the dev environment
 
+.EXAMPLE
+PS> .\deploy.ps1 edns -Env dev -ZoneType primary -Save
+Create or update PRIMARY Edge DNS zone in dev environment
+
+.EXAMPLE
+PS> .\deploy.ps1 edns -Env qa -ZoneType secondary -Destroy
+Safely destroy SECONDARY Edge DNS zone in qa environment
+
 .LINK
 https://github.com/akamai/terraform-templates
 #>
@@ -145,7 +157,7 @@ https://github.com/akamai/terraform-templates
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp")]
+    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns")]
     [string]$TemplateType,
 
     [Parameter(Mandatory = $false)]
@@ -179,6 +191,10 @@ Param(
     [Parameter(Mandatory = $false)]
     [Alias("Cert")]
     [string]$CertNumber,
+
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("primary", "secondary")]
+    [string]$ZoneType,
 
     [Parameter(ParameterSetName = 'save')]
     [switch]$Save,
@@ -244,6 +260,7 @@ $templateModuleMap = @{
     "pm"     = "PropertyManager"
     "cps"    = "CPS"
     "bmp"    = "BMP" 
+    "edns"   = "EDNS"
 }
 
 $moduleName = $templateModuleMap[$TemplateType]
@@ -261,6 +278,7 @@ $templateFolderMap = @{
     "aapasm" = "new-aapasm-configuration"
     "pm"     = "new-property"
     "bmp"    = "new-bmp-endpoints"
+    "edns"   = "new-edns"
 }
 
 if ($TemplateType -eq "cps") {
@@ -292,14 +310,14 @@ try {
             }
             elseif ($Save -or $ActivateStaging -or $ActivateProduction) {
                 $template.Deploy(@{
-                    Save = $Save.IsPresent
-                    ActivateStaging = $ActivateStaging.IsPresent
-                    ActivateProduction = $ActivateProduction.IsPresent
-                    VersionNotes = $VersionNotes
-                    Dry = $Dry.IsPresent
-                    SkipValidation = $SkipValidation.IsPresent
-                    Debug = $PSBoundParameters.ContainsKey('Debug')
-                })
+                        Save               = $Save.IsPresent
+                        ActivateStaging    = $ActivateStaging.IsPresent
+                        ActivateProduction = $ActivateProduction.IsPresent
+                        VersionNotes       = $VersionNotes
+                        Dry                = $Dry.IsPresent
+                        SkipValidation     = $SkipValidation.IsPresent
+                        Debug              = $PSBoundParameters.ContainsKey('Debug')
+                    })
             }
             else {
                 throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
@@ -322,14 +340,14 @@ try {
             }
             elseif ($Save -or $ActivateStaging -or $ActivateProduction) {
                 $template.Deploy(@{
-                    Save = $Save.IsPresent
-                    ActivateStaging = $ActivateStaging.IsPresent
-                    ActivateProduction = $ActivateProduction.IsPresent
-                    VersionNotes = $VersionNotes
-                    Dry = $Dry.IsPresent
-                    SkipValidation = $SkipValidation.IsPresent
-                    Debug = $PSBoundParameters.ContainsKey('Debug')
-                })
+                        Save               = $Save.IsPresent
+                        ActivateStaging    = $ActivateStaging.IsPresent
+                        ActivateProduction = $ActivateProduction.IsPresent
+                        VersionNotes       = $VersionNotes
+                        Dry                = $Dry.IsPresent
+                        SkipValidation     = $SkipValidation.IsPresent
+                        Debug              = $PSBoundParameters.ContainsKey('Debug')
+                    })
             }
             else {
                 throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
@@ -352,14 +370,14 @@ try {
             }
             elseif ($Save -or $ActivateStaging -or $ActivateProduction) {
                 $template.Deploy(@{
-                    Save = $Save.IsPresent
-                    ActivateStaging = $ActivateStaging.IsPresent
-                    ActivateProduction = $ActivateProduction.IsPresent
-                    VersionNotes = $VersionNotes
-                    Dry = $Dry.IsPresent
-                    SkipValidation = $SkipValidation.IsPresent
-                    Debug = $PSBoundParameters.ContainsKey('Debug')
-                })
+                        Save               = $Save.IsPresent
+                        ActivateStaging    = $ActivateStaging.IsPresent
+                        ActivateProduction = $ActivateProduction.IsPresent
+                        VersionNotes       = $VersionNotes
+                        Dry                = $Dry.IsPresent
+                        SkipValidation     = $SkipValidation.IsPresent
+                        Debug              = $PSBoundParameters.ContainsKey('Debug')
+                    })
             }
             else {
                 throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
@@ -392,8 +410,8 @@ try {
             $template = New-CPSTemplate -CpsType $CpsType -CertNumber $CertNumber -TemplateFolder $TemplateFolder
             
             switch ($action) {
-                "create"  { $template.CreateCert($Dry.IsPresent) }
-                "upload"  { $template.UploadCert($Dry.IsPresent) }
+                "create" { $template.CreateCert($Dry.IsPresent) }
+                "upload" { $template.UploadCert($Dry.IsPresent) }
                 "destroy" { $template.DestroyCert() }
             }
         }
@@ -433,7 +451,33 @@ try {
             else {
                 throw "Please specify at least one parameter: -Save, -SaveApi, -SaveSec, -ActivateStaging[Api|Sec], -ActivateProduction[Api|Sec], or -Destroy"
             }
-        }        
+        }
+        
+        "EDNS" {
+            if (-not $Environment) {
+                throw "Environment parameter required for EDNS template. Use: -Env <environment>"
+            }
+
+            if (-not $ZoneType) {
+                throw "ZoneType parameter required for EDNS template. Use: -ZoneType primary|secondary"
+            }
+
+            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
+                throw "CPS parameters are not applicable for EDNS template"
+            }
+
+            $template = New-EDNSTemplate `
+                -Environment $Environment `
+                -ZoneType $ZoneType `
+                -TemplateFolder $TemplateFolder
+
+            if ($Destroy) {
+                $template.Destroy()
+            }
+            else {
+                $template.Deploy($Dry.IsPresent)
+            }
+        }
         
         default {
             throw "Unknown template module: $moduleName"

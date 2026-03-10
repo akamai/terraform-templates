@@ -82,6 +82,12 @@ jobs:
         run: |
           terraform init -backend=false
           terraform validate
+          
+      - name: Terraform Validate - EDNS 
+        working-directory: ./new-edns
+        run: |
+          terraform init -backend=false
+          terraform validate
 
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v4
@@ -109,6 +115,10 @@ jobs:
 
       - name: Run TFLint - CPS - Third Party Cert
         working-directory: ./new-third-party-cert
+        run: tflint --recursive
+      
+      - name: Run TFLint - EDNS 
+        working-directory: ./new-edns
         run: tflint --recursive
 
       - name: Run TFLint - BMP - New Transactional Endpoint
