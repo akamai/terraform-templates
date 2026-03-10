@@ -97,7 +97,8 @@ paths:
       #             type: <string | integer | number | boolean>
       #           <field_name2>: .....
       #
-      #     When using the option (JSON/XML), add both content type JSON and XML together
+      #     JSON/XML is a distinct content type option — it means the endpoint accepts BOTH JSON and XML formats.
+      #     When using JSON/XML, add both application/json and application/xml blocks together under requestBody.content.
     #     Add more methods if required
     #     <HTTP_Method2>:
 

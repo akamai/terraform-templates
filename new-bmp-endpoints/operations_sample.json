@@ -28,8 +28,8 @@
         "parameters": {
           "_comment": "Only ONE parameter is supported per operation",
           "username": {
-            "path": ["application/json", "username"],
-            "_comment_path": "Always 2 elements for JSON, XML, and URL-encoded body: ['content_type', 'parameter_name']. Examples: ['application/json', 'username'], ['application/xml', 'username'], ['application/urlencoded', 'username']",
+            "path": ["username"],
+            "_comment_path": "JSON/URL-encoded: 1 element ['parameter_name']. XML: ['application/xml', 'parameter_name']. JSON/XML: ['json/xml', 'parameter_name'].",
             "location": "BODY",
             "_comment_location": "Valid values: BODY | HEADER | QUERY | COOKIE"
           }
@@ -40,6 +40,14 @@
             "positiveMatch": true,
             "_comment_positiveMatch": "true = success when status matches | false = success when status does NOT match",
             "values": ["200"]
+          }
+        ],
+        "failureConditions": [
+          {
+            "_comment": "failureConditions: same structure as successConditions. Define both for optimal bot protection",
+            "type": "HTTP_STATUS",
+            "positiveMatch": true,
+            "values": ["401", "403"]
           }
         ]
       }
@@ -52,7 +60,7 @@
         "purpose": "ACCOUNT_CREATION",
         "parameters": {
           "email": {
-            "path": ["application/json", "email"],
+            "path": ["email"],
             "location": "BODY",
             "usedForLogin": true,
             "_comment_usedForLogin": "true if this field is the login identifier (email or username). Only applies to ACCOUNT_CREATION"
@@ -82,7 +90,7 @@
         "purpose": "ACCOUNT_VERIFICATION",
         "parameters": {
           "email": {
-            "path": ["application/json", "email"],
+            "path": ["email"],
             "location": "BODY"
           }
         },
@@ -96,6 +104,69 @@
       }
     },
 
+    "/xml-login": {
+      "_comment": "XML BODY: path must be 2 elements — ['application/xml', 'parameter_name']",
+      "xml_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["application/xml", "username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "type": "HTTP_STATUS",
+            "positiveMatch": true,
+            "values": ["200"]
+          }
+        ]
+      }
+    },
+
+    "/jsonxml-login": {
+      "_comment": "JSON/XML BODY: endpoint accepts both JSON and XML — path uses 'json/xml' as content type, 2 elements",
+      "jsonxml_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["json/xml", "username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "type": "HTTP_STATUS",
+            "positiveMatch": true,
+            "values": ["200"]
+          }
+        ]
+      }
+    },
+
+    "/form-login": {
+      "_comment": "URL-ENCODED BODY: use application/urlencoded content type — path is still 1 element (parameter_name only)",
+      "form_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "type": "HTTP_STATUS",
+            "positiveMatch": true,
+            "values": ["200"]
+          }
+        ]
+      }
+    },
+
     "/reset-password": {
       "_comment": "PASSWORD_RESET: no successConditions needed if you only care about method + purpose",
       "password_reset": {
@@ -103,7 +174,7 @@
         "purpose": "PASSWORD_RESET",
         "parameters": {
           "username": {
-            "path": ["application/json", "username"],
+            "path": ["username"],
             "location": "BODY"
           }
         },

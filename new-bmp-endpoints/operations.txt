@@ -74,14 +74,20 @@ parameters
   NOTE: Only a single parameter entry is allowed. Do not add multiple keys.
 
   Fields:
-    path       — Always 2 elements: ["content_type", "parameter_name"].
-                 The first element is the body content type, the second is the parameter name
-                 as defined in the schema properties. Applies to JSON, XML, and URL-encoded bodies.
+    path       — Defines where to find the parameter in the request body.
+                 The number of elements depends on the content type:
 
-                 Examples:
-                   ["application/json", "username"]
+                 JSON: 1 element — just the parameter name.
+                   ["username"]
+
+                 URL-encoded: 1 element — just the parameter name.
+                   ["username"]
+
+                 XML: 2 elements — content type first, then the parameter name.
                    ["application/xml", "username"]
-                   ["application/urlencoded", "username"]
+
+                 JSON/XML (dual content type): 2 elements — use "json/xml" as the content type.
+                   ["json/xml", "username"]
 
     location   — Where in the HTTP request this parameter is found:
                    "BODY"   — In the request body (JSON, XML, form data)
@@ -96,10 +102,34 @@ parameters
 
   Examples:
 
-    # Simple body parameter (JSON)
+    # JSON body parameter (1 element — parameter name only)
     "parameters": {
       "username": {
-        "path": ["application/json", "username"],
+        "path": ["username"],
+        "location": "BODY"
+      }
+    }
+
+    # URL-encoded body parameter (1 element — parameter name only)
+    "parameters": {
+      "username": {
+        "path": ["username"],
+        "location": "BODY"
+      }
+    }
+
+    # XML body parameter (2 elements — content type + parameter name)
+    "parameters": {
+      "username": {
+        "path": ["application/xml", "username"],
+        "location": "BODY"
+      }
+    }
+
+    # JSON/XML body parameter (2 elements — "json/xml" + parameter name)
+    "parameters": {
+      "username": {
+        "path": ["json/xml", "username"],
         "location": "BODY"
       }
     }
@@ -107,7 +137,7 @@ parameters
     # Parameter used as login identifier (JSON)
     "parameters": {
       "userEmail": {
-        "path": ["application/json", "email"],
+        "path": ["email"],
         "location": "BODY",
         "usedForLogin": true
       }
@@ -225,6 +255,42 @@ successConditions
     }
   ]
 
+failureConditions
+-----------------
+  Array of conditions that define what constitutes a failed response.
+  Same structure as successConditions. Bot Manager uses these alongside
+  successConditions to accurately classify origin responses.
+
+  Responses that match neither successConditions nor failureConditions are
+  also treated as a failure by Bot Manager.
+
+  For optimal bot protection, define both successConditions and failureConditions.
+
+  Supports the same two types: HTTP_STATUS and HEADER_VALUE.
+  See the successConditions section above for full field descriptions.
+
+  Example (status-based failure):
+    "failureConditions": [
+      {
+        "positiveMatch": true,
+        "type": "HTTP_STATUS",
+        "values": ["401", "403"]
+      }
+    ]
+
+  Example (header-based failure):
+    "failureConditions": [
+      {
+        "headerName": "x-auth-status",
+        "positiveMatch": true,
+        "suppressFromClientResponse": false,
+        "type": "HEADER_VALUE",
+        "valueCase": false,
+        "valueWildcard": false,
+        "values": ["failed", "denied"]
+      }
+    ]
+
 ================================================================================
   COMMON PATTERNS
 ================================================================================
@@ -238,7 +304,7 @@ successConditions
       }
     }
 
-2. Login with username/password and status code check:
+2. Login with JSON body and status code check:
 
     "/login": {
       "user_login": {
@@ -246,7 +312,73 @@ successConditions
         "purpose": "LOGIN",
         "parameters": {
           "username": {
-            "path": ["test","username"],
+            "path": ["username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ]
+      }
+    }
+
+2b. Login with URL-encoded body:
+
+    "/form-login": {
+      "form_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ]
+      }
+    }
+
+2c. Login with XML body (schema content type: XML):
+
+    "/xml-login": {
+      "xml_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["application/xml", "username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ]
+      }
+    }
+
+2d. Login with JSON/XML body (schema content type: JSON/XML):
+
+    "/jsonxml-login": {
+      "jsonxml_login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["json/xml", "username"],
             "location": "BODY"
           }
         },
@@ -268,7 +400,7 @@ successConditions
         "purpose": "ACCOUNT_CREATION",
         "parameters": {
           "email": {
-            "path": ["user", "email"],
+            "path": ["email"],
             "location": "BODY",
             "usedForLogin": true
           }
