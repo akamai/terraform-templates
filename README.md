@@ -38,6 +38,14 @@ ps-terraform-templates/
 │   └── README.md
 ├── new-aapasm-configuration/       # AAP+ASM security template
 ├── new-property/                   # Delivery configuration template
+├── new-bmp-endpoints/              # Bot Manager Premier template
+│   ├── environments/               # Support for multiple environments
+│   │   ├── dev/
+│   │   ├── qa/
+│   │   └── prod/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── README.md
 └── README.md
 ```
 
@@ -103,6 +111,13 @@ App & API Protector with Advanced Security Management:
 
 **Valid Product IDs:** `M-LC-169586`, `M-LC-169587`
 
+### 🤖 new-bmp-endpoints
+Bot Manager Premier:
+- API Definition management (schema + operations)
+- Transactional endpoint protection
+- Security configuration activation
+- Two-phase deployment model (API Definition → Security Config)
+
 ### 🚀 new-property
 Delivery configuration templates for:
 - DSA (Dynamic Site Accelerator)
@@ -151,6 +166,25 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-Help` | Display detailed help information |
 
 > **Note:** CPS templates do not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation` parameters.
+
+#### Bot Manager Premier (BMP) Template
+
+> BMP uses a two-phase deployment model. Save and Activate are always separate commands.
+
+| Parameter | Phase | Description |
+|-----------|-------|-------------|
+| `bmp` | — | Template type for Bot Manager Premier |
+| `-Env` | — | Target environment: `dev`, `qa`, `prod`, etc. |
+| `-SaveApi` | Phase 1 | Save the API definition without activating |
+| `-ActivateStagingApi` | Phase 1 | Activate API definition to staging. Can combine with `-ActivateProductionApi` |
+| `-ActivateProductionApi` | Phase 1 | Activate API definition to production. Can combine with `-ActivateStagingApi` |
+| `-SaveSec` | Phase 2 | Save security config (requires Phase 1 activated first) |
+| `-ActivateStagingSec` | Phase 2 | Activate security config to staging (requires API activated to staging) |
+| `-ActivateProductionSec` | Phase 2 | Activate security config to production (requires API activated to production) |
+| `-Notes` | Phase 2 | Version/activation notes (prompted if not provided) |
+| `-Dry` | Both | Show Terraform plan without applying changes |
+| `-Destroy` | — | Deactivate and remove all BMP resources |
+| `-Debug` | Both | Enable detailed logging |
 
 ### Configuration
 
@@ -210,6 +244,29 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Destroy a certificate
 .\deploy.ps1 cps -CpsType dv-san-cert -DestroyCert cert1
+
+# --- BMP (Bot Manager Premier) ---
+
+# Phase 1: Save the API definition
+.\deploy.ps1 bmp -Env dev -SaveApi
+
+# Phase 1: Activate API definition to staging
+.\deploy.ps1 bmp -Env dev -ActivateStagingApi
+
+# Phase 1: Activate to both networks simultaneously
+.\deploy.ps1 bmp -Env dev -ActivateStagingApi -ActivateProductionApi
+
+# Phase 2: Save the security config (Phase 1 must be activated first)
+.\deploy.ps1 bmp -Env dev -SaveSec -Notes "Initial BMP setup"
+
+# Phase 2: Activate security config to staging
+.\deploy.ps1 bmp -Env dev -ActivateStagingSec
+
+# Phase 2: Activate security config to production
+.\deploy.ps1 bmp -Env dev -ActivateProductionSec
+
+# Destroy all BMP resources
+.\deploy.ps1 bmp -Env dev -Destroy
 ```
 
 ## Troubleshooting

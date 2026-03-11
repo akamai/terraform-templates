@@ -1,0 +1,92 @@
+# Refer to schema.txt for detailed guidance on how to build and populate this API schema.
+# If defining multiple APIs, create a copy of this file and assign it a relevant name.
+
+openapi: 3.0.1 
+
+info:
+  title: <Name of the API Definition>  # Enter a name for your API
+
+servers:
+- url: <API_hostname1>/<base_path> # Replace with values
+# - url: <API_hostname2>/<base_path>
+
+
+x-akamai-api-definitions:
+  contractId: <CONTRACT_ID>   # Akamai Contract ID under which this API definition is registered without the prefix ctr_.
+  groupId: <GROUP_ID>  # Akamai Group ID without the prefix grp_
+  matchCaseSensitive: <true|false>  # Controls case sensitivity for base path matching.
+  
+  
+# constraints:      Required if you are using AAP+ASM, otherwise remove this section
+#   enforceOn:
+#     request: true
+
+# versioning:
+#    in: <header|query|path>
+#    name: "<HEADER_NAME_OR_QUERY_PARAM_NAME>"   # Required for header/query only
+#    value: "<VERSION_VALUE>"                 # Required for header/query only
+
+paths:
+  /<resource_path1>: # Replace with actual API resource path (e.g., /login, /users)
+    x-akamai-api-definitions-resource:
+      name: "<resource_name>"   # API resource name
+    <HTTP_Method1>:  # Replace with the HTTP method to associate with this resource (e.g., get | post | put | delete | patch)
+
+    # Use below section to add any of the following request parameter [header / cookie / query]. If its not required, then remove the section
+
+      parameters:    
+        - name: <header_name/cookie_name/query_name>
+          in: <header | query | cookie>
+          required: <false/true>
+          schema:
+          type: <string | integer | number | boolean>
+
+    # Use below section to add the request parameter [Request Body] (JSON / XML / URL-encoded / {JSON/XML}). If its not required, then remove the section
+
+      requestBody:  
+        required: <true/false>
+        content:
+      # For JSON Content type
+          application/json:
+            schema:
+              type: object
+              properties:        # Skip parameters if the schema details are not required
+                <field_name1>:   # example : username / password
+                  type: <string|integer|number|boolean>
+                <field_name2>: .....
+                
+      # For XML content type
+          application/xml:     
+            schema:
+              type: object
+              properties:      # Skip parameters if the schema details are not required
+                <field_name>:    # example : username / password
+                  type: <string | integer | number | boolean>
+                <field_name2>: .....
+      # For URL-encoded content type
+          application/urlencoded:  
+            schema:
+              type: object
+              properties:          # Skip parameters if the schema details are not required
+                <field_name>:        # example : username / password
+                  type: <string | integer | number | boolean>
+                <field_name2>: .....
+     
+    #     JSON/XML is a distinct content type option — it means the endpoint accepts BOTH JSON and XML formats.
+    #     When using JSON/XML, add both application/json and application/xml blocks together under requestBody.content.
+    #     Add more methods if required
+    #     <HTTP_Method2>:
+
+# Add more resources by duplicating the entire block under `paths:` and replacing `/<resource_path1>` + `<resource_name>` + `<HTTP_Method> + <request paramter>` as needed.    
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+     
