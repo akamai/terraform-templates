@@ -70,7 +70,11 @@
  * This folder will contain your `.tfvars` file and will also store auto-generated files during deployments (`.tfplan`, `.tfstate`, `config.backend`).
  * 
  * ### Step 3: Define Your API Schema (`.yml`)
- * 
+ *
+ * > **Tip:** Use the AI chatbot prompt in `BMP_CHATBOT_PROMPT.md` to generate your `.yml` file automatically.
+ * > Paste the prompt into ChatGPT, Gemini, Claude, or any AI chatbot — it will ask you guided questions and produce a ready-to-use schema file.
+ * > Use this manual approach only if you prefer to fill the file directly.
+ *
  * Copy `Schema_sample.yml` to the **template folder root** (same level as `main.tf`) and rename it (e.g. `api1.yml`). Fill in your values:
  * 
  * ```yaml
@@ -113,9 +117,13 @@
  * **If you have multiple APIs**, create a separate `.yml` file for each one (e.g. `api1.yml`, `api2.yml`) in the same template folder root.
  * 
  * ### Step 4: Define Your Operations JSON
- * 
+ *
+ * > **Tip:** Use the AI chatbot prompt in `BMP_CHATBOT_PROMPT.md` to generate your operations JSON file automatically.
+ * > Paste the prompt into ChatGPT, Gemini, Claude, or any AI chatbot — it will ask you guided questions and produce a ready-to-use operations file.
+ * > Use this manual approach only if you prefer to fill the file directly.
+ *
  * For each API schema file, create a matching operations JSON file in the **template folder root**. This maps each resource path to its operations — including the HTTP method, purpose, request parameters, and origin response conditions (success and failure).
- * 
+ *
  * Copy `operations_sample.json`, rename it (e.g. `operations-api.json`), and modify it for your API. See `operations.txt` for detailed guidance on every field.
  * 
  * **Minimal example** — a simple endpoint with no parameters or conditions:
@@ -324,6 +332,7 @@
  * │   ├── schema.txt                          # Detailed schema reference guide
  * │   ├── operations_sample.json              # Template: copy and rename for new operations
  * │   ├── operations.txt                      # Detailed operations reference guide
+ * │   ├── BMP_CHATBOT_PROMPT.md               # AI chatbot prompt — generates .yml and operations JSON interactively
  * │   └── environments/
  * │       ├── dev/
  * │       ├── prod/

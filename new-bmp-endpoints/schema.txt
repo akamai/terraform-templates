@@ -1,4 +1,11 @@
-openapi: 3.0.1 
+# ─────────────────────────────────────────────────────────────────────────────
+# TIP: Instead of filling this file manually, use the AI chatbot prompt to
+# generate it automatically. Copy the prompt from BMP_CHATBOT_PROMPT.md and
+# paste it into ChatGPT, Gemini, Claude, or any AI chatbot. The chatbot will
+# ask you guided questions and produce a ready-to-use .yml file.
+# ─────────────────────────────────────────────────────────────────────────────
+
+openapi: 3.0.1
 
 info:
   title: <Name of the API Definition>  # Enter a name for your API

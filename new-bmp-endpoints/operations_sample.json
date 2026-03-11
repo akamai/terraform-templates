@@ -1,6 +1,10 @@
 {
   "_README": [
-    "INSTRUCTIONS:",
+    "TIP: Instead of filling this file manually, use the AI chatbot prompt to generate it automatically.",
+    "Copy the prompt from BMP_CHATBOT_PROMPT.md and paste it into ChatGPT, Gemini, Claude, or any AI chatbot.",
+    "The chatbot will ask you guided questions and produce a ready-to-use operations JSON file.",
+    "",
+    "INSTRUCTIONS (if filling manually):",
     "1. Copy this file and rename it (e.g., operations-myapi.json)",
     "2. Replace resource paths (e.g. /login) with your actual API paths — must match paths in your .yml schema",
     "3. Replace operation names (e.g. user_login) with a unique name per operation",
