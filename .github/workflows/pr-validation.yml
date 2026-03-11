@@ -77,6 +77,12 @@ jobs:
           terraform init -backend=false
           terraform validate
 
+      - name: Terraform Validate - BMP - New Transactional Endpoint
+        working-directory: ./new-bmp-endpoints
+        run: |
+          terraform init -backend=false
+          terraform validate
+          
       - name: Terraform Validate - EDNS 
         working-directory: ./new-edns
         run: |
@@ -113,6 +119,10 @@ jobs:
       
       - name: Run TFLint - EDNS 
         working-directory: ./new-edns
+        run: tflint --recursive
+
+      - name: Run TFLint - BMP - New Transactional Endpoint
+        working-directory: ./new-bmp-endpoints
         run: tflint --recursive
 
       - name: Run Trivy Security Scan

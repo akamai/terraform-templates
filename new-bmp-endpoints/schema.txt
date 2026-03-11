@@ -1,0 +1,124 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# TIP: Instead of filling this file manually, use the AI chatbot prompt to
+# generate it automatically. Copy the prompt from BMP_CHATBOT_PROMPT.md and
+# paste it into ChatGPT, Gemini, Claude, or any AI chatbot. The chatbot will
+# ask you guided questions and produce a ready-to-use .yml file.
+# ─────────────────────────────────────────────────────────────────────────────
+
+openapi: 3.0.1
+
+info:
+  title: <Name of the API Definition>  # Enter a name for your API
+
+servers:
+# Primary API hostname + base path
+- url: <API_hostname>/<base_path> # Replace with values
+
+  # To add additional API hostnames:
+  # 1. Copy the block below
+  # 2. Replace the hostname
+  # 3. Keep the same base path if it belongs to the same API
+  #
+  # Example:
+  # - url: api2.gslab-akashop.com/test
+  # - url: api3.gslab-akashop.com/test
+  #
+  # Notes:
+  # - Each hostname must be onboarded in Akamai Property Manager.
+  # - The base_path must match the API Definition configuration.
+
+x-akamai-api-definitions:
+  contractId: <CONTRACT_ID>   # Akamai Contract ID under which this API definition is registered.
+  groupId: <GROUP_ID>  # Akamai Group ID
+  matchCaseSensitive: <true|false>  # Controls case sensitivity for base path matching.
+
+  #Required if you are using AAP+ASM, otherwise remove this section
+  
+  #   constraints:      
+  #     enforceOn:
+  #       request: true
+
+# OPTIONAL: Include the versioning block only if the API uses explicit version detection.
+# If not used, remove this entire section completely.
+# Versioning (optional):
+#
+# header → Version sent in HTTP header (e.g., X-API-Version: 2)
+#           Requires: in, name, value
+#
+# query  → Version sent as query parameter (e.g., ?version=2)
+#           Requires: in, name, value
+#
+# path   → Version embedded in URL path (e.g., /v2/users)
+#           Only `in: path` required
+#           Version must already be part of basePath (e.g., /v2)
+#           Do NOT set name or value
+#
+# Below is the actual version block
+# versioning:
+#    in: <header|query|path>
+#    name: "<HEADER_NAME_OR_QUERY_PARAM_NAME>"   # Required for header/query only
+#    value: "<VERSION_VALUE>"                 # Required for header/query only
+
+paths:
+  /<resource_path1>: # Replace with actual API resource path (e.g., /login, /users)
+    x-akamai-api-definitions-resource:
+      name: "<resource_name>"   # API resource name
+    <HTTP_Method1>:  # Replace with the HTTP method to associate with this resource (e.g., get | post | put | delete | patch)
+
+    # Uncomment below  to add any of the following request parameter [header / cookie / query]
+
+      # parameters:    
+        #   - name: <header_name/cookie_name/query_name>
+        #     in: <header | query | cookie>
+        #     required: <false/true>
+        #     schema:
+        #       type: <string | integer | number | boolean>
+
+    # Uncomment below section to add the request parameter [Request Body] (JSON / XML / URL-encoded / {JSON/XML})
+
+      # requestBody:  
+      #  required: true
+      #   content:
+      #
+      #     application/json:    # For JSON Content type
+      #       schema:
+      #         type: object
+      #         properties:      # Skip parameters if the schema details are not required
+      #           <field_name1>:    # example : username / password
+      #             type: <string | integer | number | boolean | >
+      #           <field_name2>: .....
+      #
+      #     application/xml:     # For XML content type
+      #       schema:
+      #         type: object
+      #         properties:      # Skip parameters if the schema details are not required
+      #           <field_name>:    # example : username / password
+      #             type: <string | integer | number | boolean>
+      #           <field_name2>: .....
+      #
+      #     application/urlencoded:  # For URL-encoded content type
+      #       schema:
+      #         type: object
+      #         properties:          # Skip parameters if the schema details are not required
+      #           <field_name>:        # example : username / password
+      #             type: <string | integer | number | boolean>
+      #           <field_name2>: .....
+      #
+      #     JSON/XML is a distinct content type option — it means the endpoint accepts BOTH JSON and XML formats.
+      #     When using JSON/XML, add both application/json and application/xml blocks together under requestBody.content.
+    #     Add more methods if required
+    #     <HTTP_Method2>:
+
+# Add more resources by duplicating the entire block under `paths:` and replacing `/<resource_path1>` + `<resource_name>` + `<HTTP_Method> + <request paramter>` as needed.    
+
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+     

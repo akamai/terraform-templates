@@ -9,13 +9,13 @@ or activate to both networks simultaneously. Also supports certificate managemen
 This script uses a modular architecture with template handlers in lib/templates/ and shared functionality in lib/core/.
 
 .PARAMETER TemplateType
-Specifies the template type. Available values: aap, aapasm, pm, cps
+Specifies the template type. Available values: aap, aapasm, pm, cps, bmp
 
 .PARAMETER CpsType
 Specifies the CPS certificate type when TemplateType is 'cps'. Available values: dv-san-cert, third-party-cert
 
 .PARAMETER Environment
-The environment to deploy to (e.g., prod, dev, qa). Used for aap, aapasm, and pm templates.
+The environment to deploy to (e.g., prod, dev, qa). Used for aap, aapasm, pm, and bmp templates.
 
 .PARAMETER CertNumber
 The certificate identifier. Used for CPS templates.
@@ -31,6 +31,24 @@ Activates the Akamai resource to the staging network.
 
 .PARAMETER ActivateProduction
 Activates the Akamai resource to the production network.
+
+.PARAMETER SaveApi
+[BMP only — Phase 1] Saves the API definition without activating. Cannot be combined with -ActivateStagingApi or -ActivateProductionApi.
+
+.PARAMETER ActivateStagingApi
+[BMP only — Phase 1] Activates the API definition to the staging network. Can be combined with -ActivateProductionApi. Cannot be combined with -SaveApi.
+
+.PARAMETER ActivateProductionApi
+[BMP only — Phase 1] Activates the API definition to the production network. Can be combined with -ActivateStagingApi. Cannot be combined with -SaveApi.
+
+.PARAMETER SaveSec
+[BMP only — Phase 2] Saves the security configuration without activating. Requires Phase 1 to be activated first. Cannot be combined with -ActivateStagingSec or -ActivateProductionSec.
+
+.PARAMETER ActivateStagingSec
+[BMP only — Phase 2] Activates the security configuration to the staging network. Requires API definition activated to staging first. Can be combined with -ActivateProductionSec. Cannot be combined with -SaveSec.
+
+.PARAMETER ActivateProductionSec
+[BMP only — Phase 2] Activates the security configuration to the production network. Requires API definition activated to production first. Can be combined with -ActivateStagingSec. Cannot be combined with -SaveSec.
 
 .PARAMETER CreateCert
 Creates a new certificate (CPS only).
@@ -93,6 +111,38 @@ PS> .\deploy.ps1 cps -CpsType dv-san-cert -DestroyCert cert1
 Destroy a certificate
 
 .EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -SaveApi
+[BMP Phase 1] Save the API definition for the dev environment without activating
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateStagingApi
+[BMP Phase 1] Activate the API definition to staging for the dev environment
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateProductionApi
+[BMP Phase 1] Activate the API definition to production for the dev environment
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateStagingApi -ActivateProductionApi
+[BMP Phase 1] Activate the API definition to both staging and production simultaneously
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -SaveSec -Notes "JIRA-123: initial setup"
+[BMP Phase 2] Save the security configuration (requires Phase 1 activated first)
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateStagingSec
+[BMP Phase 2] Activate the security configuration to staging (requires API activated to staging first)
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -ActivateProductionSec
+[BMP Phase 2] Activate the security configuration to production (requires API activated to production first)
+
+.EXAMPLE
+PS> .\deploy.ps1 bmp -Env dev -Destroy
+Tear down the entire BMP configuration for the dev environment
+
+.EXAMPLE
 PS> .\deploy.ps1 edns -Env dev -ZoneType primary -Save
 Create or update PRIMARY Edge DNS zone in dev environment
 
@@ -107,7 +157,7 @@ https://github.com/akamai/terraform-templates
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("aap", "aapasm", "pm", "cps", "edns")]
+    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns")]
     [string]$TemplateType,
 
     [Parameter(Mandatory = $false)]
@@ -117,6 +167,26 @@ Param(
     [Parameter(Mandatory = $false)]
     [Alias("Env")]
     [string]$Environment,
+
+    # --- BMP: API-scope actions ---
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [switch]$SaveApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateStagingApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateProductionApi,
+
+    # --- BMP: SEC-scope actions ---
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [switch]$SaveSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateStagingSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateProductionSec,
 
     [Parameter(Mandatory = $false)]
     [Alias("Cert")]
@@ -144,10 +214,16 @@ Param(
     [Parameter(ParameterSetName = 'cps-destroy')]
     [string]$DestroyCert,
 
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
     [Parameter(ParameterSetName = 'save')]
     [Parameter(ParameterSetName = 'activate')]
     [switch]$Dry,
 
+    [Parameter(ParameterSetName = 'bmp-sec-save')]  
+    [Parameter(ParameterSetName = 'bmp-sec-activate')] 
     [Parameter(ParameterSetName = 'activate')]
     [Parameter(ParameterSetName = 'save')]
     [Alias("Notes")]
@@ -183,6 +259,7 @@ $templateModuleMap = @{
     "aapasm" = "AAPASM"
     "pm"     = "PropertyManager"
     "cps"    = "CPS"
+    "bmp"    = "BMP" 
     "edns"   = "EDNS"
 }
 
@@ -200,6 +277,7 @@ $templateFolderMap = @{
     "aap"    = "new-aap-configuration"
     "aapasm" = "new-aapasm-configuration"
     "pm"     = "new-property"
+    "bmp"    = "new-bmp-endpoints"
     "edns"   = "new-edns"
 }
 
@@ -338,6 +416,43 @@ try {
             }
         }
 
+        "BMP" {
+            if (-not $Environment) {
+                throw "Environment parameter required for BMP template. Use: -Env <environment>"
+            }
+
+            $template = New-BMPTemplate -Environment $Environment -TemplateFolder $TemplateFolder
+
+            if ($Destroy) {
+                $template.Destroy()
+            }
+            elseif ( $ActivateStaging -or $ActivateProduction -or
+                    $SaveApi -or $ActivateStagingApi -or $ActivateProductionApi -or
+                    $SaveSec -or $ActivateStagingSec -or $ActivateProductionSec) {
+                $template.Deploy(@{
+                    # Global scope
+                    ActivateStaging    = $ActivateStaging.IsPresent
+                    ActivateProduction = $ActivateProduction.IsPresent
+                    # API scope
+                    SaveApi               = $SaveApi.IsPresent
+                    ActivateStagingApi    = $ActivateStagingApi.IsPresent
+                    ActivateProductionApi = $ActivateProductionApi.IsPresent
+                    # SEC scope
+                    SaveSec               = $SaveSec.IsPresent
+                    ActivateStagingSec    = $ActivateStagingSec.IsPresent
+                    ActivateProductionSec = $ActivateProductionSec.IsPresent
+                    # Common
+                    VersionNotes       = $VersionNotes
+                    Dry                = $Dry.IsPresent
+                    SkipValidation     = $SkipValidation.IsPresent
+                    Debug              = $PSBoundParameters.ContainsKey('Debug')
+                })
+            }
+            else {
+                throw "Please specify at least one parameter: -Save, -SaveApi, -SaveSec, -ActivateStaging[Api|Sec], -ActivateProduction[Api|Sec], or -Destroy"
+            }
+        }
+        
         "EDNS" {
             if (-not $Environment) {
                 throw "Environment parameter required for EDNS template. Use: -Env <environment>"
