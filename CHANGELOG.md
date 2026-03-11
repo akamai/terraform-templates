@@ -1,3 +1,22 @@
+# [1.3.0](https://github.com/akamai/terraform-templates/compare/v1.2.0...v1.3.0) (2026-03-11)
+
+
+### Bug Fixes
+
+* **bmp:** Added terraform-docs.yml, updated documentation for BMP(main.tf, deploy.ps1, Readme.md), updated docs for operations ([10244c3](https://github.com/akamai/terraform-templates/commit/10244c3a938c5b17e80bd80fe349915ceee0748b))
+* **bmp:** Added the AI prompt and updated documentation to reference the prompt ([594c61d](https://github.com/akamai/terraform-templates/commit/594c61dbeb011960b281ec5273d9c422b4a6802f))
+* **bmp:** Adding the newly created readme file ([f22999b](https://github.com/akamai/terraform-templates/commit/f22999b75c928638a2b1e512a622b67e3901ac53))
+* **bmp:** updated schema and operations docs ([924fb2b](https://github.com/akamai/terraform-templates/commit/924fb2b31cb9c1ad6e2e734f5855e2315ce03337))
+* **EDNS:** setting up github workflow for new templates EDNS ([d9435f4](https://github.com/akamai/terraform-templates/commit/d9435f4ea45693c38cdd8f515eb3f56b7016048b))
+
+
+### Features
+
+* **bmp:** Added new template for BMP Integration ([5141ad6](https://github.com/akamai/terraform-templates/commit/5141ad6c19f67df1c90a811a24f87f30679b285a))
+* **EDNS:** new templates EDNS ([9a87883](https://github.com/akamai/terraform-templates/commit/9a87883d0709b879b09148344d2e39a85e37f0dc))
+
+
+
 # [1.2.0](https://github.com/akamai/terraform-templates/compare/v1.1.0...v1.2.0) (2026-02-17)
 
 
