@@ -157,7 +157,7 @@ provider "dns" {}
 # Module: New EdgeDNS (PRIMARY / SECONDARY)
 ## ----------------------------------------------------------------------------
 module "edns" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//new-edns?ref=v1.2.0"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//edns?ref=v1.3.2"
 
   zone_name   = var.zone_name
   zone_type   = var.zone_type
