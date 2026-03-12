@@ -20,6 +20,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # PAT required to bypass branch protection rules (GITHUB_TOKEN cannot bypass them)
+          token: ${{ secrets.TEMPLATES_TOKEN }}
 
       - name: Conventional Changelog Action
         id: changelog
@@ -45,7 +47,12 @@ jobs:
           git stash pop || true
           echo "${{ steps.changelog.outputs.version }}" > VERSION
           git add VERSION CHANGELOG.md
+          # [skip ci] prevents this commit from triggering the workflow again (infinite loop prevention)
           git commit -m "chore(release): ${{ steps.changelog.outputs.version }} [skip ci]"
+          # Handle retry scenario: a previous run may have pushed the tag but failed to push the commit.
+          # Delete the tag locally and on remote (if it exists) before recreating it on the correct commit.
+          git tag -d "${{ steps.changelog.outputs.tag }}" 2>/dev/null || true
+          git push origin --delete "${{ steps.changelog.outputs.tag }}" 2>/dev/null || true
           git tag -a "${{ steps.changelog.outputs.tag }}" -m "Release ${{ steps.changelog.outputs.tag }}"
           git push --follow-tags
 
