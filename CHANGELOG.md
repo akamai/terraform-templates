@@ -1,3 +1,12 @@
+## [1.3.2](https://github.com/akamai/terraform-templates/compare/v1.3.1...v1.3.2) (2026-03-12)
+
+
+### Bug Fixes
+
+* **edns:** EDNS module renamed ([3002355](https://github.com/akamai/terraform-templates/commit/3002355d88de9a4d763505a00b57667f288d0f62))
+
+
+
 ## [1.3.1](https://github.com/akamai/terraform-templates/compare/v1.3.0...v1.3.1) (2026-03-12)
 
 
