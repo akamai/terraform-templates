@@ -16,6 +16,10 @@ permissions:
 jobs:
   release:
     name: Terraform Docs Update
+    # Skip this job for merges from main to integration (mostly because of hotfixes), the head_commit message starts with "Merge branch 'main' into integration" for local branch (git merge main) or "Merge remote-tracking branch 'origin/main' into integration" for remote branch (git merge origin/main).
+    if: |
+      !startsWith(github.event.head_commit.message, 'Merge branch ''main''') &&
+      !startsWith(github.event.head_commit.message, 'Merge remote-tracking branch ''origin/main''')
     runs-on: ubuntu-latest
     
     steps:
