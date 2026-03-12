@@ -1,3 +1,12 @@
+## [1.3.1](https://github.com/akamai/terraform-templates/compare/v1.3.0...v1.3.1) (2026-03-12)
+
+
+### Bug Fixes
+
+* **ci:** optimize GH workflows for hotfixes ([18083f8](https://github.com/akamai/terraform-templates/commit/18083f8891464721d19d383ad97faacae5b7d99b))
+
+
+
 # [1.3.0](https://github.com/akamai/terraform-templates/compare/v1.2.0...v1.3.0) (2026-03-11)
 
 
