@@ -16,6 +16,7 @@ When contributing to this repository, please first discuss the change you wish t
   - [4. Push and Create Pull Request](#4-push-and-create-pull-request)
   - [5. Integration Testing](#5-integration-testing)
   - [6. Promote to Production](#6-promote-to-production)
+  - [Hotfix Workflow](#hotfix-workflow)
 - [GitHub Workflows](#github-workflows)
   - [1. PR Validation](#1-pr-validation-githubworkflowspr-validationyml)
   - [2. Terraform Docs Automation](#2-terraform-docs-automation-githubworkflowstf-docsyml)
@@ -261,6 +262,50 @@ When ready for release, create PR from `integration` to `main`. Once merged, thi
 - Updates `VERSION` file and `CHANGELOG.md`
 - Creates Git tag and GitHub release
 
+### Hotfix Workflow
+
+Use this workflow when a **critical bug in production** needs to be fixed immediately, without waiting for changes currently in `integration` to be ready.
+
+```
+hotfix/* branch → main (release automation) → integration (backmerge, no CI)
+```
+
+**Steps:**
+
+1. **Cut the hotfix branch from `main`** (not `integration`):
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b hotfix/fix-critical-issue
+   ```
+
+2. **Apply the fix and commit** using a `fix:` conventional commit:
+   ```bash
+   git commit -am "fix: resolve critical issue in rate policy"
+   git push origin hotfix/fix-critical-issue
+   ```
+
+3. **Open a PR from `hotfix/*` → `main`**:
+   - The `main-branch-protection` workflow validates the source is `hotfix/*` ✓
+   - PR validation and tf-docs do **not** run (they only trigger on PRs/pushes to `integration`)
+   - Once approved, merge the PR
+   - This triggers the **Release Automation workflow** (patch version bump) ✓
+
+4. **Backmerge `main` into `integration`** to keep branches in sync:
+   ```bash
+   git checkout integration
+   git pull origin integration
+   git merge main           # or: git merge origin/main
+   # resolve any conflicts if needed
+   git push origin integration
+   ```
+
+   > Both `git merge main` (local ref) and `git merge origin/main` (remote-tracking ref) are supported. The tf-docs workflow is configured to skip on both resulting commit message formats.
+
+5. **Verify `integration` is up to date** — no CI workflows will re-run for this backmerge:
+   - `pr-validation` is skipped (no PR opened against `integration`)
+   - `tf-docs` is skipped (commit message matches the `main` → `integration` backmerge pattern)
+
 ## GitHub Workflows
 
 This repository uses **three automated workflows** that execute in sequence:
@@ -270,6 +315,8 @@ This repository uses **three automated workflows** that execute in sequence:
 **Trigger:** Pull requests to `integration` branch
 
 **Purpose:** Validate code quality and security before merging
+
+**Note:** This workflow is **automatically skipped** when the source branch is `main` (i.e., during a hotfix backmerge PR). The code already passed production standards via the hotfix PR to `main`.
 
 **Runs:**
 1. **Terraform Format Check** - Ensures consistent formatting
@@ -295,7 +342,7 @@ This repository uses **three automated workflows** that execute in sequence:
 3. **Generate terraform-docs for Property** - Updates `new-property/README.md`
 4. **Auto-commit** - Pushes updated `README.md` files back to `integration` branch
 
-**Note:** This workflow runs AFTER merge to `integration`, ensuring documentation stays in sync with code changes.
+**Note:** This workflow runs AFTER merge to `integration`, ensuring documentation stays in sync with code changes. It is **automatically skipped** when the push is a backmerge from `main`, covering both standard merge message formats (`Merge branch 'main'` from `git merge main` and `Merge remote-tracking branch 'origin/main'` from `git merge origin/main`), preventing unnecessary doc regeneration during hotfix backmerges.
 
 ### 3. Release Automation (`.github/workflows/release.yml`)
 
@@ -347,6 +394,9 @@ This repository uses a **three-stage branching model** with automated CI/CD:
 
 ```
 feature branch → integration (PR validation + auto-docs) → main (release automation)
+                                                               ↑
+                             hotfix/* branch ─────────────────┘
+                             (then backmerged to integration with no CI)
 ```
 
 ### Branch Purposes
@@ -355,6 +405,7 @@ feature branch → integration (PR validation + auto-docs) → main (release aut
 |--------|---------|----------|
 | **Feature branches** | Active development work | Nothing |
 | **`integration`** | Pre-release testing and validation | **PR validation workflow** (on PR) + **Terraform Docs workflow** (on merge) |
+| **`hotfix/*`** | Critical production fixes bypassing `integration` | **Main branch protection** (PR to `main`) + **Release automation** (on merge to `main`) |
 | **`main`/`master`** | Production-ready code | **Release automation workflow** |
 
 ### Branch Protection Rules
@@ -384,6 +435,10 @@ feat/DOHRMY-126-botman-integration
 # Bug fixes
 fix/rate-policy-import
 fix/DOHRMY-456-state-file-conflict
+
+# Hotfixes (critical production fixes - branched from main)
+hotfix/fix-rate-policy-conflict
+hotfix/DOHRMY-789-critical-security-patch
 
 # Documentation
 docs/update-readme-examples
