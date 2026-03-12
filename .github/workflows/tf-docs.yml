@@ -23,6 +23,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # PAT required to bypass branch protection rules (GITHUB_TOKEN cannot bypass them)
+          token: ${{ secrets.TEMPLATES_TOKEN }}
 
       - name: Generate terraform-docs for AAP Configuration
         uses: terraform-docs/gh-actions@v1.4.1
