@@ -4,6 +4,8 @@
 
 Streamline your Akamai deployment with production-ready Terraform templates for delivery and security configurations, certificates and more. This repository provides automated, best-practice implementations for such configurations.
 
+For standalone snippets, individual examples, and additional tooling, visit the [terraform-examples](https://github.com/akamai/terraform-examples) repository instead.
+
 ## Overview
 
 The contents of this repository enables rapid deployment of Akamai configurations through:
