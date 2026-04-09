@@ -16,7 +16,15 @@ function Initialize-TerraformBackend {
         [string]$ConfigPath,
         
         [Parameter(Mandatory = $true)]
-        [string]$StateFileName
+        [string]$StateFileName,
+
+        # When provided, a refresh-only drift check runs after init.
+        # Omit this parameter (destroy, CPS, etc.) to skip drift detection.
+        [Parameter(Mandatory = $false)]
+        [string]$VarFilePath = "",
+
+        [Parameter(Mandatory = $false)]
+        [bool]$Force = $false
     )
     
     # Create backend config file
@@ -33,6 +41,27 @@ function Initialize-TerraformBackend {
     if ($LASTEXITCODE -ne 0) {
         Write-Host "`nTerraform initialization failed with exit code: $LASTEXITCODE" -ForegroundColor Red
         throw "Terraform initialization failed"
+    }
+
+    # Drift detection — only when a varfile is supplied and -Force is not set
+    if ($VarFilePath -and -not $Force) {
+        $driftResult = Invoke-TerraformDriftCheck -TemplateFolder $TemplateFolder -VarFilePath $VarFilePath
+        if ($driftResult.HasDrift) {
+            Write-Host ""
+            Write-Host "WARNING: Configuration drift detected!" -ForegroundColor Yellow
+            Write-Host "Remote resources differ from the Terraform state." -ForegroundColor Yellow
+            Write-Host "Pass -Force to skip this prompt." -ForegroundColor Gray
+            $confirm = Read-Host "Continue with deployment? (y/N)"
+            if ($confirm -ne 'y' -and $confirm -ne 'Y') {
+                throw "Deployment aborted by user due to configuration drift."
+            }
+        }
+        elseif ($driftResult.ExitCode -eq 1) {
+            Write-Warning "Drift check encountered an error. Continuing without drift information."
+        }
+        else {
+            Write-Host "No drift detected." -ForegroundColor Green
+        }
     }
 }
 
@@ -164,4 +193,36 @@ function Get-TerraformOutput {
     return $null
 }
 
-Export-ModuleMember -Function Initialize-TerraformBackend, Invoke-TerraformPlan, Invoke-TerraformApply, Invoke-TerraformDestroy, Test-TerraformResourceExists, Get-TerraformOutput
+function Invoke-TerraformDriftCheck {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateFolder,
+
+        [Parameter(Mandatory = $true)]
+        [string]$VarFilePath,
+
+        [Parameter(Mandatory = $false)]
+        [hashtable]$Variables = @{}
+    )
+
+    # Build variable arguments
+    $varArgs = @()
+    foreach ($key in $Variables.Keys) {
+        $varArgs += "-var"
+        $varArgs += "$key=$($Variables[$key])"
+    }
+    $varArgs += "-var-file"
+    $varArgs += $VarFilePath
+
+    Write-Host "Checking for configuration drift (refresh-only)..." -ForegroundColor Cyan
+    terraform -chdir="./$TemplateFolder" plan -refresh-only @varArgs | Out-Default
+
+    # Exit codes: 0 = no changes, 1 = error, 2 = drift detected
+    return @{
+        HasDrift = ($LASTEXITCODE -eq 2)
+        ExitCode = $LASTEXITCODE
+    }
+}
+
+Export-ModuleMember -Function Initialize-TerraformBackend, Invoke-TerraformPlan, Invoke-TerraformApply, Invoke-TerraformDestroy, Test-TerraformResourceExists, Get-TerraformOutput, Invoke-TerraformDriftCheck

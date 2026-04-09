@@ -35,7 +35,7 @@ class CPSTemplate {
         }
     }
     
-    [void] CreateCert([bool]$dryRun) {
+    [void] CreateCert([bool]$dryRun, [bool]$force) {
         Write-Host "Creating CPS certificate: $($this.CertNumber)" -ForegroundColor Green
         
         $this.ValidatePrerequisites()
@@ -43,7 +43,9 @@ class CPSTemplate {
         $configPath = "certificates/$($this.CertNumber)"
         $stateFileName = "$($this.CertNumber)-terraform.tfstate"
         
-        Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName
+        # Initialize Terraform (drift check runs automatically via -VarFilePath)
+        Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName `
+            -VarFilePath "./$configPath/$($this.CertNumber).tfvars" -Force $force
         
         $vars = $this.BuildTerraformVars()
         $outFile = "./$configPath/$($this.CertNumber).tfplan"
@@ -78,9 +80,9 @@ class CPSTemplate {
         }
     }
     
-    [void] UploadCert([bool]$dryRun) {
+    [void] UploadCert([bool]$dryRun, [bool]$force) {
         # Upload is the same as create for CPS
-        $this.CreateCert($dryRun)
+        $this.CreateCert($dryRun, $force)
     }
     
     [void] DestroyCert() {

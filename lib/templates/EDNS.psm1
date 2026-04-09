@@ -78,7 +78,7 @@ class EDNSTemplate {
     }
   }
 
-  [void] Save([bool]$dryRun) {
+  [void] Save([bool]$dryRun, [bool]$force) {
     Write-Host "Saving EDNS zone ($($this.ZoneType)) for environment $($this.Environment)" -ForegroundColor Cyan
 
     $this.ValidatePrerequisites()
@@ -86,13 +86,16 @@ class EDNSTemplate {
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "edns-$($this.ZoneType).tfstate"
 
+    $tfvars = $this.GetTfvarsPath()
+    $repoRoot = $this.GetRepoRoot()
+
+    # Initialize Terraform (drift check runs automatically when VarFilePath is supplied)
     Initialize-TerraformBackend `
       -TemplateFolder $this.TemplateFolder `
       -ConfigPath $configPath `
-      -StateFileName $stateFileName
-
-    $tfvars = $this.GetTfvarsPath()
-    $repoRoot = $this.GetRepoRoot()
+      -StateFileName $stateFileName `
+      -VarFilePath $tfvars `
+      -Force $force
 
     $planFile = Join-Path `
       -Path $repoRoot `
@@ -121,8 +124,8 @@ class EDNSTemplate {
     Write-Host "✓ EDNS deployment completed successfully" -ForegroundColor Green
   }
 
-  [void] Deploy([bool]$dryRun) {
-    $this.Save($dryRun)
+  [void] Deploy([bool]$dryRun, [bool]$force) {
+    $this.Save($dryRun, $force)
   }
 
   [void] Destroy() {

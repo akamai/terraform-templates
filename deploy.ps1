@@ -75,6 +75,10 @@ Enables debug logging. Saved in ./akamai_tf.log
 .PARAMETER SkipValidation
 Skips product ID validation. Use this if product IDs have changed or for testing purposes.
 
+.PARAMETER Force
+Skips the drift-detection prompt. When drift is detected before applying changes, the script normally
+prompts for confirmation. Pass -Force to bypass this prompt and continue automatically.
+
 .PARAMETER Help
 Displays detailed help information about the script.
 
@@ -236,6 +240,9 @@ Param(
     [switch]$SkipValidation,
 
     [Parameter()]
+    [switch]$Force,
+
+    [Parameter()]
     [switch]$Help
 )
 
@@ -316,6 +323,7 @@ try {
                         VersionNotes       = $VersionNotes
                         Dry                = $Dry.IsPresent
                         SkipValidation     = $SkipValidation.IsPresent
+                        Force              = $Force.IsPresent
                         Debug              = $PSBoundParameters.ContainsKey('Debug')
                     })
             }
@@ -346,6 +354,7 @@ try {
                         VersionNotes       = $VersionNotes
                         Dry                = $Dry.IsPresent
                         SkipValidation     = $SkipValidation.IsPresent
+                        Force              = $Force.IsPresent
                         Debug              = $PSBoundParameters.ContainsKey('Debug')
                     })
             }
@@ -376,6 +385,7 @@ try {
                         VersionNotes       = $VersionNotes
                         Dry                = $Dry.IsPresent
                         SkipValidation     = $SkipValidation.IsPresent
+                        Force              = $Force.IsPresent
                         Debug              = $PSBoundParameters.ContainsKey('Debug')
                     })
             }
@@ -410,8 +420,8 @@ try {
             $template = New-CPSTemplate -CpsType $CpsType -CertNumber $CertNumber -TemplateFolder $TemplateFolder
             
             switch ($action) {
-                "create" { $template.CreateCert($Dry.IsPresent) }
-                "upload" { $template.UploadCert($Dry.IsPresent) }
+                "create" { $template.CreateCert($Dry.IsPresent, $Force.IsPresent) }
+                "upload" { $template.UploadCert($Dry.IsPresent, $Force.IsPresent) }
                 "destroy" { $template.DestroyCert() }
             }
         }
@@ -445,6 +455,7 @@ try {
                     VersionNotes       = $VersionNotes
                     Dry                = $Dry.IsPresent
                     SkipValidation     = $SkipValidation.IsPresent
+                    Force              = $Force.IsPresent
                     Debug              = $PSBoundParameters.ContainsKey('Debug')
                 })
             }
@@ -475,7 +486,7 @@ try {
                 $template.Destroy()
             }
             else {
-                $template.Deploy($Dry.IsPresent)
+                $template.Deploy($Dry.IsPresent, $Force.IsPresent)
             }
         }
         
