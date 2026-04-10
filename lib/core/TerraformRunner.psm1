@@ -132,7 +132,12 @@ function Invoke-TerraformDestroy {
         [hashtable]$Variables = @{},
         
         [Parameter(Mandatory = $false)]
-        [switch]$AutoApprove
+        [switch]$AutoApprove,
+
+        # Pass -NoRefresh to skip state refresh during destroy. Useful when data
+        # sources (e.g. akamai_appsec_rate_policies) fail to read during teardown.
+        [Parameter(Mandatory = $false)]
+        [switch]$NoRefresh
     )
     
     # Build variable arguments
@@ -149,6 +154,10 @@ function Invoke-TerraformDestroy {
     
     if ($AutoApprove) {
         $varArgs += "-auto-approve"
+    }
+
+    if ($NoRefresh) {
+        $varArgs += "-refresh=false"
     }
     
     Write-Host "Destroying Terraform resources..." -ForegroundColor Red
@@ -216,12 +225,23 @@ function Invoke-TerraformDriftCheck {
     $varArgs += $VarFilePath
 
     Write-Host "Checking for configuration drift (refresh-only)..." -ForegroundColor Cyan
-    terraform -chdir="./$TemplateFolder" plan -refresh-only @varArgs | Out-Default
+
+    # Capture output into a variable so $LASTEXITCODE is read before any further
+    # PowerShell pipeline processing can interfere with it. Stream it afterwards.
+    $output = terraform -chdir="./$TemplateFolder" plan -refresh-only -detailed-exitcode @varArgs 2>&1
+    $exitCode = $LASTEXITCODE
+    $output | Out-Default
+
+    # With -detailed-exitcode: 0 = no changes, 1 = error, 2 = changes detected.
+    # Guard against false positives: some provider data sources (e.g. akamai_property_rules_builder)
+    # can trigger exit code 2 for state-only refreshes while the plan still reports "No changes."
+    $outputText = $output -join "`n"
+    $hasDrift = ($exitCode -eq 2) -and ($outputText -notmatch 'No changes\.')
 
     # Exit codes: 0 = no changes, 1 = error, 2 = drift detected
     return @{
-        HasDrift = ($LASTEXITCODE -eq 2)
-        ExitCode = $LASTEXITCODE
+        HasDrift = $hasDrift
+        ExitCode = $exitCode
     }
 }
 

@@ -77,26 +77,63 @@ class AAPTemplate {
     
     [void] HandleApplyFailure() {
         Write-Host "Handling AAP-specific failure: Importing rate policies..." -ForegroundColor Yellow
-        
-        $output = Get-TerraformOutput -TemplateFolder $this.TemplateFolder
-        if (-not $output) {
-            throw "Could not retrieve Terraform output for import"
-        }
-        
-        $configId = $output.config_id.value
-        $rate = $output.rate.value
-        
+
         $configPath = "environments/$($this.Environment)"
-        $varFile = "./$configPath/$($this.Environment).tfvars"
-        
+        $varFile    = "./$configPath/$($this.Environment).tfvars"
+        # Build the -chdir argument as a plain variable so PowerShell expands it
+        # reliably when passing to an external command inside a class method.
+        $chdir = "-chdir=./$($this.TemplateFolder)"
+
+        # Read current outputs
+        $output   = Get-TerraformOutput -TemplateFolder $this.TemplateFolder
+        $configId = if ($output -and $output.config_id) { $output.config_id.value } else { $null }
+        $rate     = if ($output -and $output.rate)      { $output.rate.value      } else { $null }
+
+        # On a fresh first deployment the apply fails before data sources are
+        # fully evaluated, leaving rate policy IDs empty in the outputs.
+        # A refresh-only pass forces Terraform to re-evaluate data sources and
+        # write the populated outputs back to state.
+        if (-not $configId -or -not $rate -or -not $rate.origin -or -not $rate.post -or -not $rate.page) {
+            Write-Host "Rate policy IDs not yet in state; refreshing data sources..." -ForegroundColor Yellow
+
+            $versionNotes = if ($this.DeployParams.VersionNotes) { $this.DeployParams.VersionNotes } else { "refresh" }
+            $username     = Get-Username
+            $emailsJson   = ConvertTo-Json @("$username@akamai.com") -Compress
+
+            $refreshArgs = @(
+                "apply", "-refresh-only", "-auto-approve",
+                "-var", "emails=$emailsJson",
+                "-var", "version_notes=$versionNotes",
+                "-var", "activation_notes=$versionNotes",
+                "-var", "activate_to_staging=false",
+                "-var", "activate_to_production=false",
+                "-var", "activation_to_staging_exists=false",
+                "-var", "activation_to_production_exists=false",
+                "-var-file", $varFile
+            )
+
+            terraform $chdir @refreshArgs | Out-Default
+
+            $output   = Get-TerraformOutput -TemplateFolder $this.TemplateFolder
+            $configId = if ($output -and $output.config_id) { $output.config_id.value } else { $null }
+            $rate     = if ($output -and $output.rate)      { $output.rate.value      } else { $null }
+        }
+
+        if (-not $configId) {
+            throw "config_id is empty after refresh. The security configuration may not have been created. Check the apply output above."
+        }
+        if (-not $rate -or -not $rate.origin -or -not $rate.post -or -not $rate.page) {
+            throw "Rate policy IDs are still empty after refresh. Inspect outputs manually: terraform $chdir output -json"
+        }
+
         # Import rate policies
-        terraform -chdir=$this.TemplateFolder import -var-file=$varFile `
+        terraform $chdir import -var-file $varFile `
             "module.security.akamai_appsec_rate_policy.origin_error" "${configId}:$($rate.origin)"
-        terraform -chdir=$this.TemplateFolder import -var-file=$varFile `
+        terraform $chdir import -var-file $varFile `
             "module.security.akamai_appsec_rate_policy.post_page_requests" "${configId}:$($rate.post)"
-        terraform -chdir=$this.TemplateFolder import -var-file=$varFile `
+        terraform $chdir import -var-file $varFile `
             "module.security.akamai_appsec_rate_policy.page_view_requests" "${configId}:$($rate.page)"
-        
+
         Write-Host "Resources imported successfully" -ForegroundColor Green
     }
     
@@ -162,6 +199,15 @@ class AAPTemplate {
                     
                     if ($retryCount -lt $maxRetries) {
                         $this.HandleApplyFailure()
+
+                        # Re-plan after imports/refresh — the state changed so the
+                        # original plan file is stale and cannot be applied as-is.
+                        Write-Host "Re-planning after import..." -ForegroundColor Yellow
+                        $exitCode = Invoke-TerraformPlan -TemplateFolder $this.TemplateFolder -Variables $vars -VarFilePath $varFile -OutFile $outFile
+                        if ($exitCode -ne 0) {
+                            throw "Terraform re-plan failed after import with exit code: $exitCode"
+                        }
+
                         Write-Host "Retrying terraform apply..." -ForegroundColor Yellow
                     }
                     else {
@@ -195,7 +241,7 @@ class AAPTemplate {
         
         while (-not $success -and $retryCount -lt $maxRetries) {
             $autoApprove = $retryCount -gt 0
-            $exitCode = Invoke-TerraformDestroy -TemplateFolder $this.TemplateFolder -VarFilePath $varFile -AutoApprove:$autoApprove
+            $exitCode = Invoke-TerraformDestroy -TemplateFolder $this.TemplateFolder -VarFilePath $varFile -AutoApprove:$autoApprove -NoRefresh
             
             if ($exitCode -eq 0) {
                 $success = $true

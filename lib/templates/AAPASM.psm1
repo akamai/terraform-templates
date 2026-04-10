@@ -128,6 +128,15 @@ class AAPASMTemplate {
                     if ($retryCount -ge $maxRetries) {
                         throw "AAP+ASM deployment failed after $maxRetries attempts"
                     }
+
+                    # Re-plan before retry — any out-of-band state change (e.g. a
+                    # refresh-only apply or import) makes the saved plan stale.
+                    Write-Host "Re-planning before retry..." -ForegroundColor Yellow
+                    $exitCode = Invoke-TerraformPlan -TemplateFolder $this.TemplateFolder -Variables $vars -VarFilePath $varFile -OutFile $outFile
+                    if ($exitCode -ne 0) {
+                        throw "Terraform re-plan failed on retry with exit code: $exitCode"
+                    }
+
                     Write-Host "Retrying terraform apply..." -ForegroundColor Yellow
                 }
             }

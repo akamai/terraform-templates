@@ -49,3 +49,5 @@ lib/**/.cache/
 # Custom
 .DS_Store
 
+dns_challenges.txt
+http-challenges.txt
