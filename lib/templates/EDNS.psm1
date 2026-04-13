@@ -78,13 +78,14 @@ class EDNSTemplate {
     }
   }
 
-  [void] Save([bool]$dryRun, [bool]$force) {
+  [void] Save([bool]$dryRun, [bool]$force, [bool]$debug) {
     Write-Host "Saving EDNS zone ($($this.ZoneType)) for environment $($this.Environment)" -ForegroundColor Cyan
 
     $this.ValidatePrerequisites()
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "edns-$($this.ZoneType).tfstate"
+    $logPath = "./$($this.TemplateFolder)/$configPath/$($this.Environment)-$($this.ZoneType)-akamai_tf.log"
 
     $tfvars = $this.GetTfvarsPath()
     $repoRoot = $this.GetRepoRoot()
@@ -97,6 +98,10 @@ class EDNSTemplate {
       -VarFilePath $tfvars `
       -Force $force
 
+    if ($debug) {
+      Enable-TerraformDebugLogging -LogPath $logPath
+    }
+
     $planFile = Join-Path `
       -Path $repoRoot `
       -ChildPath "$($this.TemplateFolder)/environments/$($this.Environment)/$($this.ZoneType).tfplan"
@@ -108,6 +113,10 @@ class EDNSTemplate {
       -OutFile $planFile
 
     if ($exitCode -ne 0) {
+      if ($debug) {
+        Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+        Disable-TerraformDebugLogging
+      }
       throw "Terraform plan failed for EDNS"
     }
 
@@ -117,18 +126,26 @@ class EDNSTemplate {
         -PlanFile $planFile
 
       if ($exitCode -ne 0) {
+        if ($debug) {
+          Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+          Disable-TerraformDebugLogging
+        }
         throw "Terraform apply failed for EDNS"
       }
+    }
+
+    if ($debug) {
+      Disable-TerraformDebugLogging
     }
 
     Write-Host "✓ EDNS deployment completed successfully" -ForegroundColor Green
   }
 
-  [void] Deploy([bool]$dryRun, [bool]$force) {
-    $this.Save($dryRun, $force)
+  [void] Deploy([bool]$dryRun, [bool]$force, [bool]$debug) {
+    $this.Save($dryRun, $force, $debug)
   }
 
-  [void] Destroy() {
+  [void] Destroy([bool]$debug) {
     Write-Host "Destroying EDNS zone ($($this.ZoneType)) for environment $($this.Environment)" -ForegroundColor Red
     # --- Safety check: does zone exist in Terraform state? ---
     $stateList = terraform -chdir="./$($this.TemplateFolder)" state list 2>$null
@@ -139,11 +156,16 @@ class EDNSTemplate {
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "edns-$($this.ZoneType).tfstate"
+    $logPath = "./$($this.TemplateFolder)/$configPath/$($this.Environment)-$($this.ZoneType)-akamai_tf.log"
 
     Initialize-TerraformBackend `
       -TemplateFolder $this.TemplateFolder `
       -ConfigPath $configPath `
       -StateFileName $stateFileName
+
+    if ($debug) {
+      Enable-TerraformDebugLogging -LogPath $logPath
+    }
 
     $tfvars = $this.GetTfvarsPath()
     $repoRoot = $this.GetRepoRoot()
@@ -162,6 +184,10 @@ class EDNSTemplate {
       -OutFile $planFile
 
     if ($exitCode -ne 0) {
+      if ($debug) {
+        Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+        Disable-TerraformDebugLogging
+      }
       throw "Phase 1 plan failed: could not generate cleanup plan"
     }
 
@@ -171,6 +197,10 @@ $exitCode = Invoke-TerraformApply `
   -PlanFile $planFile
 
 if ($exitCode -ne 0) {
+  if ($debug) {
+    Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+    Disable-TerraformDebugLogging
+  }
   throw "Phase 1 failed: could not remove DNS records"
 }
 
@@ -190,7 +220,15 @@ if ($exitCode -ne 0) {
       -VarFilePath $tfvars `
       -AutoApprove
     if ($exitCode -ne 0) {
+      if ($debug) {
+        Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+        Disable-TerraformDebugLogging
+      }
       throw "Terraform destroy failed for EDNS"
+    }
+
+    if ($debug) {
+      Disable-TerraformDebugLogging
     }
 
     Write-Host "EDNS zone destroyed successfully" -ForegroundColor Green

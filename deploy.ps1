@@ -483,10 +483,10 @@ try {
                 -TemplateFolder $TemplateFolder
 
             if ($Destroy) {
-                $template.Destroy()
+                $template.Destroy($PSBoundParameters.ContainsKey('Debug'))
             }
             else {
-                $template.Deploy($Dry.IsPresent, $Force.IsPresent)
+                $template.Deploy($Dry.IsPresent, $Force.IsPresent, $PSBoundParameters.ContainsKey('Debug'))
             }
         }
         
