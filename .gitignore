@@ -49,6 +49,6 @@ lib/**/.cache/
 # Custom
 .DS_Store
 
-dns_challenges.txt
-http-challenges.txt
+*challenges.txt
 *.pem
+unit-testing/
