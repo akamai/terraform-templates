@@ -51,3 +51,4 @@ lib/**/.cache/
 
 dns_challenges.txt
 http-challenges.txt
+*.pem

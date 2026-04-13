@@ -23,6 +23,10 @@ function Initialize-TerraformBackend {
         [Parameter(Mandatory = $false)]
         [string]$VarFilePath = "",
 
+        # Extra -var values to pass to the drift check (e.g. cert_name for CPS).
+        [Parameter(Mandatory = $false)]
+        [hashtable]$Variables = @{},
+
         [Parameter(Mandatory = $false)]
         [bool]$Force = $false
     )
@@ -45,7 +49,7 @@ function Initialize-TerraformBackend {
 
     # Drift detection — only when a varfile is supplied and -Force is not set
     if ($VarFilePath -and -not $Force) {
-        $driftResult = Invoke-TerraformDriftCheck -TemplateFolder $TemplateFolder -VarFilePath $VarFilePath
+        $driftResult = Invoke-TerraformDriftCheck -TemplateFolder $TemplateFolder -VarFilePath $VarFilePath -Variables $Variables
         if ($driftResult.HasDrift) {
             Write-Host ""
             Write-Host "WARNING: Configuration drift detected!" -ForegroundColor Yellow

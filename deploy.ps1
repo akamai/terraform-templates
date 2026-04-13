@@ -420,9 +420,9 @@ try {
             $template = New-CPSTemplate -CpsType $CpsType -CertNumber $CertNumber -TemplateFolder $TemplateFolder
             
             switch ($action) {
-                "create" { $template.CreateCert($Dry.IsPresent, $Force.IsPresent) }
-                "upload" { $template.UploadCert($Dry.IsPresent, $Force.IsPresent) }
-                "destroy" { $template.DestroyCert() }
+                "create" { $template.CreateCert($Dry.IsPresent, $Force.IsPresent, $PSBoundParameters.ContainsKey('Debug')) }
+                "upload" { $template.UploadCert($Dry.IsPresent, $Force.IsPresent, $PSBoundParameters.ContainsKey('Debug')) }
+                "destroy" { $template.DestroyCert($PSBoundParameters.ContainsKey('Debug')) }
             }
         }
 
