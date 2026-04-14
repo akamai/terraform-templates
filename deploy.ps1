@@ -486,7 +486,10 @@ try {
                 $template.Destroy($PSBoundParameters.ContainsKey('Debug'))
             }
             else {
-                $template.Deploy($Dry.IsPresent, $Force.IsPresent, $PSBoundParameters.ContainsKey('Debug'))
+                # -Force defaults to $true for EDNS: the zone's NS/SOA data sources
+                # trigger false-positive drift on every refresh, so the prompt would
+                # fire unconditionally. Explicit -Force flag is still respected.
+                $template.Deploy($Dry.IsPresent, $true, $PSBoundParameters.ContainsKey('Debug'))
             }
         }
         
