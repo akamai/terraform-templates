@@ -127,6 +127,12 @@ class AAPASMTemplate {
                         throw "AAP+ASM deployment failed after $maxRetries attempts"
                     }
                     Write-Host "Retrying terraform apply..." -ForegroundColor Yellow
+
+                    # Re-plan against current state before retrying (plan file is stale after a failed apply)
+                    $exitCode = Invoke-TerraformPlan -TemplateFolder $this.TemplateFolder -Variables $vars -VarFilePath $varFile -OutFile $outFile
+                    if ($exitCode -ne 0) {
+                        throw "Terraform re-plan failed with exit code: $exitCode"
+                    }
                 }
             }
         }
