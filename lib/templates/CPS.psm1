@@ -63,8 +63,6 @@ class CPSTemplate {
         if ($exitCode -ne 0) {
             if ($debug) {
                 Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
-            }
-            if ($debug) {
                 Disable-TerraformDebugLogging
             }
             throw "Terraform plan failed"

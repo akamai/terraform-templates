@@ -124,7 +124,7 @@ Bot Manager Premier:
 ### 🚀 new-property
 Delivery configuration templates for:
 - DSA (Dynamic Site Accelerator)
-- ION Standard
+- ION
 
 ### 🔑 new-dv-san-cert
 Certificate Provisioning System for:
