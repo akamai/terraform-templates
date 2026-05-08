@@ -1,3 +1,20 @@
+# [1.4.0](https://github.com/akamai/terraform-templates/compare/v1.3.2...v1.4.0) (2026-05-08)
+
+
+### Bug Fixes
+
+* **edns:** Disabled drift detection due to provider inconsistencies ([6fce93b](https://github.com/akamai/terraform-templates/commit/6fce93b44c3c55f5a527af9897421adf49d55ad3))
+
+
+### Features
+
+* Added drift detection support to AAP and AAPASM templates ([f44bea5](https://github.com/akamai/terraform-templates/commit/f44bea57b2518ca78fc9ad7cb13f57a5997c2ddf))
+* Debug support for EDNS template to support drift detection ([4e482e3](https://github.com/akamai/terraform-templates/commit/4e482e3d4e3e3c2beeeae38e18a12dcd75e38308))
+* Drift detection feature ([7cf12ae](https://github.com/akamai/terraform-templates/commit/7cf12aefc1bfba7a4ae7d5ce6b78f87bdf309d09))
+* Drift support for CPS 3rd Party Certificates ([23e49f1](https://github.com/akamai/terraform-templates/commit/23e49f1e026e6454a851279734eceaaafbfba256))
+
+
+
 ## [1.3.2](https://github.com/akamai/terraform-templates/compare/v1.3.1...v1.3.2) (2026-03-12)
 
 
