@@ -49,3 +49,6 @@ lib/**/.cache/
 # Custom
 .DS_Store
 
+*challenges.txt
+*.pem
+unit-testing/

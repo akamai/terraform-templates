@@ -53,6 +53,9 @@ pwsh deploy.ps1 pm -Env dev -Save -Dry
 # Debug mode (logs to {env}-akamai_tf.log)
 pwsh deploy.ps1 aap -Env prod -Save -Debug
 
+# Skip drift-detection prompt
+pwsh deploy.ps1 aap -Env prod -Save -Force
+
 # Destroy all resources
 pwsh deploy.ps1 pm -Env dev -Destroy
 ```
@@ -62,10 +65,11 @@ pwsh deploy.ps1 pm -Env dev -Destroy
 The `deploy.ps1` script provides critical orchestration that cannot be achieved with plain Terraform:
 
 1. **State File Isolation**: Dynamically generates `config.backend` pointing to environment-specific state files (e.g., `dev-terraform.tfstate`) to prevent state file conflicts
-2. **Activation Control**: Manages separate staging/production activation resources via runtime variables (`activate_to_staging`, `activation_to_staging_exists`)
-3. **AAP-Specific Workaround**: Auto-imports default Rate Control Policies on first run (AAP creates them automatically, causing Terraform conflicts)
-4. **Retry Logic**: Automatically retries failed applies with import operations for known AAP issues
-5. **Backend Reconfiguration**: Automatically runs `terraform init -reconfigure` with environment-specific backend config
+2. **Drift Detection**: Runs `terraform plan -refresh-only` after init to detect out-of-band changes; prompts the user to confirm before continuing (bypass with `-Force`)
+3. **Activation Control**: Manages separate staging/production activation resources via runtime variables (`activate_to_staging`, `activation_to_staging_exists`)
+4. **AAP-Specific Workaround**: Auto-imports default Rate Control Policies on first run (AAP creates them automatically, causing Terraform conflicts)
+5. **Retry Logic**: Automatically retries failed applies with import operations for known AAP issues
+6. **Backend Reconfiguration**: Automatically runs `terraform init -reconfigure` with environment-specific backend config
 
 ### Template Types
 
@@ -80,10 +84,11 @@ When you run `deploy.ps1`:
 1. Validates environment file exists: `./{template}/environments/{env}/{env}.tfvars`
 2. Creates `config.backend` file dynamically with path to environment-specific state file
 3. Runs `terraform init -reconfigure` with the backend config
-4. Checks for existing activation resources in state
-5. Runs `terraform plan` with appropriate runtime variables
-6. Applies changes (unless `-Dry` flag is used)
-7. On failure for AAP templates, imports default rate policies and retries
+4. Runs `terraform plan -refresh-only` to detect drift; prompts user to continue if drift is found (skipped with `-Force`)
+5. Checks for existing activation resources in state
+6. Runs `terraform plan` with appropriate runtime variables
+7. Applies changes (unless `-Dry` flag is used)
+8. On failure for AAP templates, imports default rate policies and retries
 
 ## Multi-Environment Structure
 

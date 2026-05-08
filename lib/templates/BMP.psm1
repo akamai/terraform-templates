@@ -248,10 +248,13 @@ class BMPTemplate {
         $stateFileName = "$($this.Environment)-terraform.tfstate"
         $logPath       = "./$($this.TemplateFolder)/$configPath/$($this.Environment)-akamai_tf.log"
 
+        # Initialize Terraform (drift check runs automatically when VarFilePath is supplied)
         Initialize-TerraformBackend `
             -TemplateFolder $this.TemplateFolder `
             -ConfigPath $configPath `
-            -StateFileName $stateFileName
+            -StateFileName $stateFileName `
+            -VarFilePath "./$configPath/$($this.Environment).tfvars" `
+            -Force $params.Force
 
         if ($params.Debug) {
             Enable-TerraformDebugLogging -LogPath $logPath
