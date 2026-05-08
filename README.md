@@ -1,6 +1,6 @@
 [![Release to Prod](https://github.com/akamai/terraform-templates/actions/workflows/release.yml/badge.svg)](https://github.com/akamai/terraform-templates/actions/workflows/release.yml)
 
-# Professional Services Terraform Templates
+# Akamai Terraform Templates
 
 Streamline your Akamai deployment with production-ready Terraform templates for delivery and security configurations, certificates and more. This repository provides automated, best-practice implementations for such configurations.
 
@@ -12,6 +12,7 @@ The contents of this repository enables rapid deployment of Akamai configuration
 - ✅ Pre-built, validated Terraform modules
 - ✅ Automated deployment scripts with built-in validation
 - ✅ Multi-environment support (e.g. dev, qa, prod)
+- ✅ Drift detection before every deployment
 - ✅ Product ID validation for security configurations
 - ✅ Integrated activation workflows
 
@@ -123,7 +124,7 @@ Bot Manager Premier:
 ### 🚀 new-property
 Delivery configuration templates for:
 - DSA (Dynamic Site Accelerator)
-- ION Standard
+- ION
 
 ### 🔑 new-dv-san-cert
 Certificate Provisioning System for:
@@ -132,6 +133,12 @@ Certificate Provisioning System for:
 ### 🔑 new-third-party-cert
 Certificate Provisioning System for:
 - Third Party Certificate
+
+### 🌐 new-edns
+Edge DNS zone management:
+- Primary zone creation and management
+- Secondary zone creation and management
+- Safe destroy workflow (removes records before zone deletion)
 
 ## Usage
 
@@ -150,6 +157,7 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-ActivateProduction` | Activate to Akamai production network |
 | `-Notes` | Version/activation notes (prompted if not provided) |
 | `-Dry` | Show Terraform plan without applying changes |
+| `-Force` | Skip the drift-detection prompt and continue automatically |
 | `-Destroy` | Deactivate and remove all resources |
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-SkipValidation` | Skip product ID validation |
@@ -164,6 +172,8 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-CreateCert` | Certificate identifier to create |
 | `-UploadCert` | Certificate identifier to upload (third-party only) |
 | `-DestroyCert` | Certificate identifier to destroy |
+| `-Dry` | Show Terraform plan without applying changes |
+| `-Force` | Skip the drift-detection prompt and continue automatically |
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-Help` | Display detailed help information |
 
@@ -185,8 +195,24 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-ActivateProductionSec` | Phase 2 | Activate security config to production (requires API activated to production) |
 | `-Notes` | Phase 2 | Version/activation notes (prompted if not provided) |
 | `-Dry` | Both | Show Terraform plan without applying changes |
+| `-Force` | Both | Skip the drift-detection prompt and continue automatically |
 | `-Destroy` | — | Deactivate and remove all BMP resources |
 | `-Debug` | Both | Enable detailed logging |
+
+#### Edge DNS (EDNS) Template
+
+| Parameter | Description |
+|-----------|-------------|
+| First Argument | `edns` - Edge DNS |
+| `-Env` | Target environment: `dev`, `qa`, `prod`, etc. |
+| `-ZoneType` | DNS zone type: `primary` or `secondary` |
+| `-Dry` | Show Terraform plan without applying changes |
+| `-Force` | Skip the drift-detection prompt and continue automatically |
+| `-Destroy` | Safely remove the DNS zone (records cleaned up first) |
+| `-Debug` | Enable detailed logging to `akamai_tf.log` |
+| `-Help` | Display detailed help information |
+
+> **Note:** EDNS destroy is a multi-phase operation: DNS records are removed first, then the zone is destroyed.
 
 ### Configuration
 
@@ -217,6 +243,8 @@ Refer to each template's `README.md` for detailed configuration options.
 # Basic syntax
 .\deploy.ps1 <template> -Env <environment> [options]
 
+# --- AAP & AAP+ASM ---
+
 # Save configuration without activation
 .\deploy.ps1 aap -Env dev -Save -Notes "Initial WAF rules"
 
@@ -234,6 +262,11 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Skip product ID validation
 .\deploy.ps1 aapasm -Env qa -Save -SkipValidation
+
+# Skip drift-detection prompt
+.\deploy.ps1 aap -Env prod -Save -Force
+
+# --- CPS (Certificate Provisioning System) ---
 
 # Create a DV SAN certificate
 .\deploy.ps1 cps -CpsType dv-san-cert -CreateCert cert1
@@ -269,6 +302,20 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Destroy all BMP resources
 .\deploy.ps1 bmp -Env dev -Destroy
+
+# --- Edge DNS (EDNS) ---
+
+# Create or update a PRIMARY zone in dev
+.\deploy.ps1 edns -Env dev -ZoneType primary -Save
+
+# Create or update a SECONDARY zone in qa
+.\deploy.ps1 edns -Env qa -ZoneType secondary -Save
+
+# Dry run for a PRIMARY zone
+.\deploy.ps1 edns -Env dev -ZoneType primary -Save -Dry
+
+# Safely destroy a SECONDARY zone in qa
+.\deploy.ps1 edns -Env qa -ZoneType secondary -Destroy
 ```
 
 ## Troubleshooting

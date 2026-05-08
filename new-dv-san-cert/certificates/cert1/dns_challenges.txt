@@ -1,0 +1,7 @@
+domain: lv426.jaescalo.online
+cname : _acme-challenge.lv426.jaescalo.online.
+target: aupHSXoSG-XaujtwFBBeozGgY28Dtgj4kR6Io4ETv6g
+
+domain: weyland-yutani.jaescalo.online
+cname : _acme-challenge.weyland-yutani.jaescalo.online.
+target: CBb48vjLiFC0wEBP7ZsYIMnZvIdb5JF6NQ_DX5q8ORk

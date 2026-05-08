@@ -35,15 +35,24 @@ class CPSTemplate {
         }
     }
     
-    [void] CreateCert([bool]$dryRun) {
+    [void] CreateCert([bool]$dryRun, [bool]$force, [bool]$debug) {
         Write-Host "Creating CPS certificate: $($this.CertNumber)" -ForegroundColor Green
         
         $this.ValidatePrerequisites()
         
         $configPath = "certificates/$($this.CertNumber)"
         $stateFileName = "$($this.CertNumber)-terraform.tfstate"
+        $logPath = "./$($this.TemplateFolder)/$configPath/$($this.CertNumber)-akamai_tf.log"
+
+        if ($debug) {
+            Enable-TerraformDebugLogging -LogPath $logPath
+        }
         
-        Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName
+        # Initialize Terraform (drift check runs automatically via -VarFilePath)
+        # Pass vars so cert_name is available during the refresh-only plan and
+        # terraform doesn't hang waiting for an interactive variable prompt.
+        Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName `
+            -VarFilePath "./$configPath/$($this.CertNumber).tfvars" -Variables $this.BuildTerraformVars() -Force $force
         
         $vars = $this.BuildTerraformVars()
         $outFile = "./$configPath/$($this.CertNumber).tfplan"
@@ -52,6 +61,10 @@ class CPSTemplate {
         $exitCode = Invoke-TerraformPlan -TemplateFolder $this.TemplateFolder -Variables $vars -VarFilePath $varFile -OutFile $outFile
         
         if ($exitCode -ne 0) {
+            if ($debug) {
+                Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+                Disable-TerraformDebugLogging
+            }
             throw "Terraform plan failed"
         }
         
@@ -76,18 +89,27 @@ class CPSTemplate {
                 }
             }
         }
+
+        if ($debug) {
+            Disable-TerraformDebugLogging
+        }
     }
     
-    [void] UploadCert([bool]$dryRun) {
+    [void] UploadCert([bool]$dryRun, [bool]$force, [bool]$debug) {
         # Upload is the same as create for CPS
-        $this.CreateCert($dryRun)
+        $this.CreateCert($dryRun, $force, $debug)
     }
     
-    [void] DestroyCert() {
+    [void] DestroyCert([bool]$debug) {
         Write-Host "Destroying CPS certificate: $($this.CertNumber)" -ForegroundColor Red
         
         $configPath = "certificates/$($this.CertNumber)"
         $stateFileName = "$($this.CertNumber)-terraform.tfstate"
+        $logPath = "./$($this.TemplateFolder)/$configPath/$($this.CertNumber)-akamai_tf.log"
+
+        if ($debug) {
+            Enable-TerraformDebugLogging -LogPath $logPath
+        }
         
         Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName
         
@@ -113,6 +135,10 @@ class CPSTemplate {
                 }
                 Write-Host "Retrying terraform destroy..." -ForegroundColor Yellow
             }
+        }
+
+        if ($debug) {
+            Disable-TerraformDebugLogging
         }
     }
 }

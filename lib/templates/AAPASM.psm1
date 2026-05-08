@@ -83,8 +83,10 @@ class AAPASMTemplate {
         $stateFileName = "$($this.Environment)-terraform.tfstate"
         $logPath = "./$($this.TemplateFolder)/$configPath/$($this.Environment)-akamai_tf.log"
         
-        Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName
-        
+        # Initialize Terraform (drift check runs automatically when VarFilePath is supplied)
+        Initialize-TerraformBackend -TemplateFolder $this.TemplateFolder -ConfigPath $configPath -StateFileName $stateFileName `
+            -VarFilePath "./$configPath/$($this.Environment).tfvars" -Force $params.Force
+
         if ($params.Debug) {
             Enable-TerraformDebugLogging -LogPath $logPath
         }
@@ -126,6 +128,15 @@ class AAPASMTemplate {
                     if ($retryCount -ge $maxRetries) {
                         throw "AAP+ASM deployment failed after $maxRetries attempts"
                     }
+
+                    # Re-plan before retry — any out-of-band state change (e.g. a
+                    # refresh-only apply or import) makes the saved plan stale.
+                    Write-Host "Re-planning before retry..." -ForegroundColor Yellow
+                    $exitCode = Invoke-TerraformPlan -TemplateFolder $this.TemplateFolder -Variables $vars -VarFilePath $varFile -OutFile $outFile
+                    if ($exitCode -ne 0) {
+                        throw "Terraform re-plan failed on retry with exit code: $exitCode"
+                    }
+
                     Write-Host "Retrying terraform apply..." -ForegroundColor Yellow
                 }
             }
