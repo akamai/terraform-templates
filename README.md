@@ -49,6 +49,15 @@ ps-terraform-templates/
 │   ├── main.tf
 │   ├── variables.tf
 │   └── README.md
+├── new-edns/                       # Edge DNS template
+│   ├── backends/                   # Environment + zone type backend configs
+│   ├── environments/               # Support for multiple environments
+│   │   ├── dev/
+│   │   ├── qa/
+│   │   └── prod/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── README.md
 └── README.md
 ```
 
@@ -63,6 +72,7 @@ Navigate to **Akamai Control Center → Identity & Access Management**:
    - **Application Security API** (for AAP/AAP+ASM)
    - **Bot Manager API** (for bot management features)
    - **Client Lists API** (for client lists)
+   - **Edge DNS API** (for DNS zone management)
 2. Generate credentials: `client_secret`, `access_token`, `client_token`, `host`
 
 ### 2. Get Account Switch Key
@@ -136,9 +146,10 @@ Certificate Provisioning System for:
 
 ### 🌐 new-edns
 Edge DNS zone management:
-- Primary zone creation and management
-- Secondary zone creation and management
-- Safe destroy workflow (removes records before zone deletion)
+- Primary zone creation and management (A, AAAA, CNAME, TXT, NS, MX, SRV, CAA, PTR, LOC, SPF, RP)
+- Optional SOA management and Akamai authoritative NS discovery
+- Secondary zone creation with configurable master servers and optional TSIG authentication
+- Safe multi-phase destroy workflow (records emptied, NS/SOA detached, zone destroyed)
 
 ## Usage
 
@@ -206,17 +217,20 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | First Argument | `edns` - Edge DNS |
 | `-Env` | Target environment: `dev`, `qa`, `prod`, etc. |
 | `-ZoneType` | DNS zone type: `primary` or `secondary` |
+| `-Save` | Save zone configuration without destroying |
 | `-Dry` | Show Terraform plan without applying changes |
 | `-Force` | Skip the drift-detection prompt and continue automatically |
 | `-Destroy` | Safely remove the DNS zone (records cleaned up first) |
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-Help` | Display detailed help information |
 
-> **Note:** EDNS destroy is a multi-phase operation: DNS records are removed first, then the zone is destroyed.
+> **Note:** EDNS destroy is a 3-phase operation: (1) all DNS records are force-emptied, (2) NS and SOA records are detached from Terraform state to prevent conflicts, (3) the zone itself is destroyed.
+
+> **Note:** EDNS templates do not use `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation` parameters. Drift detection is skipped automatically for EDNS zones, as NS/SOA data sources trigger false-positive drift on every refresh.
 
 ### Configuration
 
-Each template has environment-specific configurations in `environments/{env}/{env}.tfvars`:
+Each template has environment-specific configurations in `environments/{env}/{env}.tfvars` (or `environments/{env}/{zone_type}.tfvars` for EDNS):
 
 ```hcl
 # Common variables
@@ -360,6 +374,8 @@ Enable detailed logging:
 ```
 
 Logs are written to: `environments/{env}/{env}-akamai_tf.log`
+
+For EDNS, the zone type is included in the log filename: `environments/{env}/{env}-{zone_type}-akamai_tf.log` (e.g., `environments/dev/dev-primary-akamai_tf.log`)
 
 ## Provider Information
 
