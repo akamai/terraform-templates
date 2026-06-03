@@ -52,3 +52,5 @@ lib/**/.cache/
 *challenges.txt
 *.pem
 unit-testing/
+
+.env

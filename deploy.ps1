@@ -79,12 +79,21 @@ Skips product ID validation. Use this if product IDs have changed or for testing
 Skips the drift-detection prompt. When drift is detected before applying changes, the script normally
 prompts for confirmation. Pass -Force to bypass this prompt and continue automatically.
 
+.PARAMETER AI
+Enables AI-powered plan summary and error diagnosis. After a successful plan the AI prints a
+plain-English bullet-point summary of every change. On apply failure it diagnoses the error and
+suggests a fix. Requires the ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable.
+
 .PARAMETER Help
 Displays detailed help information about the script.
 
 .EXAMPLE
 PS> Get-Help deploy.ps1
 Show Help information for the deployment script
+
+.EXAMPLE
+PS> .\deploy.ps1 aap -Env dev -Save -AI
+Save AAP configuration for dev environment and print an AI-generated plain-English plan summary
 
 .EXAMPLE
 PS> .\deploy.ps1 aap -Env prod -Save -Notes "Some user notes"
@@ -243,6 +252,9 @@ Param(
     [switch]$Force,
 
     [Parameter()]
+    [switch]$AI,
+
+    [Parameter()]
     [switch]$Help
 )
 
@@ -259,6 +271,19 @@ if ($Help -or $args -contains "Help" -or $args -contains "-Help" -or $args -cont
 Import-Module "$PSScriptRoot/lib/core/TerraformRunner.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Validation.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Logger.psm1" -Force
+Import-Module "$PSScriptRoot/lib/core/AIAssistant.psm1" -Force
+
+# Enable AI features when requested
+if ($AI) {
+    $env:TF_AI_ENABLED = "1"
+    $aiProvider = Get-AIProvider
+    if ($aiProvider) {
+        Write-Host "AI features enabled (provider: $aiProvider)" -ForegroundColor Magenta
+    }
+    else {
+        Write-Warning "AI features requested but no API key found. Set ANTHROPIC_API_KEY or OPENAI_API_KEY."
+    }
+}
 
 # Map template type to module name
 $templateModuleMap = @{
@@ -501,6 +526,10 @@ try {
 catch {
     Write-Error "Deployment failed: $_"
     exit 1
+}
+finally {
+    # Reset AI env var so it does not leak into the caller's environment
+    $env:TF_AI_ENABLED = $null
 }
 
 # Execution summary

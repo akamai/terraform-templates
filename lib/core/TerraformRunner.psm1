@@ -6,6 +6,12 @@ Core Terraform execution functions
 Provides shared functions for running Terraform commands across all templates
 #>
 
+# Load AI assistant when available — graceful no-op if the file is missing.
+$_aiModule = Join-Path $PSScriptRoot "AIAssistant.psm1"
+if (Test-Path $_aiModule) {
+    Import-Module $_aiModule
+}
+
 function Initialize-TerraformBackend {
     [CmdletBinding()]
     param(
@@ -102,9 +108,34 @@ function Invoke-TerraformPlan {
     $varArgs += $OutFile
     
     Write-Host "Running Terraform plan..." -ForegroundColor Cyan
-    terraform -chdir="./$TemplateFolder" plan @varArgs | Out-Default
-    
-    return $LASTEXITCODE
+
+    if ($env:TF_AI_ENABLED -eq "1") {
+        # Tee to a temp file so we can feed errors to AI without buffering the live output.
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        try {
+            terraform -chdir="./$TemplateFolder" plan @varArgs 2>&1 | Tee-Object -FilePath $tempFile | Out-Default
+            $planExitCode = $LASTEXITCODE
+
+            if ($planExitCode -eq 0) {
+                Invoke-AIPlanSummary -TemplateFolder $TemplateFolder -PlanFile $OutFile
+            }
+            else {
+                $captured = Get-Content $tempFile -Raw -ErrorAction SilentlyContinue
+                if ($captured) {
+                    Invoke-AIErrorDiagnosis -ErrorText $captured
+                }
+            }
+        }
+        finally {
+            Remove-Item $tempFile -ErrorAction SilentlyContinue
+        }
+    }
+    else {
+        terraform -chdir="./$TemplateFolder" plan @varArgs | Out-Default
+        $planExitCode = $LASTEXITCODE
+    }
+
+    return $planExitCode
 }
 
 function Invoke-TerraformApply {
@@ -118,9 +149,32 @@ function Invoke-TerraformApply {
     )
     
     Write-Host "Applying Terraform changes..." -ForegroundColor Cyan
-    terraform -chdir="./$TemplateFolder" apply $PlanFile | Out-Default
-    
-    return $LASTEXITCODE
+
+    if ($env:TF_AI_ENABLED -eq "1") {
+        # Tee output to a temp file while streaming to console so we can
+        # analyse errors with AI on failure without buffering the live output.
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        try {
+            terraform -chdir="./$TemplateFolder" apply $PlanFile 2>&1 | Tee-Object -FilePath $tempFile | Out-Default
+            $applyExitCode = $LASTEXITCODE
+
+            if ($applyExitCode -ne 0) {
+                $captured = Get-Content $tempFile -Raw -ErrorAction SilentlyContinue
+                if ($captured) {
+                    Invoke-AIErrorDiagnosis -ErrorText $captured
+                }
+            }
+        }
+        finally {
+            Remove-Item $tempFile -ErrorAction SilentlyContinue
+        }
+    }
+    else {
+        terraform -chdir="./$TemplateFolder" apply $PlanFile | Out-Default
+        $applyExitCode = $LASTEXITCODE
+    }
+
+    return $applyExitCode
 }
 
 function Invoke-TerraformDestroy {
