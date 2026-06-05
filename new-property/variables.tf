@@ -77,12 +77,19 @@ variable "default_origin" {
   type        = string
 }
 
+variable "forward_host_header" {
+  description = "Host header to be forwarded to the origin server. Possible fixed values are ORIGIN_HOSTNAME or REQUEST_HOST_HEADER. But the user can also select any host header they would like to use as a custom value."
+  type        = string
+  default     = "REQUEST_HOST_HEADER"
+}
+
 variable "additional_origins" {
-  description = "Additional origins for the property. For now the match is only by hostname."
+  description = "Additional origins for the property. For now the match is only by hostname. The field forward_host_header allows specifying a custom host header for each additional origin.Possible fixed values are ORIGIN_HOSTNAME or REQUEST_HOST_HEADER. But the user can also select any host header they would like to use as a custom value."
   type = map(object({
-    origin_name    = string
-    hostname_match = list(string)
-    path_match     = list(string)
+    origin_name         = string
+    forward_host_header = string
+    hostname_match      = list(string)
+    path_match          = list(string)
   }))
 }
 
@@ -102,7 +109,7 @@ variable "td_region" {
 }
 
 variable "enable_mPulse" {
-  description = "Boolean tod ecide whether to inject the mpulse behavior"
+  description = "Boolean to decide whether to inject the mpulse behavior"
   type        = bool
   default     = true
 }
@@ -138,19 +145,14 @@ variable "noncompliance_reason" {
   default     = []
   validation {
     condition = (
+      length(var.noncompliance_reason) == 0 ||
       (
-        !var.activate_to_production ||
+        length(var.noncompliance_reason) == 1 &&
         (
-          (
-            length(var.noncompliance_reason) == 1 &&
-            var.activate_to_production
-          ) &&
-          (
-            contains(var.noncompliance_reason, "EMERGENCY") ||
-            contains(var.noncompliance_reason, "OTHER") ||
-            contains(var.noncompliance_reason, "NO_PRODUCTION_TRAFFIC") ||
-            contains(var.noncompliance_reason, "NONE")
-          )
+          contains(var.noncompliance_reason, "EMERGENCY") ||
+          contains(var.noncompliance_reason, "OTHER") ||
+          contains(var.noncompliance_reason, "NO_PRODUCTION_TRAFFIC") ||
+          contains(var.noncompliance_reason, "NONE")
         )
       )
     )
@@ -162,16 +164,6 @@ variable "ticket_id" {
   type        = string
   description = "Identifies the ticket that describes the need for the activation"
   default     = null
-  validation {
-    condition = (
-      !var.activate_to_production ||
-      (
-        var.ticket_id != null &&
-        var.activate_to_production
-      )
-    )
-    error_message = " a ticket id should be logged for complaince reasons"
-  }
 }
 
 # tflint-ignore: terraform_unused_declarations
@@ -179,72 +171,24 @@ variable "other_noncompliance_reason" {
   type        = string
   description = "Describes the reason why the activation must occur immediately, out of compliance with the standard procedure"
   default     = null
-  validation {
-    condition = (
-      !var.activate_to_production ||
-      !contains(var.noncompliance_reason, "OTHER") ||
-      (
-        var.other_noncompliance_reason != null &&
-        var.activate_to_production &&
-        contains(var.noncompliance_reason, "OTHER")
-      )
-    )
-    error_message = "The other reason explanantion needs to be logged"
-  }
 }
 
 variable "peer_reviewed_by" {
   type        = string
   description = "Email address of the peer who performed the review"
   default     = null
-  validation {
-    condition = (
-      !var.activate_to_production ||
-      !contains(var.noncompliance_reason, "NONE") ||
-      (
-        var.peer_reviewed_by != null &&
-        var.activate_to_production &&
-        contains(var.noncompliance_reason, "NONE")
-      )
-    )
-    error_message = "When NONE is choosen as the non compliance reason the peer_reviewed_by field is required"
-  }
 }
 
 variable "customer_email" {
   type        = string
   description = "Email address of the customer that acknowledged, tested and accepted the change"
   default     = null
-  validation {
-    condition = (
-      !var.activate_to_production ||
-      !contains(var.noncompliance_reason, "NONE") ||
-      (
-        var.customer_email != null &&
-        var.activate_to_production &&
-        contains(var.noncompliance_reason, "NONE")
-      )
-    )
-    error_message = "When NONE is choosen as the non compliance reason the customer_email field is required"
-  }
 }
 
 variable "unit_tested" {
   type        = bool
   description = "Whether the metadata to activate has been fully tested"
   default     = null
-  validation {
-    condition = (
-      !var.activate_to_production ||
-      !contains(var.noncompliance_reason, "NONE") ||
-      (
-        var.unit_tested != null &&
-        var.activate_to_production &&
-        contains(var.noncompliance_reason, "NONE")
-      )
-    )
-    error_message = "When NONE is choosen as the non compliance reason the unit_tested field is required"
-  }
 }
 
 variable "activation_notes" {
@@ -270,6 +214,11 @@ variable "activation_to_production_exists" {
 ## ----------------------------------------------------------------------------
 ## CP Code
 ## ----------------------------------------------------------------------------
+variable "default_cpcode" {
+  description = "Boolean to enable the default CP Code for all properties. If false, the CP Code must be specified in the property definition."
+  type        = bool
+  default     = false
+}
 
 variable "cpcode_name" {
   description = "Default CP Code name. Will be the property name (var.name) if null."
@@ -321,18 +270,13 @@ variable "ehn_domain" {
 
 variable "ip_behavior" {
   description = <<-EOD
-    EdgeHostname IP behaviour.
+    EdgeHostname IP behaviour.Possible values are IPV4 or IPV6_COMPLIANCE.
   EOD
   type        = string
   default     = "IPV6_COMPLIANCE"
 
   validation {
-    condition     = length(regexall("^(IPV4|IPV6_COMPLIANCE|IPV6_PERFORMANCE)$", var.ip_behavior)) > 0
-    error_message = "ERROR: Valid types are IPV4, IPV6_COMPLIANCE or IPV6_PERFORMANCE."
+    condition     = length(regexall("^(IPV4|IPV6_COMPLIANCE)$", var.ip_behavior)) > 0
+    error_message = "ERROR: Valid types are IPV4 or IPV6_COMPLIANCE."
   }
-}
-
-variable "dummy_test" {
-  type    = string
-  default = "dummy_test"
 }

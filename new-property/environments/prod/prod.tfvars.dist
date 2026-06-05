@@ -19,22 +19,30 @@ name                   = "<Config Name>"
 hostnames              = ["www.example.com", "api.example.com"]
 etls                   = true
 default_origin         = "origin.example.com"
+forward_host_header = "REQUEST_HOST_HEADER"
+
 # Set additional_origins=null if no additional origins are needed. In a similar fashion, set path_match or hostname_match to null if not needed.
+The field forward_host_header allows specifying a custom host header for each additional origin.Possible fixed values are ORIGIN_HOSTNAME or REQUEST_HOST_HEADER. But the user can also select any host header they would like to use as a custom value."
 additional_origins = {
   "api_origin" = {
     origin_name    = "api-origin.example.com"
     hostname_match = ["api.example.com"]
+    forward_host_header = "REQUEST_HOST_HEADER"
     path_match     = ["/api/*"]
   },
   "images_origin" = {
     origin_name    = "images-origin.example.com"
     hostname_match = null
+    forward_host_header = "REQUEST_HOST_HEADER"
     path_match     = ["/images/*"]
   }
 }
 sure_route_test_object = "/terraform/srto.html"
 td_region              = "CH2"
 cpcode_name            = "cpcode_name"
+
+# Enable only if product is Fresca or SPM
+enable_mpulse = false
 
 ## ----------------------------------------------------------------------------
 ## Activation

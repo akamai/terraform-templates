@@ -93,7 +93,7 @@
 
 
 module "property" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=v1.1.2"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=fix/DOHRMY-148-delivery"
 
   contract_id = var.contract_id
   group_id    = var.group_id
@@ -101,10 +101,11 @@ module "property" {
 
   product_id             = var.product_id
   name                   = var.name
-  version_notes          = "${var.version_notes}${var.dummy_test}"
+  version_notes          = var.version_notes
   hostnames              = var.hostnames
   etls                   = var.etls
   default_origin         = var.default_origin
+  forward_host_header    = var.forward_host_header
   additional_origins     = var.additional_origins
   sure_route_test_object = var.sure_route_test_object
   td_region              = var.td_region
@@ -123,7 +124,8 @@ module "property" {
   activation_to_staging_exists    = var.activation_to_staging_exists
   activation_to_production_exists = var.activation_to_production_exists
 
-  cpcode_name = var.cpcode_name
+  default_cpcode = var.default_cpcode
+  cpcode_name    = var.cpcode_name
 
   secure_by_default = var.secure_by_default
   certificate_id    = var.certificate_id
@@ -133,5 +135,36 @@ module "property" {
 
   providers = {
     akamai = akamai
+  }
+}
+
+check "production_activation_compliance" {
+  assert {
+    condition = (
+      !var.activate_to_production ||
+      (
+        length(var.noncompliance_reason) == 1 &&
+        (
+          contains(var.noncompliance_reason, "EMERGENCY") ||
+          contains(var.noncompliance_reason, "OTHER") ||
+          contains(var.noncompliance_reason, "NO_PRODUCTION_TRAFFIC") ||
+          contains(var.noncompliance_reason, "NONE")
+        ) &&
+        var.ticket_id != null &&
+        (
+          !contains(var.noncompliance_reason, "OTHER") ||
+          var.other_noncompliance_reason != null
+        ) &&
+        (
+          !contains(var.noncompliance_reason, "NONE") ||
+          (
+            var.peer_reviewed_by != null &&
+            var.customer_email != null &&
+            var.unit_tested != null
+          )
+        )
+      )
+    )
+    error_message = "When activate_to_production is true, set exactly one noncompliance_reason from EMERGENCY, OTHER, NO_PRODUCTION_TRAFFIC, NONE and provide required compliance fields (ticket_id, and additional fields for OTHER or NONE)."
   }
 }
