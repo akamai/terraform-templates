@@ -10,31 +10,20 @@ repos:
         stages: [commit-msg]
         args: []
 
-  - repo: https://github.com/terraform-docs/terraform-docs
-    rev: "v0.20.0"
+  - repo: https://github.com/antonbabenko/pre-commit-terraform
+    rev: "v1.98.1"
     hooks:
-      - id: terraform-docs-go
-        args: [./new-aap-configuration]
+      - id: terraform_docs
+        name: Terraform docs
+        description: >-
+          Inserts documentation from main.tf, module usage, requirements, 
+          resources, modules, inputs and outputs into README.md
+        args:
+          - --hook-config=--terraform-docs-version=v0.20.0
+          - --hook-config=--path-to-file=README.md
+          - --hook-config=--create-file-if-not-exist=true
+          - --args=--config=.terraform-docs.yaml
         stages: [pre-commit]
-      - id: terraform-docs-go
-        args: [./new-aapasm-configuration]
-        stages: [pre-commit]
-      - id: terraform-docs-go
-        args: [./new-property]
-        stages: [pre-commit]
-      - id: terraform-docs-go
-        args: [./new-dv-san-cert]
-        stages: [pre-commit]
-      - id: terraform-docs-go
-        args: [./new-third-party-cert]
-        stages: [pre-commit]
-      - id: terraform-docs-go
-        args: [./new-bmp-endpoints]
-        stages: [pre-commit]
-      - id: terraform-docs-go
-        args: [./new-edns]
-        stages: [pre-commit]
-          
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
     rev: "v1.98.1"
