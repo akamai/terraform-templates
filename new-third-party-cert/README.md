@@ -144,7 +144,7 @@ module "example" {
   	 sni_only  = <bool> | default: true
   	 wait_for_deployment  = <bool> | default: false
 }
- ```
+```
 
 ## Requirements
 

@@ -27,7 +27,7 @@ content: |-
     {{- end }}
     {{- end }}
   }
-   ```
+  ```
 
   {{ .Requirements }}
 

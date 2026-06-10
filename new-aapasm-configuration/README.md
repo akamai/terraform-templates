@@ -189,7 +189,7 @@ module "example" {
 ]
   	 version_notes  = <string> | default: "Initial Config"
 }
- ```
+```
 
 ## Requirements
 

@@ -254,7 +254,7 @@ module "example" {
     ttl    = number
   }))> | default: []
 }
- ```
+```
 
 ## Requirements
 

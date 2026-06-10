@@ -34,6 +34,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-aap-configuration
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true
@@ -42,6 +43,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-aapasm-configuration
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true
@@ -50,6 +52,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-property
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true
@@ -58,6 +61,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-dv-san-cert
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true
@@ -66,6 +70,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-third-party-cert
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true
@@ -74,6 +79,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-bmp-endpoints
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true
@@ -82,6 +88,7 @@ jobs:
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-edns
+          config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
           git-push: true

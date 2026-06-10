@@ -139,7 +139,7 @@ module "example" {
   	 unit_tested  = <bool> | default: null
   	 version_notes  = <string> | default: "Initial Config"
 }
- ```
+```
 
 ## Requirements
 

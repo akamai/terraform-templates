@@ -136,7 +136,7 @@ module "example" {
   	 signature_algorithm  = <string> | default: "SHA-256"
   	 sni_only  = <bool> | default: true
 }
- ```
+```
 
 ## Requirements
 
