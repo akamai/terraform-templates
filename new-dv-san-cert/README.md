@@ -157,7 +157,7 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dv-san-cert"></a> [dv-san-cert](#module\_dv-san-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert | v1.1.2 |
+| <a name="module_dv-san-cert"></a> [dv-san-cert](#module\_dv-san-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert | v1.3.3 |
 
 ## Inputs
 

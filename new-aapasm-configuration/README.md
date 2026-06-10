@@ -208,11 +208,11 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security | v1.1.2 |
-| <a name="module_botman"></a> [botman](#module\_botman) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager | v1.1.2 |
-| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-lists | v1.1.2 |
-| <a name="module_client-reputation"></a> [client-reputation](#module\_client-reputation) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation | v1.1.2 |
-| <a name="module_security"></a> [security](#module\_security) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/security | v1.1.2 |
+| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security | v1.3.3 |
+| <a name="module_botman"></a> [botman](#module\_botman) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager | v1.3.3 |
+| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-lists | v1.3.3 |
+| <a name="module_client-reputation"></a> [client-reputation](#module\_client-reputation) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation | v1.3.3 |
+| <a name="module_security"></a> [security](#module\_security) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/security | v1.3.3 |
 
 ## Inputs
 
