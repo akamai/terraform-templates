@@ -1,19 +1,27 @@
 name: Main Branch Protection
 on:
- pull_request:
-   branches:
-     - main
+  pull_request:
+    branches:
+      - main
 
 permissions:
   checks: write  # Allow the workflow to write status checks
 
 jobs:
- check-branch:
-   runs-on: ubuntu-latest
-   steps:
-     - name: Validate source branch
-       run: |
-         if [[ "${GITHUB_HEAD_REF}" != "integration" ]] && ! [[ "${GITHUB_HEAD_REF}" =~ ^hotfix/ ]]; then
-           echo "❌ Pull requests to main must come from 'integration' or 'hotfix/*'"
-           exit 1
-         fi
+  check-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate source branch
+        env:
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+        run: |
+          echo "PR base: ${PR_BASE_REF}"
+          echo "PR head: ${PR_HEAD_REF}"
+
+          if [[ "${PR_BASE_REF}" == "main" ]] && [[ "${PR_HEAD_REF}" != "integration" ]] && ! [[ "${PR_HEAD_REF}" =~ ^hotfix/ ]]; then
+            echo "❌ Pull requests to main must come from 'integration' or 'hotfix/*'"
+            exit 1
+          fi
+
+          echo "✅ Source branch validation passed"
