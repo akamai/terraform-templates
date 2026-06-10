@@ -6,18 +6,21 @@ AI-powered plan interpretation and error diagnosis
 Provides AI-assisted summaries of Terraform plan output and plain-English diagnosis
 of Terraform/Akamai API errors.
 
-Requires one of the following environment variables to be set:
-  ANTHROPIC_API_KEY  - Uses Claude (default model: claude-3-5-haiku-latest)
-  OPENAI_API_KEY     - Uses OpenAI (default model: gpt-4o-mini)
+Provider selection (first match wins):
+  TF_AI_ENDPOINT     - URL of a shared Fermyon/Akamai-Functions proxy (preferred).
+                       Optional bearer token via TF_AI_TOKEN.
+  ANTHROPIC_API_KEY  - Uses Claude directly (default model: claude-3-5-haiku-latest)
+  OPENAI_API_KEY     - Uses OpenAI directly (default model: gpt-4o-mini)
 
 Model overrides:
   ANTHROPIC_MODEL    - Override the Anthropic model (e.g. "claude-opus-4-5")
   OPENAI_MODEL       - Override the OpenAI model   (e.g. "gpt-4o")
 #>
 
-# Maximum characters of before/after JSON per resource sent to AI.
-# Keeps token usage low while retaining the most meaningful changed fields.
-$script:MaxResourceJsonChars = 2000
+# Maximum characters of the human-readable `terraform show <plan>` output sent to AI.
+# Property Manager rule trees can be large; 60k chars ≈ ~15k input tokens, comfortably
+# within gpt-4o-mini / claude-haiku context windows and a few tenths of a cent per call.
+$script:MaxPlanTextChars = 60000
 
 # Maximum characters of error text sent for diagnosis.
 $script:MaxErrorChars = 4000
@@ -25,11 +28,13 @@ $script:MaxErrorChars = 4000
 function Get-AIProvider {
     <#
     .SYNOPSIS
-    Returns the active AI provider name, or $null if no API key is configured.
+    Returns the active AI provider name, or $null if no provider is configured.
+    Order of preference: proxy → anthropic → openai.
     #>
     [CmdletBinding()]
     param()
 
+    if ($env:TF_AI_ENDPOINT)    { return "proxy" }
     if ($env:ANTHROPIC_API_KEY) { return "anthropic" }
     if ($env:OPENAI_API_KEY)    { return "openai" }
     return $null
@@ -52,13 +57,37 @@ function Invoke-AIRequest {
 
     $provider = Get-AIProvider
     if (-not $provider) {
-        Write-Host "[AI] No API key found. Set ANTHROPIC_API_KEY or OPENAI_API_KEY to use AI features." -ForegroundColor DarkGray
+        Write-Host "[AI] No provider configured. Set TF_AI_ENDPOINT, ANTHROPIC_API_KEY, or OPENAI_API_KEY." -ForegroundColor DarkGray
         return $null
     }
 
     try {
-        if ($provider -eq "anthropic") {
-            $model = if ($env:ANTHROPIC_MODEL) { $env:ANTHROPIC_MODEL } else { "claude-3-5-haiku-latest" }
+        if ($provider -eq "proxy") {
+            $endpoint = $env:TF_AI_ENDPOINT.TrimEnd('/')
+            $uri      = "$endpoint/v1/ai/chat"
+
+            $headers = @{ "Content-Type" = "application/json" }
+            if ($env:TF_AI_TOKEN) {
+                $headers["Authorization"] = "Bearer $env:TF_AI_TOKEN"
+            }
+
+            $body = @{
+                system     = $SystemPrompt
+                user       = $UserPrompt
+                max_tokens = 1024
+            } | ConvertTo-Json -Depth 10
+
+            $response = Invoke-RestMethod `
+                -Uri     $uri `
+                -Method  Post `
+                -Headers $headers `
+                -Body    $body `
+                -ErrorAction Stop
+
+            return $response.text
+        }
+        elseif ($provider -eq "anthropic") {
+            $model = if ($env:ANTHROPIC_MODEL) { $env:ANTHROPIC_MODEL } else { "claude-sonnet-4-6" }
 
             $headers = @{
                 "x-api-key"         = $env:ANTHROPIC_API_KEY
@@ -136,14 +165,25 @@ function Invoke-AIPlanSummary {
         [string]$PlanFile
     )
 
-    if (-not (Get-AIProvider)) { return }
+    if (-not (Get-AIProvider)) {
+        Write-Host "[AI] No provider configured. Set TF_AI_ENDPOINT, ANTHROPIC_API_KEY, or OPENAI_API_KEY to enable AI features." -ForegroundColor DarkYellow
+        return
+    }
 
     Write-Host "`nGenerating AI plan summary..." -ForegroundColor Magenta
 
-    # Convert the binary plan to structured JSON
-    $planJson = terraform -chdir="./$TemplateFolder" show -json $PlanFile 2>$null
+    # Resolve PlanFile to an absolute path so terraform -chdir interprets it correctly.
+    # (Without this, terraform looks for the path *relative to the chdir target*, not cwd.)
+    $resolvedPlan = $PlanFile
+    if (Test-Path $PlanFile) {
+        $resolvedPlan = (Resolve-Path $PlanFile).Path
+    }
+
+    # Step 1: parse JSON once — only to decide whether there are any actionable changes
+    # at all. Avoids spending tokens on a no-op plan.
+    $planJson = terraform -chdir="./$TemplateFolder" show -json $resolvedPlan 2>$null
     if ($LASTEXITCODE -ne 0 -or -not $planJson) {
-        Write-Warning "[AI] Could not read plan file as JSON — skipping summary."
+        Write-Warning "[AI] Could not read plan file as JSON — skipping summary. (Tried: $resolvedPlan)"
         return
     }
 
@@ -155,7 +195,6 @@ function Invoke-AIPlanSummary {
         return
     }
 
-    # Filter to resources that will actually change
     $actionableChanges = @("create", "update", "delete", "replace")
     $changes = $plan.resource_changes | Where-Object {
         $_.change -and $_.change.actions -and
@@ -167,33 +206,36 @@ function Invoke-AIPlanSummary {
         return
     }
 
-    # Build a compact, token-efficient representation for the AI
-    $changeSummaryLines = foreach ($c in $changes) {
-        $action = $c.change.actions -join "/"
-
-        $before = if ($c.change.before) {
-            $raw = $c.change.before | ConvertTo-Json -Depth 4 -Compress
-            if ($raw.Length -gt $script:MaxResourceJsonChars) {
-                $raw.Substring(0, $script:MaxResourceJsonChars) + "... [truncated]"
-            } else { $raw }
-        } else { "null" }
-
-        $after = if ($c.change.after) {
-            $raw = $c.change.after | ConvertTo-Json -Depth 4 -Compress
-            if ($raw.Length -gt $script:MaxResourceJsonChars) {
-                $raw.Substring(0, $script:MaxResourceJsonChars) + "... [truncated]"
-            } else { $raw }
-        } else { "null" }
-
-        "Resource : $($c.address)`nAction   : $action`nBefore   : $before`nAfter    : $after`n"
+    # Step 2: capture the human-readable plan text. Terraform's text view uses +/-/~
+    # markers that LLMs interpret natively and stays compact even for nested rule trees
+    # — unlike compact JSON which obscures nested additions when truncated.
+    $planTextLines = terraform -chdir="./$TemplateFolder" show $resolvedPlan 2>$null
+    if ($LASTEXITCODE -ne 0 -or -not $planTextLines) {
+        Write-Warning "[AI] Could not read plan file as text — skipping summary."
+        return
     }
 
-    $changeSummary = $changeSummaryLines -join "`n"
+    $planText = $planTextLines -join "`n"
+    if ($planText.Length -gt $script:MaxPlanTextChars) {
+        # Keep the tail — it contains the resource diffs and the final "Plan: N to add..." line.
+        $planText = "... [plan truncated; showing last $($script:MaxPlanTextChars) chars] ...`n" +
+                    $planText.Substring($planText.Length - $script:MaxPlanTextChars)
+    }
 
     $systemPrompt = @"
-You are an expert on Akamai's Terraform provider (akamai/akamai). You receive a list of planned Terraform resource changes for Akamai security (AAP / AAP+ASM) or delivery (Property Manager) configurations.
+You are an expert on Akamai's Terraform provider (akamai/akamai). You are given the human-readable output of `terraform show <planfile>` for an Akamai security (AAP / AAP+ASM) or delivery (Property Manager) configuration.
 
-Summarize every changed resource in plain English — one bullet point per resource. Be specific: include policy names, old values, and new values where present. Omit resources with only metadata changes (tags, notes). Highlight any activation or destruction.
+Diff markers in the input:
+  +  resource or field being ADDED
+  -  resource or field being REMOVED
+  ~  field being CHANGED in place
+
+Produce a concise, accurate bullet-point summary. One bullet per meaningful change. Examine ADDED blocks carefully — they often contain new origin rules, new behaviors, new hostnames, or new policies nested deep inside Property Manager rule trees. Do not dismiss them as "metadata" if they introduce real configuration.
+
+For each bullet, include:
+  • the resource type and name
+  • what specifically is changing (rule name, behavior name, hostname, threshold, etc.)
+  • old → new values when both are present
 
 Akamai resource types to know:
 - akamai_appsec_rate_policy          → rate-limiting rule (threshold in req/s or req/10s)
@@ -201,15 +243,14 @@ Akamai resource types to know:
 - akamai_appsec_slow_post_protection → slow POST attack mitigation
 - akamai_appsec_reputation_profile   → IP reputation-based blocking
 - akamai_appsec_activations          → security config activation to staging/production
-- akamai_property                    → delivery configuration (hostnames, caching rules)
+- akamai_property                    → delivery configuration (rules JSON contains nested children with behaviors like `origin`, `caching`, `cpCode`)
 - akamai_property_activation         → property activation to staging/production
 - akamai_dns_record                  → Edge DNS record
 
-Format each bullet as:
-• <plain resource description>: <what changes> (<old> → <new> when values differ)
+For `akamai_property` updates, the `rules` attribute is a jsonencode() blob — inspect nested `+ {` blocks inside `children = [...]` arrays for newly added rules or origins, and report each one (rule name, hostname behavior target, criteria).
 "@
 
-    $userPrompt = "Summarize these Terraform plan changes:`n`n$changeSummary"
+    $userPrompt = "Summarize this Terraform plan output:`n`n$planText"
 
     $summary = Invoke-AIRequest -SystemPrompt $systemPrompt -UserPrompt $userPrompt
     if ($summary) {
@@ -236,7 +277,10 @@ function Invoke-AIErrorDiagnosis {
         [string]$ErrorText
     )
 
-    if (-not (Get-AIProvider)) { return }
+    if (-not (Get-AIProvider)) {
+        Write-Host "[AI] No provider configured. Set TF_AI_ENDPOINT, ANTHROPIC_API_KEY, or OPENAI_API_KEY to enable AI features." -ForegroundColor DarkYellow
+        return
+    }
     if ([string]::IsNullOrWhiteSpace($ErrorText)) { return }
 
     Write-Host "`nRunning AI error diagnosis..." -ForegroundColor Red

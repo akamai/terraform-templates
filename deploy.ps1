@@ -82,7 +82,8 @@ prompts for confirmation. Pass -Force to bypass this prompt and continue automat
 .PARAMETER AI
 Enables AI-powered plan summary and error diagnosis. After a successful plan the AI prints a
 plain-English bullet-point summary of every change. On apply failure it diagnoses the error and
-suggests a fix. Requires the ANTHROPIC_API_KEY or OPENAI_API_KEY environment variable.
+suggests a fix. Requires one of: TF_AI_ENDPOINT (Akamai-hosted proxy, preferred),
+ANTHROPIC_API_KEY, or OPENAI_API_KEY environment variable.
 
 .PARAMETER Help
 Displays detailed help information about the script.
@@ -281,7 +282,7 @@ if ($AI) {
         Write-Host "AI features enabled (provider: $aiProvider)" -ForegroundColor Magenta
     }
     else {
-        Write-Warning "AI features requested but no API key found. Set ANTHROPIC_API_KEY or OPENAI_API_KEY."
+        Write-Warning "AI features requested but no provider configured. Set TF_AI_ENDPOINT, ANTHROPIC_API_KEY, or OPENAI_API_KEY."
     }
 }
 
