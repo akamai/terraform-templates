@@ -1,26 +1,26 @@
 /**
- * # ### Akamai CPS Third-Party Certificate Module
+ * # Akamai CPS Third-Party Certificate Module
  * 
  * This Terraform configuration manages Akamai Certificate Provisioning System (CPS) third-party certificate enrollments. Handles both enrollment (creating a new certificate request) and certificate upload.
  * It supports:
  * 
  * ## Two-phase workflow in Terraform when dealing with Third-Party signed certificates:
  * 
- * ## Phase 1 → Terraform creates the enrollment + CSR.
+ * ### Phase 1 → Terraform creates the enrollment + CSR.
  * - Creating an enrollment with certificate details (SANs, contacts, CSR, network config, etc.)
  * - You take the CSR, submit to a CA, and later come back with the signed cert.
  * 
- * ## Phase 2 → Terraform uploads the signed certificate to Akamai.
+ * ### Phase 2 → Terraform uploads the signed certificate to Akamai.
  * - Uploading RSA or ECDSA certificates and their trust chains in pem format 
  * 
+ * ## Prerequisites
  * 
- * **Prerequisites**
+ * - Terraform v1.9+
+ * - Akamai Terraform Provider
+ * - An Akamai .edgerc file with valid credentials
  * 
- * Terraform v1.9+
- * Akamai Terraform Provider
- * An Akamai .edgerc file with valid credentials
- * 
- * **Project Structure**
+ * ## Project Structure
+ * ```
  * .
  * ├── [main.tf]              # Root module calling the CPS enrollment module
  * ├── [variables.tf]         # Input variables definition
@@ -29,36 +29,36 @@
  * ├── [providers.tf]         # Akamai provider configuration
  * └── [csr_ecdsa.pem]        # Generated ECDSA CSR (auto-generated)
  * └── [csr_rsa.pem]          # Generated RSA CSR (auto-generated)
+ * ```
  * 
- * 
- * **Scenario 1: Create a New Enrollment**
+ * ## Scenario 1: Create a New Enrollment`
  * 
  * If you are creating certificate for the first time, you will create an enrollment with your domain details with the help of tfvars. 
  * 
- * **Scenario 2: Upload a Certificate to an Existing Enrollment**
+ * ## Scenario 2: Upload a Certificate to an Existing Enrollment
  * 
  * Once an enrollment exists/created, you can upload your RSA/ ECDSA cert and trust chain.
- * 
+ * ```hcl
  * enrollment_id = 12345
  * 
  * certificate_rsa_pem   = file("rsa_certificate.pem")
  * trust_chain_rsa_pem   = file("rsa_certificate_ca.pem")
  * certificate_ecdsa_pem = ""
  * trust_chain_ecdsa_pem = ""
- * 
+ * ````
  * - This attaches your certificate to the given enrollment and deploys it to the Akamai edge.
  * 
  * **Please note**
  * 
- * 1. [change_management]
- *         1. [Purpose]: Enables Akamai Change Management workflow (review/approve before deployment).
- *         2. If [true] changes are put into Change Management pending state until manually approved.
- *         3. If [false]  changes go straight through without requiring Change Management approval.     
+ * 1. `change_management`
+ *     1. Purpose: Enables Akamai Change Management workflow (review/approve before deployment).
+ *     2. If `true` changes are put into Change Management pending state until manually approved.
+ *     3. If `false`  changes go straight through without requiring Change Management approval.     
  * 
- * 2. [acknowledge_post_verification_warnings]
- *       1. [Purpose]: After CPS runs verification (DNS checks, certificate validation, etc.), it may raise warnings.
- *       2. If [true]: it indicates that you acknowledge the post-verification warnings and confirm proceeding with the deployment
- *       3. If [false]: deployment halts until warnings are reviewed/cleared.
+ * 2. `acknowledge_post_verification_warnings`
+ *     1. Purpose: After CPS runs verification (DNS checks, certificate validation, etc.), it may raise warnings.
+ *     2. If `true`: it indicates that you acknowledge the post-verification warnings and confirm proceeding with the deployment
+ *     3. If `false`: deployment halts until warnings are reviewed/cleared.
  * 
  * 3. If only one type (RSA or ECDSA) is used, leave the other’s fields blank.
 */
