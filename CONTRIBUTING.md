@@ -295,7 +295,7 @@ hotfix/* branch → main (release automation) → integration (backmerge, no CI)
    ```bash
    git checkout integration
    git pull origin integration
-   git merge main           # or: git merge origin/main
+   git merge origin/main
    # resolve any conflicts if needed
    git push origin integration
    ```
