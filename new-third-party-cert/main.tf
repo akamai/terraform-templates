@@ -38,14 +38,14 @@
  * ## Scenario 2: Upload a Certificate to an Existing Enrollment
  * 
  * Once an enrollment exists/created, you can upload your RSA/ ECDSA cert and trust chain.
- * ```
+ * ```hcl
  * enrollment_id = 12345
  * 
  * certificate_rsa_pem   = file("rsa_certificate.pem")
  * trust_chain_rsa_pem   = file("rsa_certificate_ca.pem")
  * certificate_ecdsa_pem = ""
  * trust_chain_ecdsa_pem = ""
- * ```
+ * ````
  * - This attaches your certificate to the given enrollment and deploys it to the Akamai edge.
  * 
  * **Please note**
