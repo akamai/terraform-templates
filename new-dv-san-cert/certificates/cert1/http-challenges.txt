@@ -1,7 +1,0 @@
-domain: lv426.jaescalo.online
-cname : http://lv426.jaescalo.online/.well-known/acme-challenge/YVhnO5s2GtreXwxs3BuxthAmoTxhcqHjqDWxFpZ35k8
-target: YVhnO5s2GtreXwxs3BuxthAmoTxhcqHjqDWxFpZ35k8.MTBYXvmiaHkLzZVaHIxg9Dv0FuRHj9cU6De8dGrpua0
-
-domain: weyland-yutani.jaescalo.online
-cname : http://weyland-yutani.jaescalo.online/.well-known/acme-challenge/uWCpYzQIt09mpma2OPf062RAhrBFLwgclbDFreOABCc
-target: uWCpYzQIt09mpma2OPf062RAhrBFLwgclbDFreOABCc.MTBYXvmiaHkLzZVaHIxg9Dv0FuRHj9cU6De8dGrpua0
