@@ -1,0 +1,44 @@
+name: Copilot Code Review
+
+# Automatically requests a Copilot code review on every PR targeting integration.
+# Copilot will review Terraform (.tf, .tfvars), PowerShell (.ps1), and workflow files.
+#
+# Prerequisites:
+#   - GitHub Copilot code review must be enabled for this repository
+#     (Settings → Copilot → "Code review" → Enable)
+#   - The GITHUB_TOKEN needs pull-requests: write permission (set below)
+
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - ready_for_review
+    branches:
+      - integration
+    paths:
+      - '**.tf'
+      - '**.tfvars'
+      - '**.ps1'
+      - 'tests/**'
+      - '.github/workflows/**.yml'
+
+jobs:
+  copilot-review:
+    name: Request Copilot Review
+    # Skip draft PRs — request review only when the PR is ready
+    if: github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Request Copilot Code Review
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh api \
+            --method POST \
+            -H "Accept: application/vnd.github+json" \
+            /repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/requested_reviewers \
+            -f 'reviewers[]=copilot-pull-request-reviewer'

@@ -1,0 +1,83 @@
+name: "Copilot Setup Steps"
+
+# Runs automatically when this file changes (for validation), and supports
+# manual runs from the Actions tab.
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # Job name MUST be exactly `copilot-setup-steps` to be picked up by the cloud agent.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      # ── Terraform ──────────────────────────────────────────────────────────
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: "1.12.1"
+
+      # ── TFLint ─────────────────────────────────────────────────────────────
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v6
+        with:
+          tflint_version: latest
+
+      - name: Init TFLint
+        run: tflint --init
+
+      # ── Trivy ──────────────────────────────────────────────────────────────
+      - name: Install Trivy
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      # ── PowerShell modules ─────────────────────────────────────────────────
+      # Akamai PS module (Get-AccountSwitchKey etc.) and Pester for deploy.ps1 tests.
+      - name: Install PowerShell modules
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Akamai.PowerShell -RequiredVersion 2.2.0 -Scope CurrentUser -Force
+          Install-Module -Name Pester          -Force -SkipPublisherCheck -Scope CurrentUser
+
+      # ── SSH key for private Terraform modules ──────────────────────────────
+      # The Copilot cloud agent needs SSH access to akamai/terraform-templates-modules
+      # so `terraform init` can download versioned modules.
+      #
+      # Prerequisites (one-time setup):
+      #   1. Go to repo Settings → Environments → copilot
+      #   2. Add an environment secret called DEPLOY_KEY containing the private
+      #      SSH key whose public key is registered as a Deploy Key on
+      #      akamai/terraform-templates-modules (read-only access is sufficient).
+      - name: Setup SSH for private Terraform modules
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
+          git config --global url."git@github.com:".insteadOf "https://github.com/"
+          git config --global url."git@github.com:".insteadOf "http://github.com/"
+
+      # ── Verify tool versions ───────────────────────────────────────────────
+      - name: Verify installed tools
+        run: |
+          echo "=== Terraform ===" && terraform version
+          echo "=== TFLint ===" && tflint --version
+          echo "=== Trivy ===" && trivy --version
+          echo "=== PowerShell ===" && pwsh --version
