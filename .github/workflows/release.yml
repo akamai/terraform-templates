@@ -5,10 +5,12 @@ on:
     branches:
       - main
       - master
+      - feat/jaescalo-test-ai-changelog
 
 permissions:
   contents: write
   pull-requests: write
+  models: read
 
 jobs:
   release:
@@ -38,7 +40,7 @@ jobs:
           create-summary: true
 
       - name: Update VERSION file
-        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        if: ${{ steps.changelog.outputs.skipped == 'false' && (github.ref_name == 'main' || github.ref_name == 'master') }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,13 +58,73 @@ jobs:
           git tag -a "${{ steps.changelog.outputs.tag }}" -m "Release ${{ steps.changelog.outputs.tag }}"
           git push --follow-tags
 
-      # Create GitHub release with auto-generated changelog if there are releasable commits (feat:, fix:, feat!:)
+      # Generate an AI summary of the changelog using GitHub Models (gpt-4o-mini).
+      # Falls back gracefully to the raw changelog if the API is unavailable.
+      - name: Generate AI Release Summary
+        id: ai-summary
+        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CHANGELOG_CONTENT: ${{ steps.changelog.outputs.clean_changelog }}
+        run: |
+          python3 << 'PYEOF'
+          import os, json, urllib.request, sys
+
+          changelog = os.environ.get("CHANGELOG_CONTENT", "")
+          token = os.environ.get("GITHUB_TOKEN", "")
+
+          payload = json.dumps({
+              "messages": [{
+                  "role": "user",
+                  "content": (
+                      "Summarize these Akamai Terraform Templates release notes in 2-3 sentences "
+                      "for infrastructure engineers. Focus on the most impactful changes across "
+                      "security (AAP/ASM), delivery (PM), DNS, certificates, and bot management. "
+                      "Be concise and technical. Do not use bullet points.\n\nChangelog:\n" + changelog
+                  )
+              }],
+              "model": "gpt-4o-mini",
+              "max_tokens": 150
+          }).encode()
+
+          try:
+              req = urllib.request.Request(
+                  "https://models.inference.ai.azure.com/chat/completions",
+                  data=payload,
+                  headers={
+                      "Content-Type": "application/json",
+                      "Authorization": f"Bearer {token}"
+                  }
+              )
+              with urllib.request.urlopen(req, timeout=30) as resp:
+                  summary = json.loads(resp.read())["choices"][0]["message"]["content"].strip()
+              full_body = f"## 📋 Summary\n\n{summary}\n\n---\n\n{changelog}"
+          except Exception as e:
+              print(f"AI summary unavailable, using raw changelog: {e}", file=sys.stderr)
+              full_body = changelog
+
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"body<<EOF_BODY\n{full_body}\nEOF_BODY\n")
+          PYEOF
+
+      # Create GitHub release on main/master
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
-        if: ${{ steps.changelog.outputs.skipped == 'false' }}
+        if: ${{ steps.changelog.outputs.skipped == 'false' && (github.ref_name == 'main' || github.ref_name == 'master') }}
         with:
           tag_name: ${{ steps.changelog.outputs.tag }}
           name: ${{ steps.changelog.outputs.tag }}
-          body: ${{ steps.changelog.outputs.clean_changelog }}
+          body: ${{ steps.ai-summary.outputs.body }}
           draft: false
           prerelease: false
+
+      # Create a draft pre-release on test branches to validate the AI summary output
+      - name: Create Test Pre-Release
+        uses: softprops/action-gh-release@v2
+        if: ${{ steps.changelog.outputs.skipped == 'false' && github.ref_name != 'main' && github.ref_name != 'master' }}
+        with:
+          tag_name: test-${{ github.ref_name }}-${{ github.run_id }}
+          name: "[TEST] ${{ steps.changelog.outputs.tag }} @ ${{ github.ref_name }}"
+          body: ${{ steps.ai-summary.outputs.body }}
+          draft: true
+          prerelease: true
