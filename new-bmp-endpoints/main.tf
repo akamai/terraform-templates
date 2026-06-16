@@ -521,7 +521,7 @@ data "akamai_contract" "contract" {
 }
 
 module "api_definition" {
-  source   = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/api-definition?ref=v1.3.3"
+  source   = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/api-definition?ref=v1.4.0"
   for_each = var.apis
 
   api_json       = "${path.module}/${var.apis[each.key]}"
@@ -538,7 +538,7 @@ module "api_definition" {
 }
 
 module "transactional_endpoint" {
-  source   = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/transactional-endpoint?ref=v1.3.3"
+  source   = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/transactional-endpoint?ref=v1.4.0"
   for_each = var.apis
 
   # AppSec lookup inputs
@@ -569,7 +569,7 @@ module "transactional_endpoint" {
 }
 
 module "security_config_activation" {
-  source                          = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/security-config-activation?ref=v1.3.3"
+  source                          = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/security-config-activation?ref=v1.4.0"
   config_id                       = module.transactional_endpoint["api1"].config_id
   config_name                     = var.config_name
   activate_to_staging             = var.activate_to_staging
