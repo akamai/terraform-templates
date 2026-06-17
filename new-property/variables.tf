@@ -139,6 +139,56 @@ variable "activate_to_production" {
   default     = false
 }
 
+check "production_activation_noncompliance_reason" {
+  assert {
+    condition = (
+      !var.activate_to_production || length(
+        setsubtract(
+          toset(var.noncompliance_reason),
+          toset(["EMERGENCY", "OTHER", "NO_PRODUCTION_TRAFFIC", "NONE"])
+        )
+    ) == 0)
+    error_message = "When activate_to_production is true, noncompliance_reason should be a list of any of the above EMERGENCY, OTHER, NO_PRODUCTION_TRAFFIC, or NONE."
+  }
+}
+
+check "production_activation_ticket_id" {
+  assert {
+    condition = (
+      !var.activate_to_production ||
+      contains(var.noncompliance_reason, "NO_PRODUCTION_TRAFFIC") ||
+      var.ticket_id != null
+    )
+    error_message = "When activate_to_production is true, ticket_id is required."
+  }
+}
+
+check "production_activation_other_reason" {
+  assert {
+    condition = (
+      !var.activate_to_production ||
+      !contains(var.noncompliance_reason, "OTHER") ||
+      var.other_noncompliance_reason != null
+    )
+    error_message = "When noncompliance_reason is OTHER, other_noncompliance_reason is required."
+  }
+}
+
+check "production_activation_none_compliance" {
+  assert {
+    condition = (
+      !var.activate_to_production ||
+      !contains(var.noncompliance_reason, "NONE") ||
+      (
+        var.peer_reviewed_by != null &&
+        var.customer_email != null &&
+        var.unit_tested != null
+      )
+    )
+    error_message = "When noncompliance_reason is NONE, peer_reviewed_by, customer_email, and unit_tested are required."
+  }
+}
+
 variable "noncompliance_reason" {
   type        = list(string)
   description = "Allowed values for noncompliance_reason are \"NO_PRODUCTION_TRAFFIC\", \"EMERGENCY\", \"NONE\". (OR null for the customer, as None will require the complaince block)"

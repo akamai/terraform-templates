@@ -93,8 +93,7 @@
 
 
 module "property" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=fix/DOHRMY-148-delivery"
-
+  source      = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=integration"
   contract_id = var.contract_id
   group_id    = var.group_id
 
@@ -135,36 +134,5 @@ module "property" {
 
   providers = {
     akamai = akamai
-  }
-}
-
-check "production_activation_compliance" {
-  assert {
-    condition = (
-      !var.activate_to_production ||
-      (
-        length(var.noncompliance_reason) == 1 &&
-        (
-          contains(var.noncompliance_reason, "EMERGENCY") ||
-          contains(var.noncompliance_reason, "OTHER") ||
-          contains(var.noncompliance_reason, "NO_PRODUCTION_TRAFFIC") ||
-          contains(var.noncompliance_reason, "NONE")
-        ) &&
-        var.ticket_id != null &&
-        (
-          !contains(var.noncompliance_reason, "OTHER") ||
-          var.other_noncompliance_reason != null
-        ) &&
-        (
-          !contains(var.noncompliance_reason, "NONE") ||
-          (
-            var.peer_reviewed_by != null &&
-            var.customer_email != null &&
-            var.unit_tested != null
-          )
-        )
-      )
-    )
-    error_message = "When activate_to_production is true, set exactly one noncompliance_reason from EMERGENCY, OTHER, NO_PRODUCTION_TRAFFIC, NONE and provide required compliance fields (ticket_id, and additional fields for OTHER or NONE)."
   }
 }

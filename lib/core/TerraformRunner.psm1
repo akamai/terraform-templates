@@ -34,6 +34,8 @@ function Initialize-TerraformBackend {
     # Create backend config file
     $backendConfig = "path=`"./$ConfigPath/$StateFileName`""
     $backendConfigPath = "./$TemplateFolder/$ConfigPath/config.backend"
+    $stateFilePath = "./$TemplateFolder/$ConfigPath/$StateFileName"
+    $stateFileExistedBeforeInit = Test-Path $stateFilePath
     
     $backendConfig | Out-File -FilePath $backendConfigPath -Force
     
@@ -47,8 +49,8 @@ function Initialize-TerraformBackend {
         throw "Terraform initialization failed"
     }
 
-    # Drift detection — only when a varfile is supplied and -Force is not set
-    if ($VarFilePath -and -not $Force) {
+    # Drift detection only makes sense when a state file existed before init, varfile is supplied and -Force is not set
+    if ($VarFilePath -and -not $Force -and $stateFileExistedBeforeInit) {
         $driftResult = Invoke-TerraformDriftCheck -TemplateFolder $TemplateFolder -VarFilePath $VarFilePath -Variables $Variables
         if ($driftResult.HasDrift) {
             Write-Host ""
@@ -66,6 +68,9 @@ function Initialize-TerraformBackend {
         else {
             Write-Host "No drift detected." -ForegroundColor Green
         }
+    }
+    elseif ($VarFilePath -and -not $Force) {
+        Write-Host "Skipping drift detection because no Terraform state file existed before initialization." -ForegroundColor DarkGray
     }
 }
 
