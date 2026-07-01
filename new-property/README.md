@@ -158,7 +158,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | v1.3.3 |
+| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | integration |
 
 ## Inputs
 
