@@ -93,7 +93,8 @@
 
 
 module "property" {
-  source      = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=integration"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery?ref=v1.3.3"
+
   contract_id = var.contract_id
   group_id    = var.group_id
 

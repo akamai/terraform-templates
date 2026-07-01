@@ -141,7 +141,7 @@ module "example" {
   	 unit_tested  = <bool> | default: null
   	 version_notes  = <string> | default: "Initial Config"
 }
- ```
+```
 
 ## Requirements
 
@@ -158,7 +158,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | integration |
+| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | v1.3.3 |
 
 ## Inputs
 
