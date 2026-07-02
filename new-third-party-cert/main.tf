@@ -64,7 +64,7 @@
 */
 
 module "third-party-cert" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.3.3"
+  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.5.0"
 
   //enrollment_id                        = var.enrollment_id
   common_name                           = var.common_name
