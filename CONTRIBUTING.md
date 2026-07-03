@@ -102,6 +102,7 @@ This repository uses a **modular PowerShell architecture** to manage Terraform d
   - `AAPASM.psm1` - AAP + Advanced Security Management handler  
   - `PropertyManager.psm1` - Property Manager configuration handler
   - `CPS.psm1` - Certificate Provisioning System handler
+  - `DS2.psm1` - DataStream 2 configuration handler
 
 - **`deploy.ps1`** - Main orchestration script
   - Maps template types to handlers via hashtables
@@ -128,13 +129,15 @@ terraform-templates/
 │       ├── AAP.psm1              # AAP template handler
 │       ├── AAPASM.psm1           # AAP+ASM template handler
 │       ├── PropertyManager.psm1  # Property Manager handler
-│       └── CPS.psm1              # CPS handler
+│       ├── CPS.psm1              # CPS handler
+│       └── DS2.psm1              # DataStream 2 handler
 ├── tests/
 │   ├── deploy.Tests.ps1          # Deploy script tests
 │   └── lib-modules.Tests.ps1     # Module unit tests
 ├── new-aap-configuration/        # AAP template files
 ├── new-aapasm-configuration/     # AAP+ASM template files
 ├── new-property/                 # Property Manager template files
+├── new-ds2/                      # DataStream 2 template files
 └── new-*-cert/                   # CPS certificate templates
 ```
 
