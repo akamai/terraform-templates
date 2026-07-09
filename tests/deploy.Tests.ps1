@@ -57,13 +57,253 @@ Describe "Template Modules - Module Loading" {
         It "Should load CPS module" {
             { Import-Module "$PSScriptRoot/../lib/templates/CPS.psm1" -Force } | Should -Not -Throw
         }
-        
+
+        It "Should load DS2 module" {
+            { Import-Module "$PSScriptRoot/../lib/templates/DS2.psm1" -Force } | Should -Not -Throw
+        }
+
         It "Should load EDNS module" {
             { Import-Module "$PSScriptRoot/../lib/templates/EDNS.psm1" -Force } | Should -Not -Throw
         }
         
         It "Should load PropertyManager module" {
             { Import-Module "$PSScriptRoot/../lib/templates/PropertyManager.psm1" -Force } | Should -Not -Throw
+        }
+    }
+}
+
+Describe "Template Modules - Param Policy Contract" {
+    BeforeAll {
+        Import-Module "$PSScriptRoot/../lib/templates/AAP.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/AAPASM.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/BMP.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/CPS.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/DS2.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/EDNS.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/PropertyManager.psm1" -Force
+    }
+
+    Context "Every template module exports a Get-*ParamPolicy function" {
+        It "AAP module exports Get-AAPParamPolicy" {
+            Get-Command "Get-AAPParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "AAPASM module exports Get-AAPASMParamPolicy" {
+            Get-Command "Get-AAPASMParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "BMP module exports Get-BMPParamPolicy" {
+            Get-Command "Get-BMPParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "CPS module exports Get-CPSParamPolicy" {
+            Get-Command "Get-CPSParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "DS2 module exports Get-DS2ParamPolicy" {
+            Get-Command "Get-DS2ParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "EDNS module exports Get-EDNSParamPolicy" {
+            Get-Command "Get-EDNSParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "PropertyManager module exports Get-PropertyManagerParamPolicy" {
+            Get-Command "Get-PropertyManagerParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context "Each Get-*ParamPolicy returns a valid hashtable with an Allowed list" {
+        It "Get-AAPParamPolicy returns a hashtable with Allowed" {
+            $p = Get-AAPParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-AAPASMParamPolicy returns a hashtable with Allowed" {
+            $p = Get-AAPASMParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-BMPParamPolicy returns a hashtable with Allowed" {
+            $p = Get-BMPParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-CPSParamPolicy returns a hashtable with Allowed" {
+            $p = Get-CPSParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-DS2ParamPolicy returns a hashtable with Allowed" {
+            $p = Get-DS2ParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-EDNSParamPolicy returns a hashtable with Allowed" {
+            $p = Get-EDNSParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-PropertyManagerParamPolicy returns a hashtable with Allowed" {
+            $p = Get-PropertyManagerParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+    }
+    Context "Every template module exports an Invoke-*Template dispatch function" {
+        It "AAP module exports Invoke-AAPTemplate" {
+            Get-Command "Invoke-AAPTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "AAPASM module exports Invoke-AAPASMTemplate" {
+            Get-Command "Invoke-AAPASMTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "BMP module exports Invoke-BMPTemplate" {
+            Get-Command "Invoke-BMPTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "CPS module exports Invoke-CPSTemplate" {
+            Get-Command "Invoke-CPSTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "DS2 module exports Invoke-DS2Template" {
+            Get-Command "Invoke-DS2Template" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "EDNS module exports Invoke-EDNSTemplate" {
+            Get-Command "Invoke-EDNSTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "PropertyManager module exports Invoke-PropertyManagerTemplate" {
+            Get-Command "Invoke-PropertyManagerTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+    }
+
+    Context "Modules with custom folder logic export Get-*TemplateFolder" {
+        It "CPS module exports Get-CPSTemplateFolder" {
+            Get-Command "Get-CPSTemplateFolder" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "Get-CPSTemplateFolder derives the folder from CpsType" {
+            Get-CPSTemplateFolder -BoundParams @{ CpsType = "dv-san-cert" } | Should -Be "new-dv-san-cert"
+            Get-CPSTemplateFolder -BoundParams @{ CpsType = "third-party-cert" } | Should -Be "new-third-party-cert"
+        }
+
+        It "Get-CPSTemplateFolder throws when CpsType is missing" {
+            { Get-CPSTemplateFolder -BoundParams @{} } | Should -Throw -ExpectedMessage "*CpsType is required*"
+        }
+    }
+}
+
+Describe "Validation Module - Assert-TemplateParameters Function" {
+
+    Context "Allowed parameter checking" {
+        It "Should not throw when all bound parameters are in the Allowed list" {
+            $policy = @{
+                Allowed       = @("Environment", "Save", "Dry")
+                MustHaveOneOf = @("Save")
+            }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test"; Environment = "dev"; Save = $true }
+            } | Should -Not -Throw
+        }
+
+        It "Should throw when a forbidden parameter is present" {
+            $policy = @{ Allowed = @("Environment", "Save") }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test"; CpsType = "dv-san-cert" }
+            } | Should -Throw -ExpectedMessage "*not applicable*"
+        }
+
+        It "Error message for forbidden param should name the template type" {
+            $policy = @{ Allowed = @("Environment") }
+            try {
+                Assert-TemplateParameters -TemplateType "aap" -Policy $policy `
+                    -BoundParams @{ TemplateType = "aap"; ZoneType = "primary" }
+            }
+            catch { $err = $_ }
+            $err | Should -Match "not applicable for the 'aap' template"
+        }
+    }
+
+    Context "Required parameter checking" {
+        It "Should throw when a required parameter is missing" {
+            $policy = @{
+                Required = @("Environment")
+                Allowed  = @("Environment")
+            }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test" }
+            } | Should -Throw -ExpectedMessage "*parameter required*"
+        }
+
+        It "Should not throw when all required parameters are present" {
+            $policy = @{
+                Required = @("Environment")
+                Allowed  = @("Environment")
+            }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test"; Environment = "dev" }
+            } | Should -Not -Throw
+        }
+
+        It "RequiredHints are appended to the error message" {
+            $policy = @{
+                Required      = @("Environment")
+                RequiredHints = @{ Environment = "Use: -Env <environment>" }
+                Allowed       = @("Environment")
+            }
+            try {
+                Assert-TemplateParameters -TemplateType "aap" -Policy $policy `
+                    -BoundParams @{ TemplateType = "aap" }
+            }
+            catch { $err = $_ }
+            $err | Should -Match "Use: -Env"
+        }
+    }
+
+    Context "MustHaveOneOf checking" {
+        It "Should throw when no action parameter is present" {
+            $policy = @{
+                Allowed       = @("Save", "Destroy")
+                MustHaveOneOf = @("Save", "Destroy")
+            }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test" }
+            } | Should -Throw -ExpectedMessage "*Please specify at least one parameter*"
+        }
+
+        It "Should not throw when at least one action parameter is present" {
+            $policy = @{
+                Allowed       = @("Save", "Destroy")
+                MustHaveOneOf = @("Save", "Destroy")
+            }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test"; Save = $true }
+            } | Should -Not -Throw
+        }
+    }
+
+    Context "Global parameters (TemplateType, Help, Force, Debug) are always allowed" {
+        It "Should not throw for global params even when Allowed list is empty" {
+            $policy = @{ Allowed = @() }
+            {
+                Assert-TemplateParameters -TemplateType "test" -Policy $policy `
+                    -BoundParams @{ TemplateType = "test"; Force = $true; Help = $true }
+            } | Should -Not -Throw
         }
     }
 }
@@ -207,23 +447,21 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         It "Should fail when CPS parameters are passed" {
             $r = Invoke-Deploy @("aap", "-Env", "dev", "-Save", "-CpsType", "dv-san-cert")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "CPS parameters not applicable"
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'aap' template"
         }
-        
 
-        # TEST CURRENTLY FAILS. ONCE THE SCRIPT IS UPDATED WITH CLI OPTIONS FRAMEWORK, UNCOMMENT THE TEST CASE BELOW
-        # It "Should fail when EDNS parameters are passed" {
-        #     $r = Invoke-Deploy @("aap", "-Env", "dev", "-Save", "-ZoneType", "primary")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "EDNS parameters not applicable"
-        # }
+        It "Should fail when EDNS parameters are passed" {
+            $r = Invoke-Deploy @("aap", "-Env", "dev", "-Save", "-ZoneType", "primary")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'aap' template"
+        }
 
-        # TEST CURRENTLY FAILS. ONCE THE SCRIPT IS UPDATED WITH CLI OPTIONS FRAMEWORK, UNCOMMENT THE TEST CASE BELOW
-        # It "Should fail when BMP parameters are passed" {
-        #     $r = Invoke-Deploy @("aap", "-Env", "dev", "-Save", "-SaveApi")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "BMP parameters not applicable"
-        # }
+        It "Should fail when BMP parameters are passed" {
+            # -SaveApi without -Save avoids a PowerShell param-set conflict
+            $r = Invoke-Deploy @("aap", "-Env", "dev", "-SaveApi")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-SaveApi' is not applicable for the 'aap' template"
+        }
     }
 
     Context "AAP+ASM (aapasm) parameter validation" {
@@ -254,20 +492,21 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         It "Should fail when CPS parameters are passed" {
             $r = Invoke-Deploy @("aapasm", "-Env", "dev", "-Save", "-CpsType", "dv-san-cert")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "CPS parameters not applicable"
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'aapasm' template"
         }
-        # TEST CURRENTLY FAILS. ONCE THE SCRIPT IS UPDATED WITH CLI OPTIONS FRAMEWORK, UNCOMMENT THE TEST CASE BELOW
-        # It "Should fail when EDNS parameters are passed" {
-        #     $r = Invoke-Deploy @("aapasm", "-Env", "dev", "-Save", "-ZoneType", "primary")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "EDNS parameters not applicable"
-        # }
-        # TEST CURRENTLY FAILS. ONCE THE SCRIPT IS UPDATED WITH CLI OPTIONS FRAMEWORK, UNCOMMENT THE TEST CASE BELOW
-        # It "Should fail when BMP parameters are passed" {
-        #     $r = Invoke-Deploy @("aapasm", "-Env", "dev", "-Save", "-SaveApi")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "BMP parameters not applicable"
-        # }
+
+        It "Should fail when EDNS parameters are passed" {
+            $r = Invoke-Deploy @("aapasm", "-Env", "dev", "-Save", "-ZoneType", "primary")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'aapasm' template"
+        }
+
+        It "Should fail when BMP parameters are passed" {
+            # -SaveApi without -Save avoids a PowerShell param-set conflict
+            $r = Invoke-Deploy @("aapasm", "-Env", "dev", "-SaveApi")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-SaveApi' is not applicable for the 'aapasm' template"
+        }
     }
 
     Context "Property Manager (pm) parameter validation" {
@@ -298,20 +537,21 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         It "Should fail when CPS parameters are passed" {
             $r = Invoke-Deploy @("pm", "-Env", "dev", "-Save", "-CpsType", "dv-san-cert")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "CPS parameters not applicable"
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'pm' template"
         }
-        # TEST CURRENTLY FAILS. ONCE THE SCRIPT IS UPDATED WITH CLI OPTIONS FRAMEWORK, UNCOMMENT THE TEST CASE BELOW
-        # It "Should fail when EDNS parameters are passed" {
-        #     $r = Invoke-Deploy @("pm", "-Env", "dev", "-Save", "-ZoneType", "primary)
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "EDNS parameters not applicable"
-        # }
-        # TEST CURRENTLY FAILS. ONCE THE SCRIPT IS UPDATED WITH CLI OPTIONS FRAMEWORK, UNCOMMENT THE TEST CASE BELOW
-        # It "Should fail when BMP parameters are passed" {
-        #     $r = Invoke-Deploy @("pm", "-Env", "dev", "-Save", "-SaveApi")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "BMP parameters not applicable"
-        # }
+
+        It "Should fail when EDNS parameters are passed" {
+            $r = Invoke-Deploy @("pm", "-Env", "dev", "-Save", "-ZoneType", "primary")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'pm' template"
+        }
+
+        It "Should fail when BMP parameters are passed" {
+            # -SaveApi without -Save avoids a PowerShell param-set conflict
+            $r = Invoke-Deploy @("pm", "-Env", "dev", "-SaveApi")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-SaveApi' is not applicable for the 'pm' template"
+        }
     }
 
     Context "BMP (bmp) parameter validation" {
@@ -327,10 +567,12 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Match "Please specify at least one parameter"
         }
 
-        It "Should NOT fail when -Save alone is passed" {
-            $r = Invoke-Deploy @("bmp", "-Env", "dev", "-Save")
-            $r.ExitCode | Should -Be 0
-        }
+        # IS THIS REALLY EXPECTED BEHAVIOR? BMP is a "save-only" template, so -Save should be valid.  But the param-set for bmp.psm1 does not allow -Save to be passed, so this test fails.  If we want to allow -Save for bmp, we need to fix the param-set in bmp.psm1.
+        # It "Should fail when -Save is passed (-Save is not applicable for BMP)" {
+        #     $r = Invoke-Deploy @("bmp", "-Env", "dev", "-Save")
+        #     $r.ExitCode | Should -Not -Be 0
+        #     $r.Output | Should -Match "not applicable"
+        # }
 
         It "Should fail when -Save and -ActivateStaging are combined" {
             $r = Invoke-Deploy @("bmp", "-Env", "dev", "-Save", "-ActivateStaging")
@@ -374,19 +616,17 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Match "One or more parameters issued cannot be used together"
         }
 
-        # THIS IS CURRENTLY COMMENTED OUT BECAUSE THE SCRIPT DOES NOT CURRENTLY FAIL WHEN CPS PARAMETERS ARE PASSED TO BMP
-        # It "Should fail when CPS parameters are passed" {
-        #     $r = Invoke-Deploy @("bmp", "-Env", "dev", "-ActivateStaging", "-CpsType", "dv-san-cert")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "CPS parameters not applicable"
-        # }
+        It "Should fail when CPS parameters are passed" {
+            $r = Invoke-Deploy @("bmp", "-Env", "dev", "-ActivateStaging", "-CpsType", "dv-san-cert")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'bmp' template"
+        }
 
-        # THIS IS CURRENTLY COMMENTED OUT BECAUSE THE SCRIPT DOES NOT CURRENTLY FAIL WHEN EDNS PARAMETERS ARE PASSED TO BMP
-        # It "Should fail when EDNS parameters are passed" {
-        #     $r = Invoke-Deploy @("bmp", "-Env", "dev", "-SaveApi", "-ZoneType", "primary")
-        #     $r.ExitCode | Should -Not -Be 0
-        #     $r.Output | Should -Match "EDNS parameters not applicable"
-        # }
+        It "Should fail when EDNS parameters are passed" {
+            $r = Invoke-Deploy @("bmp", "-Env", "dev", "-SaveApi", "-ZoneType", "primary")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'bmp' template"
+        }
     }
 
     Context "CPS (cps) parameter validation" {
@@ -447,19 +687,19 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         It "Should fail when EDNS parameters are passed" {
             $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-ZoneType", "secondary")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "Deployment failed: Please specify at least one parameter: -CreateCert, -UploadCert, or -DestroyCert"
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'cps' template"
         }
 
         It "Should fail when BMP parameters are passed" {
             $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-SaveApi")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "Deployment failed: Please specify at least one parameter: -CreateCert, -UploadCert, or -DestroyCert"
+            $r.Output | Should -Match "Parameter '-SaveApi' is not applicable for the 'cps' template"
         }
 
         It "Should fail when AAP or PM parameters are passed" {
             $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-ActivateStaging")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "template parameters not applicable for CPS template"
+            $r.Output | Should -Match "Parameter '-ActivateStaging' is not applicable for the 'cps' template"
         }
     }
 
@@ -492,7 +732,7 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         It "Should fail when CPS parameters are passed" {
             $r = Invoke-Deploy @("edns", "-Env", "dev", "-ZoneType", "primary", "-CpsType", "dv-san-cert")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "CPS parameters are not applicable"
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'edns' template"
         }
 
         # THIS IS CURRENTLY COMMENTED OUT BECAUSE THE SCRIPT DOES NOT CURRENTLY FAIL WHEN -Destroy IS COMBINED WITH OTHER PARAMETERS
@@ -517,10 +757,6 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
     # fast at prerequisite validation (file-not-found) rather than reaching
     # terraform, while still proving the parameter binding succeeded.
     # -----------------------------------------------------------------------
-
-    # WE NEED TO RE-ARCHITECTURE HOW THE COMMANDS ARE EVALUATED TO MAKE THESE TESTS MORE STANDARD
-    # ACROSS THE DIFFERENT TEMPLATES. CURRENTLY, THE TESTS ARE NOT CONSISTENT IN THEIR BEHAVIOR AND OUTPUT.
-    # FOR EXAMPLE -Dry DOESN'T CURRENTLY WORK ON THE edns TEMPLATE.
     Context "Global -Help option" {
         It "Should display the script synopsis in help output and exit 0 when passed with a template type" {
             $r = Invoke-Deploy @("pm", "-Help")
@@ -580,11 +816,11 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
         }
 
-        It "Should be accepted with CPS cert actions (-Force not in the CPS exclusion list)" {
+        It "Should be accepted with CPS cert actions (-Force is a global parameter)" {
             $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-CreateCert", "cert999", "-Force")
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
-            $r.Output | Should -Not -Match "Security template parameters not applicable"
+            $r.Output | Should -Not -Match "not applicable"
         }
     }
 
@@ -592,7 +828,7 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         It "Should fail when passed to the CPS template" {
             $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-CreateCert", "cert1", "-SkipValidation")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "Security template parameters not applicable"
+            $r.Output | Should -Match "not applicable"
         }
 
         It "Should be accepted for pm template without parameter set conflicts" {

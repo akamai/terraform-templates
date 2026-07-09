@@ -159,4 +159,78 @@ function New-CPSTemplate {
     return [CPSTemplate]::new($CpsType, $CertNumber, $TemplateFolder)
 }
 
-Export-ModuleMember -Function New-CPSTemplate
+function Get-CPSParamPolicy {
+    <#
+    .SYNOPSIS
+    Returns the parameter policy for the CPS template.
+    Called automatically by deploy.ps1 before routing begins.
+    Note: CpsType presence is pre-validated in deploy.ps1 before this policy runs.
+    #>
+    return @{
+        Allowed       = @("CpsType", "CreateCert", "UploadCert", "DestroyCert")
+        MustHaveOneOf = @("CreateCert", "UploadCert", "DestroyCert")
+    }
+}
+
+function Get-CPSTemplateFolder {
+    <#
+    .SYNOPSIS
+    Returns the CPS template folder derived from -CpsType.
+    Overrides the default folder-map lookup in deploy.ps1 because the CPS folder
+    is determined by the certificate type, not the template-type key alone.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    if (-not $BoundParams['CpsType']) {
+        throw "CpsType is required for CPS template. Use: -CpsType dv-san-cert or -CpsType third-party-cert"
+    }
+    return "new-$($BoundParams['CpsType'])"
+}
+
+function Invoke-CPSTemplate {
+    <#
+    .SYNOPSIS
+    Dispatches a CPS certificate operation received from deploy.ps1.
+    Owns all CPS-specific routing logic so that deploy.ps1 stays template-agnostic.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateFolder,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    $action     = $null
+    $certNumber = $null
+
+    if ($BoundParams.ContainsKey('CreateCert')) {
+        $action     = 'create'
+        $certNumber = $BoundParams['CreateCert']
+    }
+    elseif ($BoundParams.ContainsKey('UploadCert')) {
+        $action     = 'upload'
+        $certNumber = $BoundParams['UploadCert']
+    }
+    elseif ($BoundParams.ContainsKey('DestroyCert')) {
+        $action     = 'destroy'
+        $certNumber = $BoundParams['DestroyCert']
+    }
+
+    $template = New-CPSTemplate -CpsType $BoundParams['CpsType'] -CertNumber $certNumber -TemplateFolder $TemplateFolder
+
+    $isDry   = $BoundParams.ContainsKey('Dry')
+    $isForce = $BoundParams.ContainsKey('Force')
+    $isDebug = $BoundParams.ContainsKey('Debug')
+
+    switch ($action) {
+        'create'  { $template.CreateCert($isDry, $isForce, $isDebug) }
+        'upload'  { $template.UploadCert($isDry, $isForce, $isDebug) }
+        'destroy' { $template.DestroyCert($isDebug) }
+    }
+}
+
+Export-ModuleMember -Function New-CPSTemplate, Get-CPSParamPolicy, Get-CPSTemplateFolder, Invoke-CPSTemplate

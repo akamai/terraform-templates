@@ -194,4 +194,54 @@ function New-PropertyManagerTemplate {
     return [PropertyManagerTemplate]::new($Environment, $TemplateFolder)
 }
 
-Export-ModuleMember -Function New-PropertyManagerTemplate
+function Get-PropertyManagerParamPolicy {
+    <#
+    .SYNOPSIS
+    Returns the parameter policy for the Property Manager template.
+    Called automatically by deploy.ps1 before routing begins.
+    #>
+    return @{
+        Required      = @("Environment")
+        RequiredHints = @{ Environment = "Use: -Env <environment>" }
+        Allowed       = @(
+            "Environment", "Save", "ActivateStaging", "ActivateProduction",
+            "Destroy", "VersionNotes", "SkipValidation", "Dry"
+        )
+        MustHaveOneOf = @("Save", "ActivateStaging", "ActivateProduction", "Destroy")
+    }
+}
+
+function Invoke-PropertyManagerTemplate {
+    <#
+    .SYNOPSIS
+    Dispatches a Property Manager deployment request received from deploy.ps1.
+    Owns all PM-specific routing logic so that deploy.ps1 stays template-agnostic.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateFolder,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    $template = New-PropertyManagerTemplate -Environment $BoundParams['Environment'] -TemplateFolder $TemplateFolder
+
+    if ($BoundParams.ContainsKey('Destroy')) {
+        $template.Destroy()
+    }
+    else {
+        $template.Deploy(@{
+            Save               = $BoundParams.ContainsKey('Save')
+            ActivateStaging    = $BoundParams.ContainsKey('ActivateStaging')
+            ActivateProduction = $BoundParams.ContainsKey('ActivateProduction')
+            VersionNotes       = $BoundParams['VersionNotes']
+            Dry                = $BoundParams.ContainsKey('Dry')
+            SkipValidation     = $BoundParams.ContainsKey('SkipValidation')
+            Force              = $BoundParams.ContainsKey('Force')
+            Debug              = $BoundParams.ContainsKey('Debug')
+        })
+    }
+}
+
+Export-ModuleMember -Function New-PropertyManagerTemplate, Get-PropertyManagerParamPolicy, Invoke-PropertyManagerTemplate
