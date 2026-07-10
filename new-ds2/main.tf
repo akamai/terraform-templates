@@ -62,25 +62,7 @@
  * - Dynatrace (`dynatrace_connector`)
  * - TrafficPeak / Hydrolix (`trafficpeak_connector`)
  */
-
-## ----------------------------------------------------------------------------
-# Module: DataStream 2 (DS-managed / Decoupled)
-## ----------------------------------------------------------------------------
-# ============================================================================
-# FIXME(ds2-ref): TEMPORARY MODULE REF — MUST BE CHANGED BEFORE RELEASE
-# ----------------------------------------------------------------------------
-# The ds2 module is not yet on main / in a release tag, so `ref` is pinned to a
-# specific integration commit SHA (immutable + reproducible) rather than the
-# moving `integration` branch.
-#
-# >>> ACTION REQUIRED once ds2 ships to main and a version tag is cut:
-#       replace ref=<commit-sha> below with ref=vX.Y.Z (the release tag).
-#
-# Search markers to find every spot to update: "FIXME(ds2-ref)" / "DS2_REF_TODO"
-# See also: README.md (Modules table) and terraform-templates-modules.
-# ============================================================================
 module "ds2" {
-  # DS2_REF_TODO: swap the commit SHA for a release tag (ref=vX.Y.Z) after release.
   source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//ds2?ref=v1.5.0"
 
   # Scope

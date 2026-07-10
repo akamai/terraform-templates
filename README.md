@@ -142,9 +142,9 @@ Bot Manager Premier:
 
 ### 🚀 new-property
 Delivery configuration templates for:
-- DSA (Dynamic Site Accelerator)
-- ION Standard (Fresca)
-- ION Premier (SPM)
+- DSA - Dynamic Site Accelerator (product_id: Site_Accel)
+- ION Standard (product_id: Fresca)
+- ION Premier (product_id: SPM)
 
 ### 🔑 new-dv-san-cert
 Certificate Provisioning System for:
