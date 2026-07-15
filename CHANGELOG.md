@@ -1,3 +1,19 @@
+# [1.5.0](https://github.com/akamai/terraform-templates/compare/v1.4.0...v1.5.0) (2026-07-15)
+
+
+### Bug Fixes
+
+* change module source ref to pass test ([c443275](https://github.com/akamai/terraform-templates/commit/c443275f5f5d1afda6822069e9afa4c234cf08cd))
+* set proper module source ref ([d9c8226](https://github.com/akamai/terraform-templates/commit/d9c82267538139f8962a4492179440e3a9ed87d0))
+* several changes as follows ([64da101](https://github.com/akamai/terraform-templates/commit/64da1013c746927d0a02c553fe7b712f12ff992a))
+
+
+### Features
+
+* DOHRMY-148, DOHRMY-131 ([ede6b6f](https://github.com/akamai/terraform-templates/commit/ede6b6f595f9c69cc33abd7d69055c069a6e8644))
+
+
+
 # [1.4.0](https://github.com/akamai/terraform-templates/compare/v1.3.2...v1.4.0) (2026-05-08)
 
 
