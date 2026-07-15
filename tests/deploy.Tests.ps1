@@ -743,6 +743,57 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         # }
     }
 
+    Context "Datastream (DS2) parameter validation" {
+        It "Should fail without -Env parameter" {
+            $r = Invoke-Deploy @("ds2")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Environment parameter required"
+        }
+
+        It "Should fail without an action parameter" {
+            $r = Invoke-Deploy @("ds2", "-Env", "dev")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Please specify at least one parameter"
+        }
+
+        It "Should fail when -ActivateStaging parameter is passed" {
+            $r = Invoke-Deploy @("ds2", "-Env", "dev", "-ActivateStaging")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ActivateStaging' is not applicable for the 'ds2' template"
+        }
+
+        It "Should fail when -Save and -ActivateProduction are combined" {
+            $r = Invoke-Deploy @("ds2", "-Env", "dev", "-Save", "-ActivateProduction")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should fail when -Save and -Destroy are combined" {
+            $r = Invoke-Deploy @("ds2", "-Env", "dev", "-Save", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should fail when CPS parameters are passed" {
+            $r = Invoke-Deploy @("ds2", "-Env", "dev", "-Save", "-CpsType", "dv-san-cert")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'ds2' template"
+        }
+
+        It "Should fail when EDNS parameters are passed" {
+            $r = Invoke-Deploy @("ds2", "-Env", "dev", "-Save", "-ZoneType", "primary")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'ds2' template"
+        }
+
+        It "Should fail when BMP parameters are passed" {
+            # -SaveApi without -Save avoids a PowerShell param-set conflict
+            $r = Invoke-Deploy @("ds2", "-Env", "dev", "-SaveApi")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-SaveApi' is not applicable for the 'ds2' template"
+        }
+    }
+
     Context "Invalid TemplateType" {
         It "Should fail with an invalid TemplateType value" {
             $r = Invoke-Deploy @("invalid")
@@ -796,10 +847,10 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Match "Parameter set cannot be resolved"
         }
 
-        It "Should fail when combined with a CPS cert action (-Dry not valid in cps parameter sets)" {
+        It "Should be accepted alongside a CPS cert action (-Dry is valid for cps-create and cps-upload)" {
             $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-CreateCert", "cert1", "-Dry")
             $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
         }
     }
 

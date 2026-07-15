@@ -176,74 +176,10 @@ Param(
     [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2")]
     [string]$TemplateType,
 
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("dv-san-cert", "third-party-cert")]
-    [string]$CpsType,
-
+    # --- Common parameters ---
     [Parameter(Mandatory = $false)]
     [Alias("Env")]
     [string]$Environment,
-
-    # --- BMP: API-scope actions ---
-    [Parameter(ParameterSetName = 'bmp-api-save')]
-    [switch]$SaveApi,
-
-    [Parameter(ParameterSetName = 'bmp-api-activate')]
-    [switch]$ActivateStagingApi,
-
-    [Parameter(ParameterSetName = 'bmp-api-activate')]
-    [switch]$ActivateProductionApi,
-
-    # --- BMP: SEC-scope actions ---
-    [Parameter(ParameterSetName = 'bmp-sec-save')]
-    [switch]$SaveSec,
-
-    [Parameter(ParameterSetName = 'bmp-sec-activate')]
-    [switch]$ActivateStagingSec,
-
-    [Parameter(ParameterSetName = 'bmp-sec-activate')]
-    [switch]$ActivateProductionSec,
-
-    [Parameter(Mandatory = $false)]
-    [Alias("Cert")]
-    [string]$CertNumber,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("primary", "secondary")]
-    [string]$ZoneType,
-
-    [Parameter(ParameterSetName = 'save')]
-    [switch]$Save,
-    
-    [Parameter(ParameterSetName = 'activate')]
-    [switch]$ActivateStaging,
-    
-    [Parameter(ParameterSetName = 'activate')]
-    [switch]$ActivateProduction,
-
-    [Parameter(ParameterSetName = 'cps-create')]
-    [string]$CreateCert,
-
-    [Parameter(ParameterSetName = 'cps-upload')]
-    [string]$UploadCert,
-
-    [Parameter(ParameterSetName = 'cps-destroy')]
-    [string]$DestroyCert,
-
-    [Parameter(ParameterSetName = 'bmp-api-save')]
-    [Parameter(ParameterSetName = 'bmp-api-activate')]
-    [Parameter(ParameterSetName = 'bmp-sec-save')]
-    [Parameter(ParameterSetName = 'bmp-sec-activate')]
-    [Parameter(ParameterSetName = 'save')]
-    [Parameter(ParameterSetName = 'activate')]
-    [switch]$Dry,
-
-    [Parameter(ParameterSetName = 'bmp-sec-save')]  
-    [Parameter(ParameterSetName = 'bmp-sec-activate')] 
-    [Parameter(ParameterSetName = 'activate')]
-    [Parameter(ParameterSetName = 'save')]
-    [Alias("Notes")]
-    [string]$VersionNotes,
 
     [Parameter(ParameterSetName = 'destroy')]
     [switch]$Destroy,
@@ -255,7 +191,80 @@ Param(
     [switch]$Force,
 
     [Parameter()]
-    [switch]$Help
+    [switch]$Help,
+
+    # --- AAP / AAPASM / PM / EDNS / DS2 parameters ---
+    [Parameter(ParameterSetName = 'save')]
+    [switch]$Save,
+
+    [Parameter(ParameterSetName = 'activate')]
+    [switch]$ActivateStaging,
+
+    [Parameter(ParameterSetName = 'activate')]
+    [switch]$ActivateProduction,
+
+    # VersionNotes is applicable to all templates except CPS
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [Parameter(ParameterSetName = 'activate')]
+    [Parameter(ParameterSetName = 'save')]
+    [Alias("Notes")]
+    [string]$VersionNotes,
+
+    # Dry is applicable to all templates except -DestroyCert (no plan phase).
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [Parameter(ParameterSetName = 'save')]
+    [Parameter(ParameterSetName = 'activate')]
+    [Parameter(ParameterSetName = 'cps-create')]
+    [Parameter(ParameterSetName = 'cps-upload')]
+    [switch]$Dry,
+
+    # --- EDNS parameters ---
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("primary", "secondary")]
+    [string]$ZoneType,
+
+    # --- BMP parameters ---
+    # Phase 1: API-scope actions
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [switch]$SaveApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateStagingApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateProductionApi,
+
+    # Phase 2: Security-scope actions
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [switch]$SaveSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateStagingSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateProductionSec,
+
+    # --- CPS parameters ---
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("dv-san-cert", "third-party-cert")]
+    [string]$CpsType,
+
+    [Parameter(Mandatory = $false)]
+    [Alias("Cert")]
+    [string]$CertNumber,
+
+    [Parameter(ParameterSetName = 'cps-create')]
+    [string]$CreateCert,
+
+    [Parameter(ParameterSetName = 'cps-upload')]
+    [string]$UploadCert,
+
+    [Parameter(ParameterSetName = 'cps-destroy')]
+    [string]$DestroyCert
 )
 
 # Start timing
