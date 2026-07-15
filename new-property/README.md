@@ -101,9 +101,10 @@ module "example" {
   
 	 # Required variables
   	 additional_origins  = <map(object({
-    origin_name    = string
-    hostname_match = list(string)
-    path_match     = list(string)
+    origin_name         = string
+    forward_host_header = string
+    hostname_match      = list(string)
+    path_match          = list(string)
   }))>
   	 contract_id  = <string>
   	 default_origin  = <string>
@@ -123,10 +124,11 @@ module "example" {
   	 certificate_id  = <number> | default: null
   	 cpcode_name  = <string> | default: null
   	 customer_email  = <string> | default: null
-  	 dummy_test  = <string> | default: "dummy_test"
+  	 default_cpcode  = <bool> | default: false
   	 edgerc_path  = <string> | default: "~/.edgerc"
   	 ehn_domain  = <string> | default: null
   	 enable_mPulse  = <bool> | default: true
+  	 forward_host_header  = <string> | default: "REQUEST_HOST_HEADER"
   	 ip_behavior  = <string> | default: "IPV6_COMPLIANCE"
   	 noncompliance_reason  = <list(string)> | default: []
   	 other_noncompliance_reason  = <string> | default: null
@@ -146,7 +148,7 @@ module "example" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
-| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 9.0 |
+| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 10.1 |
 
 ## Resources
 
@@ -156,13 +158,13 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | v1.3.3 |
+| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | v1.5.0 |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_additional_origins"></a> [additional\_origins](#input\_additional\_origins) | Additional origins for the property. For now the match is only by hostname. | <pre>map(object({<br/>    origin_name    = string<br/>    hostname_match = list(string)<br/>    path_match     = list(string)<br/>  }))</pre> | n/a | yes |
+| <a name="input_additional_origins"></a> [additional\_origins](#input\_additional\_origins) | Additional origins for the property. For now the match is only by hostname. The field forward\_host\_header allows specifying a custom host header for each additional origin.Possible fixed values are ORIGIN\_HOSTNAME or REQUEST\_HOST\_HEADER. But the user can also select any host header they would like to use as a custom value. | <pre>map(object({<br/>    origin_name         = string<br/>    forward_host_header = string<br/>    hostname_match      = list(string)<br/>    path_match          = list(string)<br/>  }))</pre> | n/a | yes |
 | <a name="input_contract_id"></a> [contract\_id](#input\_contract\_id) | Contract ID for property/config creation | `string` | n/a | yes |
 | <a name="input_default_origin"></a> [default\_origin](#input\_default\_origin) | Default origin server for all properties | `string` | n/a | yes |
 | <a name="input_edgerc_section"></a> [edgerc\_section](#input\_edgerc\_section) | Section in the .edgerc file.<br/><br/>    For professional services, it is recommended to create a new section for<br/>    each account managed. | `string` | n/a | yes |
@@ -179,11 +181,12 @@ No resources.
 | <a name="input_certificate_id"></a> [certificate\_id](#input\_certificate\_id) | Certificate enrollment id. Only applicable if enhanced\_tls is true, and secure\_by\_default<br/>is false.<br/><br/>Can be retrieved using AkamaiPowershell or the Akamai CPS CLI. | `number` | `null` | no |
 | <a name="input_cpcode_name"></a> [cpcode\_name](#input\_cpcode\_name) | Default CP Code name. Will be the property name (var.name) if null. | `string` | `null` | no |
 | <a name="input_customer_email"></a> [customer\_email](#input\_customer\_email) | Email address of the customer that acknowledged, tested and accepted the change | `string` | `null` | no |
-| <a name="input_dummy_test"></a> [dummy\_test](#input\_dummy\_test) | n/a | `string` | `"dummy_test"` | no |
+| <a name="input_default_cpcode"></a> [default\_cpcode](#input\_default\_cpcode) | Boolean to enable the default CP Code for all properties. If false, the CP Code must be specified in the property definition. | `bool` | `false` | no |
 | <a name="input_edgerc_path"></a> [edgerc\_path](#input\_edgerc\_path) | Path to the .edgerc file. | `string` | `"~/.edgerc"` | no |
 | <a name="input_ehn_domain"></a> [ehn\_domain](#input\_ehn\_domain) | EdgeHostname domain, e.g. edgesuite.net or edgekey.net. Will default to one or<br/>the other, based on the value of etls variable. | `string` | `null` | no |
-| <a name="input_enable_mPulse"></a> [enable\_mPulse](#input\_enable\_mPulse) | Boolean tod ecide whether to inject the mpulse behavior | `bool` | `true` | no |
-| <a name="input_ip_behavior"></a> [ip\_behavior](#input\_ip\_behavior) | EdgeHostname IP behaviour. | `string` | `"IPV6_COMPLIANCE"` | no |
+| <a name="input_enable_mPulse"></a> [enable\_mPulse](#input\_enable\_mPulse) | Boolean to decide whether to inject the mpulse behavior | `bool` | `true` | no |
+| <a name="input_forward_host_header"></a> [forward\_host\_header](#input\_forward\_host\_header) | Host header to be forwarded to the origin server. Possible fixed values are ORIGIN\_HOSTNAME or REQUEST\_HOST\_HEADER. But the user can also select any host header they would like to use as a custom value. | `string` | `"REQUEST_HOST_HEADER"` | no |
+| <a name="input_ip_behavior"></a> [ip\_behavior](#input\_ip\_behavior) | EdgeHostname IP behaviour.Possible values are IPV4 or IPV6\_COMPLIANCE. | `string` | `"IPV6_COMPLIANCE"` | no |
 | <a name="input_noncompliance_reason"></a> [noncompliance\_reason](#input\_noncompliance\_reason) | Allowed values for noncompliance\_reason are "NO\_PRODUCTION\_TRAFFIC", "EMERGENCY", "NONE". (OR null for the customer, as None will require the complaince block) | `list(string)` | `[]` | no |
 | <a name="input_other_noncompliance_reason"></a> [other\_noncompliance\_reason](#input\_other\_noncompliance\_reason) | Describes the reason why the activation must occur immediately, out of compliance with the standard procedure | `string` | `null` | no |
 | <a name="input_peer_reviewed_by"></a> [peer\_reviewed\_by](#input\_peer\_reviewed\_by) | Email address of the peer who performed the review | `string` | `null` | no |
