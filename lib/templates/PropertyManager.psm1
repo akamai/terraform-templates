@@ -46,6 +46,25 @@ class PropertyManagerTemplate {
                 Write-Host "Secure by Default not enabled - skipping product validation" -ForegroundColor Yellow
             }
         }
+
+
+        # Only validate if enable_mpulse is enabled and not skipped
+        if (-not $this.DeployParams.SkipValidation) {
+            $enableMPulseValue = Get-TfVarValue -FilePath $tfvarsPath -VarName "enable_mPulse"
+            
+            if ($enableMPulseValue -eq "true") {
+                Write-Host "mPulse enabled - validating product ID" -ForegroundColor Cyan
+                
+                $expectedProducts = @(
+                    @{Id = "M-LC-161244"; Name = "mPulse::mPulse"}
+                )
+                
+                Test-AkamaiProductId -TfVarsPath $tfvarsPath -ExpectedProducts $expectedProducts
+            }
+            else {
+                Write-Host "mPulse not enabled - skipping product validation" -ForegroundColor Yellow
+            }
+        }
     }
     
     [hashtable] BuildTerraformVars() {
