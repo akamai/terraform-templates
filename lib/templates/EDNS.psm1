@@ -9,6 +9,7 @@ Supports plan, apply and safe destroy workflow.
 
 using module ../core/TerraformRunner.psm1
 using module ../core/Logger.psm1
+using module ../core/Validation.psm1
 
 class EDNSTemplate {
   [string]$Environment
@@ -60,21 +61,6 @@ class EDNSTemplate {
     }
     if ($this.ZoneType -notin @("primary", "secondary")) {
       throw "Invalid ZoneType: $($this.ZoneType)"
-    }
-  }
-  [void] ConfirmDestroy() {
-    $zoneName = "$($this.Environment) / $($this.ZoneType)"
-
-    Write-Host ""
-    Write-Host "WARNING: You are about to DESTROY an Edge DNS zone!" -ForegroundColor Red
-    Write-Host "Zone: $zoneName" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Type YES to confirm destruction:" -ForegroundColor Cyan
-
-    $confirmation = Read-Host
-
-    if ($confirmation -ne "YES") {
-      throw "Destroy operation cancelled by user."
     }
   }
 
@@ -152,7 +138,7 @@ class EDNSTemplate {
 
     $this.ValidatePrerequisites()
 
-    $this.ConfirmDestroy()
+    Confirm-DestroyOperation -ResourceDescription "Edge DNS $($this.ZoneType) zone for environment: $($this.Environment)"
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "edns-$($this.ZoneType).tfstate"

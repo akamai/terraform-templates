@@ -200,4 +200,36 @@ function Assert-TemplateParameters {
     }
 }
 
-Export-ModuleMember -Function Get-TfVarValue, Test-AkamaiProductId, Assert-TemplateParameters
+function Confirm-DestroyOperation {
+    <#
+    .SYNOPSIS
+    Prompts the user to confirm a destructive Terraform destroy operation.
+
+    .DESCRIPTION
+    Displays a warning and requires the user to type YES to proceed.
+    Throws if the user does not confirm, preventing the destroy from running.
+
+    .PARAMETER ResourceDescription
+    A short description of what is about to be destroyed, shown to the user.
+    Example: "AAP configuration for environment: prod"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ResourceDescription
+    )
+
+    Write-Host ""
+    Write-Host "WARNING: You are about to DESTROY the following resource!" -ForegroundColor Red
+    Write-Host "  $ResourceDescription" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Type YES to confirm destruction:" -ForegroundColor Cyan
+
+    $confirmation = Read-Host
+
+    if ($confirmation -ne "YES") {
+        throw "Destroy operation cancelled by user."
+    }
+}
+
+Export-ModuleMember -Function Get-TfVarValue, Test-AkamaiProductId, Assert-TemplateParameters, Confirm-DestroyOperation

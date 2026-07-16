@@ -374,6 +374,33 @@ numeric_value = 12345
     }
 }
 
+Describe "Validation Module - Confirm-DestroyOperation Function" {
+
+    Context "When user confirms with YES" {
+        It "Should not throw when the user enters YES" {
+            Mock Read-Host -MockWith { return "YES" } -ModuleName "Validation"
+            { Confirm-DestroyOperation -ResourceDescription "AAP configuration for environment: dev" } | Should -Not -Throw
+        }
+    }
+
+    Context "When user cancels or provides invalid input" {
+        It "Should throw when the user enters 'no'" {
+            Mock Read-Host -MockWith { return "no" } -ModuleName "Validation"
+            { Confirm-DestroyOperation -ResourceDescription "test resource" } | Should -Throw -ExpectedMessage "*Destroy operation cancelled by user*"
+        }
+
+        It "Should throw when the user presses Enter (empty input)" {
+            Mock Read-Host -MockWith { return "" } -ModuleName "Validation"
+            { Confirm-DestroyOperation -ResourceDescription "test resource" } | Should -Throw -ExpectedMessage "*Destroy operation cancelled by user*"
+        }
+
+        It "Should throw when the user enters 'YES ' (trailing whitespace)" {
+            Mock Read-Host -MockWith { return "YES " } -ModuleName "Validation"
+            { Confirm-DestroyOperation -ResourceDescription "test resource" } | Should -Throw -ExpectedMessage "*Destroy operation cancelled by user*"
+        }
+    }
+}
+
 Describe "Logger Module - Get-Username Function" {
     
     Context "When running on different platforms" {
@@ -406,6 +433,17 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         function Invoke-Deploy {
             param([string[]]$Arguments)
             $output = & pwsh -NonInteractive -File $Script:DeployScript @Arguments 2>&1
+            return @{
+                Output   = ($output | Out-String)
+                ExitCode = $LASTEXITCODE
+            }
+        }
+
+        # Like Invoke-Deploy but pipes a string to the script's stdin.
+        # Used to simulate user input for interactive prompts (e.g. destroy confirmation).
+        function Invoke-DeployWithInput {
+            param([string[]]$Arguments, [string]$StdinInput = "")
+            $output = $StdinInput | & pwsh -NonInteractive -File $Script:DeployScript @Arguments 2>&1
             return @{
                 Output   = ($output | Out-String)
                 ExitCode = $LASTEXITCODE
@@ -827,18 +865,21 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r = Invoke-Deploy @("pm", "-Env", "nonexistent", "-Save", "-Dry")
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Match "Environment file not found"
         }
 
         It "Should be accepted alongside -ActivateStaging (no parameter set conflict)" {
             $r = Invoke-Deploy @("aap", "-Env", "nonexistent", "-ActivateStaging", "-Dry")
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Match "Environment file not found"
         }
 
         It "Should be accepted alongside BMP -SaveApi (no parameter set conflict)" {
             $r = Invoke-Deploy @("bmp", "-Env", "nonexistent", "-SaveApi", "-Dry")
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Match "Environment file not found"
         }
 
         It "Should fail without an action parameter because the parameter set is ambiguous" {
@@ -848,10 +889,12 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         }
 
         It "Should be accepted alongside a CPS cert action (-Dry is valid for cps-create and cps-upload)" {
-            $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-CreateCert", "cert1", "-Dry")
+            $r = Invoke-Deploy @("cps", "-CpsType", "dv-san-cert", "-CreateCert", "nonexistent", "-Dry")
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Match "Certificate file not found"
         }
+        
     }
 
     Context "Global -Force option" {
@@ -906,6 +949,42 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r = Invoke-Deploy @("bmp", "-Env", "nonexistent", "-SaveApi", "-Debug")
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+        }
+    }
+
+    Context "Destroy confirmation prompt — stdin cancellation" {
+        # These templates run the confirmation prompt before any file-system or
+        # Terraform check, so piping a non-YES answer is sufficient to trigger
+        # cancellation without requiring a real environment to exist.
+
+        It "AAP -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("aap", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "AAP+ASM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("aapasm", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "BMP -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("bmp", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "PM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("pm", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "CPS -DestroyCert: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("cps", "-CpsType", "dv-san-cert", "-DestroyCert", "cert1") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
         }
     }
 }

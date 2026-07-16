@@ -22,6 +22,7 @@ and run -Save.
 
 using module ../core/TerraformRunner.psm1
 using module ../core/Logger.psm1
+using module ../core/Validation.psm1
 
 class DS2Template {
   [string]$Environment
@@ -64,20 +65,6 @@ class DS2Template {
     }
 
     return $vars
-  }
-
-  [void] ConfirmDestroy() {
-    Write-Host ""
-    Write-Host "WARNING: You are about to DESTROY a DataStream 2 configuration!" -ForegroundColor Red
-    Write-Host "Stream : $($this.Environment)" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Type YES to confirm destruction:" -ForegroundColor Cyan
-
-    $confirmation = Read-Host
-
-    if ($confirmation -ne "YES") {
-      throw "Destroy operation cancelled by user."
-    }
   }
 
   [void] Deploy([hashtable]$params) {
@@ -149,7 +136,7 @@ class DS2Template {
     Write-Host "Destroying DataStream 2 configuration for environment: $($this.Environment)" -ForegroundColor Red
 
     $this.ValidatePrerequisites()
-    $this.ConfirmDestroy()
+    Confirm-DestroyOperation -ResourceDescription "DataStream 2 configuration for environment: $($this.Environment)"
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "$($this.Environment)-terraform.tfstate"

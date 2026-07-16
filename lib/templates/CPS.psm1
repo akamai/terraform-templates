@@ -8,6 +8,7 @@ Handles creation, upload, and destruction of CPS certificates
 
 using module ../core/TerraformRunner.psm1
 using module ../core/Logger.psm1
+using module ../core/Validation.psm1
 
 class CPSTemplate {
     [string]$CpsType
@@ -102,7 +103,9 @@ class CPSTemplate {
     
     [void] DestroyCert([bool]$debug) {
         Write-Host "Destroying CPS certificate: $($this.CertNumber)" -ForegroundColor Red
-        
+
+        Confirm-DestroyOperation -ResourceDescription "CPS $($this.CpsType) certificate: $($this.CertNumber)"
+
         $configPath = "certificates/$($this.CertNumber)"
         $stateFileName = "$($this.CertNumber)-terraform.tfstate"
         $logPath = "./$($this.TemplateFolder)/$configPath/$($this.CertNumber)-akamai_tf.log"

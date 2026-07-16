@@ -225,7 +225,9 @@ class AAPTemplate {
     
     [void] Destroy() {
         Write-Host "Destroying AAP configuration for environment: $($this.Environment)" -ForegroundColor Red
-        
+
+        Confirm-DestroyOperation -ResourceDescription "AAP configuration for environment: $($this.Environment)"
+
         $configPath = "environments/$($this.Environment)"
         $stateFileName = "$($this.Environment)-terraform.tfstate"
         

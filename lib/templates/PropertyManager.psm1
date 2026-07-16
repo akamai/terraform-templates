@@ -168,7 +168,9 @@ class PropertyManagerTemplate {
     
     [void] Destroy() {
         Write-Host "Destroying Property Manager configuration for environment: $($this.Environment)" -ForegroundColor Red
-        
+
+        Confirm-DestroyOperation -ResourceDescription "Property Manager configuration for environment: $($this.Environment)"
+
         $configPath = "environments/$($this.Environment)"
         $stateFileName = "$($this.Environment)-terraform.tfstate"
         

@@ -395,6 +395,8 @@ class BMPTemplate {
     [void] Destroy() {
         Write-Host "Destroying BMP configuration for environment: $($this.Environment)" -ForegroundColor Red
 
+        Confirm-DestroyOperation -ResourceDescription "BMP configuration for environment: $($this.Environment)"
+
         $configPath    = "environments/$($this.Environment)"
         $stateFileName = "$($this.Environment)-terraform.tfstate"
 
