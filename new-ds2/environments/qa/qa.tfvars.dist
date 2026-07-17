@@ -1,0 +1,175 @@
+## ----------------------------------------------------------------------------
+## EdgeGrid
+## ----------------------------------------------------------------------------
+
+edgerc_path    = "~/.edgerc"
+edgerc_section = "default"
+
+#### ------------------------------------------------------------
+## Account
+#### ------------------------------------------------------------
+
+group_id    = "grp_XXX"
+contract_id = "ctr_1-XXXX"
+
+#### ------------------------------------------------------------
+## Stream Identity
+#### ------------------------------------------------------------
+
+name         = "DS2-QA"
+property_ids = ["prp_XXXX"]
+
+#### ------------------------------------------------------------
+## Stream Behaviour
+#### ------------------------------------------------------------
+
+activate_stream = false # never activate automatically in QA
+
+enable_midgress     = false
+notification_emails = []
+log_format          = "JSON"
+interval_in_secs    = 60
+
+# dataset_fields_ids  = [1000, 1002, 1015, 1037, 1100]   # default field set
+# sampling_percentage = 10    # deliver 10 % of log lines (null = 100 %)
+# upload_file_prefix  = "ak"  # log file name prefix (default: ak)
+# upload_file_suffix  = "ds"  # log file name suffix (default: ds)
+# field_delimiter     = "SPACE"  # only when log_format = STRUCTURED
+
+#### ============================================================
+## Connector — uncomment exactly ONE block
+#### ============================================================
+
+# ---------- AWS S3 ----------
+# s3_connector = {
+#   display_name      = "s3-example"
+#   bucket            = "<bucket-name>"
+#   region            = "eu-central-1"
+#   access_key        = "<aws-access-key-id>"
+#   secret_access_key = "<aws-secret-access-key>"
+#   path              = "/akamai/logs"
+# }
+
+# ---------- S3-Compatible (MinIO, Wasabi, Cloudflare R2)  ----------
+# endpoint is the scheme-qualified host only; Akamai builds {endpoint}/{bucket}/{path}/{file}.
+# s3_compatible_connector = {
+#   display_name      = "mock-s3compatible"
+#   endpoint          = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app"
+#   bucket            = "akamai-ds-logs"
+#   region            = "us-east-1"
+#   access_key        = "AKIAIOSFODNN7XXXX01"
+#   secret_access_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYXXXX0001"
+# }
+
+# ---------- Azure Blob Storage ----------
+# azure_connector = {
+#   display_name   = "azure-example"
+#   account_name   = "<storage-account-name>"
+#   container_name = "<container-name>"
+#   access_key     = "<storage-account-access-key>"
+#   path           = "/akamai/logs"
+# }
+
+# ---------- Google Cloud Storage ----------
+# gcs_connector = {
+#   display_name         = "gcs-example"
+#   bucket               = "<bucket-name>"
+#   project_id           = "<gcp-project-id>"
+#   service_account_name = "<sa-name>@<project>.iam.gserviceaccount.com"
+#   private_key          = "<full-json-key-file-contents>"
+#   path                 = "/akamai/logs"   # optional
+# }
+
+# ---------- Oracle Cloud Object Storage ----------
+# oracle_connector = {
+#   display_name      = "oracle-example"
+#   bucket            = "<bucket-name>"
+#   namespace         = "<tenancy-namespace>"
+#   region            = "eu-frankfurt-1"
+#   access_key        = "<oracle-access-key>"
+#   secret_access_key = "<oracle-secret-key>"
+#   path              = "/akamai/logs"
+# }
+
+# ---------- Datadog  ----------
+# Akamai only accepts Datadog v1 endpoints and validates the key with a live POST at apply.
+# datadog_connector = {
+#   display_name  = "mock-datadog"
+#   endpoint      = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/v1/input"
+#   auth_token    = "7527a19091aXXXX02be89624771833"
+#   service       = "akamai-cdn"
+#   source        = "akamai"
+#   tags          = "env:test,team:platform"
+# }
+
+# ---------- Splunk HEC  ----------
+# Endpoint must end with /services/collector/raw (not /event).
+# splunk_connector = {
+#   display_name          = "mock-splunk-hec"
+#   endpoint              = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/mock/splunk/services/collector/raw"
+#   event_collector_token = "dcb9-427e-8f7e-ae81527fbf0f"
+# }
+
+# ---------- Custom HTTPS  (most reliable) ----------
+# authentication_type must be NONE or BASIC.
+# https_connector = {
+#   display_name        = "mock-https-endpoint"
+#   endpoint            = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/mock/datadog/api/v2/logs"
+#   authentication_type = "NONE"
+#   content_type        = "application/json"
+#   custom_header_name  = "DD-API-KEY"
+#   custom_header_value = "7527a19091aXXXX02be89624771833"
+# }
+
+# ---------- Sumo Logic  ----------
+# Akamai appends collector_code to the endpoint URL.
+# sumologic_connector = {
+#   display_name   = "mock-sumologic"
+#   endpoint       = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/mock/sumologic/receiver/v1/http"
+#   collector_code = "ZaVnC4dhaV1DAmU6bQxMk5MWnEfBJbLHKf3N8IFqkc0VW9dGbQaYFLa4OJKK"
+# }
+
+# ---------- Loggly  ----------
+# Akamai appends auth_token to the endpoint URL to form the full bulk ingest URL.
+# loggly_connector = {
+#   display_name = "mock-loggly"
+#   endpoint     = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/mock/loggly/inputs/"
+#   auth_token   = "8a4b2c6d-1234-5678-abcd-ef0123456789"
+#   tags         = "akamai"
+# }
+
+# ---------- New Relic  ----------
+# auth_token is sent as the Api-Key header.
+# new_relic_connector = {
+#   display_name = "mock-newrelic"
+#   endpoint     = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/mock/newrelic/log/v1"
+#   auth_token   = "eu01xx8a4b2c6d1234567890abcdef012345NRAL"
+# }
+
+# ---------- Elasticsearch  ----------
+# Akamai uses BASIC auth (user_name + password).
+# elasticsearch_connector = {
+#   display_name = "mock-elasticsearch"
+#   endpoint     = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/mock/elasticsearch"
+#   user_name    = "elastic"
+#   password     = "mockpassword123"
+#   index_name   = "akamai-logs"
+# }
+
+# ---------- Dynatrace ----------
+# dynatrace_connector = {
+#   display_name = "dynatrace-example"
+#   endpoint     = "https://<env-id>.live.dynatrace.com/api/v2/logs/ingest"
+#   api_token    = "<dynatrace-token>"   # requires logs.ingest scope
+# }
+
+# ---------- TrafficPeak (Hydrolix)  ----------
+# authentication_type must be BASIC. Endpoint includes table + token query params.
+# trafficpeak_connector = {
+#   display_name        = "mock-trafficpeak"
+#   endpoint            = "https://f22c8a3c-1b1d-4762-aadb-8c4XXXX3b.fwf.app/ingest/event?table=akamai_logs&token=tp_mock_abc123456789"
+#   authentication_type = "BASIC"
+#   content_type        = "application/json"
+#   user_name           = "tpuser"
+#   password            = "tppassword123"
+# }

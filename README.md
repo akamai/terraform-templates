@@ -58,6 +58,14 @@ ps-terraform-templates/
 │   ├── main.tf
 │   ├── variables.tf
 │   └── README.md
+├── new-ds2/                        # DataStream 2 template
+│   ├── environments/               # Support for multiple environments
+│   │   ├── dev/
+│   │   ├── qa/
+│   │   └── prod/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── README.md
 └── README.md
 ```
 
@@ -73,6 +81,7 @@ Navigate to **Akamai Control Center → Identity & Access Management**:
    - **Bot Manager API** (for bot management features)
    - **Client Lists API** (for client lists)
    - **Edge DNS API** (for DNS zone management)
+   - **DataStream API / Datastream Config** (for DataStream 2 log streaming)
 2. Generate credentials: `client_secret`, `access_token`, `client_token`, `host`
 
 ### 2. Get Account Switch Key
@@ -133,8 +142,9 @@ Bot Manager Premier:
 
 ### 🚀 new-property
 Delivery configuration templates for:
-- DSA (Dynamic Site Accelerator)
-- ION
+- DSA - Dynamic Site Accelerator (product_id: Site_Accel)
+- ION Standard (product_id: Fresca)
+- ION Premier (product_id: SPM)
 
 ### 🔑 new-dv-san-cert
 Certificate Provisioning System for:
@@ -150,6 +160,13 @@ Edge DNS zone management:
 - Optional SOA management and Akamai authoritative NS discovery
 - Secondary zone creation with configurable master servers and optional TSIG authentication
 - Safe multi-phase destroy workflow (records emptied, NS/SOA detached, zone destroyed)
+
+### 📊 new-ds2
+DataStream 2 (DS-managed / Decoupled):
+- Decoupled operational log streaming directly mapped via property IDs without modifying Property Manager rule trees
+- Support for 14+ destination connectors (AWS S3, Datadog, Splunk, Azure, GCS, TrafficPeak, and more)
+- Granular control over log formats (JSON or STRUCTURED), dataset fields, sampling percentages, and midgress tracking
+- Streamlined deployment with a single activation dimension directly driven by environment configurations
 
 ## Usage
 
@@ -227,6 +244,22 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 > **Note:** EDNS destroy is a 3-phase operation: (1) all DNS records are force-emptied, (2) NS and SOA records are detached from Terraform state to prevent conflicts, (3) the zone itself is destroyed.
 
 > **Note:** EDNS templates do not use `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation` parameters. Drift detection is skipped automatically for EDNS zones, as NS/SOA data sources trigger false-positive drift on every refresh.
+
+#### DataStream 2 (DS2) Template
+
+> **Note:** DataStream 2 has a single activation dimension (the stream is either active or not active). There is no distinct staging network.
+
+| Parameter | Description |
+|-----------|-------------|
+| First Argument | `ds2` - DataStream 2 |
+| `-Env` | Target environment: `dev`, `qa`, `prod`, etc. |
+| `-Save` | Deploy the stream configuration. Activation status is controlled entirely by the `activate_stream` variable inside your `.tfvars` file. |
+| `-ActivateProduction` | Deploy the configuration and force `activate_stream = true` to activate the stream immediately without editing the `.tfvars` file. |
+| `-Destroy` | Deactivate and remove the entire DataStream 2 configuration |
+| `-Dry` | Show Terraform plan without applying changes |
+| `-Force` | Skip the drift-detection prompt and continue automatically |
+| `-Debug` | Enable detailed logging to `akamai_tf.log` |
+| `-Help` | Display detailed help information |
 
 ### Configuration
 
@@ -330,6 +363,20 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Safely destroy a SECONDARY zone in qa
 .\deploy.ps1 edns -Env qa -ZoneType secondary -Destroy
+
+# --- DataStream 2 (DS2) ---
+
+# Save or update a DS2 configuration in dev (activation status driven by tfvars file)
+.\deploy.ps1 ds2 -Env dev -Save
+
+# Deploy and force activate the DataStream 2 stream in the prod environment
+.\deploy.ps1 ds2 -Env prod -ActivateProduction
+
+# Dry run for a DataStream 2 configuration (plan only, no changes)
+.\deploy.ps1 ds2 -Env dev -Save -Dry
+
+# Safely tear down the DataStream 2 configuration for the dev environment
+.\deploy.ps1 ds2 -Env dev -Destroy
 ```
 
 ## Troubleshooting
