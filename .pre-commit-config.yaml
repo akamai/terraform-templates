@@ -23,6 +23,7 @@ repos:
           - --hook-config=--path-to-file=README.md
           - --hook-config=--create-file-if-not-exist=true
           - --args=--config=.terraform-docs.yaml
+        exclude: ^\.github/
         stages: [pre-commit]
 
   - repo: https://github.com/antonbabenko/pre-commit-terraform
@@ -44,4 +45,5 @@ repos:
         args:
           # Re-install source modules when there are changes to module versions
           - --hook-config=--retry-once-with-cleanup=true
+        exclude: ^\.github/
         stages: [pre-commit]
