@@ -34,6 +34,7 @@ repos:
       - id: terraform_tflint
         args:
           - --hook-config=--delegate-chdir
+        exclude: ^\.github/
         stages: [pre-commit]
       - id: terraform_trivy
         args: 
