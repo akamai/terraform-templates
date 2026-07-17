@@ -112,7 +112,6 @@ module "example" {
   	 etls  = <bool>
   	 group_id  = <string>
   	 hostnames  = <list(string)>
-  	 name  = <string>
   
 	 # Optional variables
   	 activate_to_production  = <bool> | default: false
@@ -170,7 +169,6 @@ No resources.
 | <a name="input_etls"></a> [etls](#input\_etls) | Boolean to switch between Enhanced and Standard TLS modes | `bool` | n/a | yes |
 | <a name="input_group_id"></a> [group\_id](#input\_group\_id) | Group ID for property/config creation. | `string` | n/a | yes |
 | <a name="input_hostnames"></a> [hostnames](#input\_hostnames) | List of hostnames. | `list(string)` | n/a | yes |
-| <a name="input_name"></a> [name](#input\_name) | Property name. | `string` | n/a | yes |
 | <a name="input_activate_to_production"></a> [activate\_to\_production](#input\_activate\_to\_production) | Set to true to directly activate on the production network. | `bool` | `false` | no |
 | <a name="input_activate_to_staging"></a> [activate\_to\_staging](#input\_activate\_to\_staging) | Set to true to directly activate on the staging network. | `bool` | `false` | no |
 | <a name="input_activation_notes"></a> [activation\_notes](#input\_activation\_notes) | Activation notes. Leave default value until DXE-2373 is resolved, unless you know what you are doing. | `string` | `"activated with terraform"` | no |
