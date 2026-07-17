@@ -9,7 +9,7 @@ or activate to both networks simultaneously. Also supports certificate managemen
 This script uses a modular architecture with template handlers in lib/templates/ and shared functionality in lib/core/.
 
 .PARAMETER TemplateType
-Specifies the template type. Available values: aap, aapasm, pm, cps, bmp
+Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2
 
 .PARAMETER CpsType
 Specifies the CPS certificate type when TemplateType is 'cps'. Available values: dv-san-cert, third-party-cert
@@ -154,6 +154,18 @@ Create or update PRIMARY Edge DNS zone in dev environment
 PS> .\deploy.ps1 edns -Env qa -ZoneType secondary -Destroy
 Safely destroy SECONDARY Edge DNS zone in qa environment
 
+.EXAMPLE
+PS> .\deploy.ps1 ds2 -Env dev -Save
+Create or update a DataStream 2 configuration in the dev environment (activation driven by the tfvars activate_stream value)
+
+.EXAMPLE
+PS> .\deploy.ps1 ds2 -Env prod -ActivateProduction
+Deploy and activate the DataStream 2 stream in the prod environment
+
+.EXAMPLE
+PS> .\deploy.ps1 ds2 -Env dev -Destroy
+Tear down the DataStream 2 configuration for the dev environment
+
 .LINK
 https://github.com/akamai/terraform-templates
 #>
@@ -161,7 +173,7 @@ https://github.com/akamai/terraform-templates
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns")]
+    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2")]
     [string]$TemplateType,
 
     [Parameter(Mandatory = $false)]
@@ -268,6 +280,7 @@ $templateModuleMap = @{
     "cps"    = "CPS"
     "bmp"    = "BMP" 
     "edns"   = "EDNS"
+    "ds2"    = "DS2"
 }
 
 $moduleName = $templateModuleMap[$TemplateType]
@@ -286,6 +299,7 @@ $templateFolderMap = @{
     "pm"     = "new-property"
     "bmp"    = "new-bmp-endpoints"
     "edns"   = "new-edns"
+    "ds2"    = "new-ds2"
 }
 
 if ($TemplateType -eq "cps") {
@@ -490,6 +504,39 @@ try {
                 # trigger false-positive drift on every refresh, so the prompt would
                 # fire unconditionally. Explicit -Force flag is still respected.
                 $template.Deploy($Dry.IsPresent, $true, $PSBoundParameters.ContainsKey('Debug'))
+            }
+        }
+        
+        "DS2" {
+            if (-not $Environment) {
+                throw "Environment parameter required for DS2 template. Use: -Env <environment>"
+            }
+
+            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
+                throw "CPS parameters are not applicable for DS2 template"
+            }
+
+            # DataStream has a single activation dimension (no staging network).
+            if ($ActivateStaging) {
+                throw "DataStream has no staging network. Use -ActivateProduction to activate the stream, or set activate_stream in the tfvars file and use -Save."
+            }
+
+            $template = New-DS2Template -Environment $Environment -TemplateFolder $TemplateFolder
+
+            if ($Destroy) {
+                $template.Destroy($PSBoundParameters.ContainsKey('Debug'))
+            }
+            elseif ($Save -or $ActivateProduction) {
+                $template.Deploy(@{
+                        Save               = $Save.IsPresent
+                        ActivateProduction = $ActivateProduction.IsPresent
+                        Dry                = $Dry.IsPresent
+                        Force              = $Force.IsPresent
+                        Debug              = $PSBoundParameters.ContainsKey('Debug')
+                    })
+            }
+            else {
+                throw "Please specify at least one parameter: -Save, -ActivateProduction, or -Destroy"
             }
         }
         
