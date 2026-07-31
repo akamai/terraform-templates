@@ -17,13 +17,13 @@ content: |-
   {{- if .Module.RequiredInputs }}
     {{"\n\t"}} # Required variables
     {{- range .Module.RequiredInputs }}
-    {{"\t"}} {{ .Name }}  = <{{ .Type }}>
+    {{"\t"}} {{ .Name }}  = <{{ regexReplaceAll "\n" (tostring .Type) "\n\t" }}>
     {{- end }}
     {{- end }}
   {{- if .Module.OptionalInputs }}
     {{"\n\t"}} # Optional variables
     {{- range .Module.OptionalInputs }}
-    {{"\t"}} {{ .Name }}  = <{{ .Type }}> | default: {{ .GetValue | printf "%s" }}
+    {{"\t"}} {{ .Name }}  = <{{ regexReplaceAll "\n" (tostring .Type) "\n\t" }}> | default: {{ .GetValue | printf "%s" }}
     {{- end }}
     {{- end }}
   }

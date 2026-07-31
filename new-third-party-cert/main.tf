@@ -22,13 +22,13 @@
  * ## Project Structure
  * ```
  * .
- * ├── [main.tf]              # Root module calling the CPS enrollment module
- * ├── [variables.tf]         # Input variables definition
- * ├── [terraform.tfvars]     # User-supplied variable values
- * ├── [files.tf]             # Generates CSR files for ECDSA and RSA certificates  
- * ├── [providers.tf]         # Akamai provider configuration
- * └── [csr_ecdsa.pem]        # Generated ECDSA CSR (auto-generated)
- * └── [csr_rsa.pem]          # Generated RSA CSR (auto-generated)
+ * ├── main.tf               # Root module calling the CPS enrollment module
+ * ├── variables.tf          # Input variables definition
+ * ├── terraform.tfvars      # User-supplied variable values
+ * ├── files.tf              # Generates CSR files for ECDSA and RSA certificates  
+ * ├── providers.tf          # Akamai provider configuration
+ * └── csr_ecdsa.pem         # Generated ECDSA CSR (auto-generated)
+ * └── csr_rsa.pem           # Generated RSA CSR (auto-generated)
  * ```
  * 
  * ## Scenario 1: Create a New Enrollment`
@@ -64,7 +64,7 @@
 */
 
 module "third-party-cert" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.3.3"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//third-party-cert?ref=v1.3.3"
 
   //enrollment_id                        = var.enrollment_id
   common_name                           = var.common_name

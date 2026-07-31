@@ -23,13 +23,13 @@ It supports:
 ## Project Structure
 ```
 .
-├── [main.tf]              # Root module calling the CPS enrollment module
-├── [variables.tf]         # Input variables definition
-├── [terraform.tfvars]     # User-supplied variable values
-├── [files.tf]             # Generates CSR files for ECDSA and RSA certificates  
-├── [providers.tf]         # Akamai provider configuration
-└── [csr_ecdsa.pem]        # Generated ECDSA CSR (auto-generated)
-└── [csr_rsa.pem]          # Generated RSA CSR (auto-generated)
+├── main.tf               # Root module calling the CPS enrollment module
+├── variables.tf          # Input variables definition
+├── terraform.tfvars      # User-supplied variable values
+├── files.tf              # Generates CSR files for ECDSA and RSA certificates  
+├── providers.tf          # Akamai provider configuration
+└── csr_ecdsa.pem         # Generated ECDSA CSR (auto-generated)
+└── csr_rsa.pem           # Generated RSA CSR (auto-generated)
 ```
 
 ## Scenario 1: Create a New Enrollment`
@@ -72,64 +72,64 @@ module "example" {
   
 	 # Required variables
   	 admin_contact  = <object({
-    first_name       = string
-    last_name        = string
-    organization     = string
-    email            = string
-    phone            = string
-    address_line_one = string
-    address_line_two = string
-    city             = string
-    region           = string
-    postal_code      = string
-    country_code     = string
-  })>
+	    first_name       = string
+	    last_name        = string
+	    organization     = string
+	    email            = string
+	    phone            = string
+	    address_line_one = string
+	    address_line_two = string
+	    city             = string
+	    region           = string
+	    postal_code      = string
+	    country_code     = string
+	  })>
   	 cert_name  = <string>
   	 certificate_ecdsa_pem  = <string>
   	 certificate_rsa_pem  = <string>
   	 common_name  = <string>
   	 contract_id  = <string>
   	 csr  = <object({
-    country_code        = string
-    city                = string
-    organization        = string
-    organizational_unit = string
-    state               = string
-  })>
+	    country_code        = string
+	    city                = string
+	    organization        = string
+	    organizational_unit = string
+	    state               = string
+	  })>
   	 edgerc_section  = <string>
   	 enrollment_id  = <number>
   	 network_configuration  = <object({
-    disallowed_tls_versions = list(string)
-    clone_dns_names         = bool
-    geography               = string
-    must_have_ciphers       = string
-    ocsp_stapling           = string
-    preferred_ciphers       = string
-    quic_enabled            = bool
-  })>
+	    disallowed_tls_versions = list(string)
+	    clone_dns_names         = bool
+	    geography               = string
+	    must_have_ciphers       = string
+	    ocsp_stapling           = string
+	    preferred_ciphers       = string
+	    quic_enabled            = bool
+	  })>
   	 organization  = <object({
-    name             = string
-    phone            = string
-    address_line_one = string
-    address_line_two = string
-    city             = string
-    region           = string
-    postal_code      = string
-    country_code     = string
-  })>
+	    name             = string
+	    phone            = string
+	    address_line_one = string
+	    address_line_two = string
+	    city             = string
+	    region           = string
+	    postal_code      = string
+	    country_code     = string
+	  })>
   	 sans  = <list(string)>
   	 tech_contact  = <object({
-    first_name       = string
-    last_name        = string
-    organization     = string
-    email            = string
-    phone            = string
-    address_line_one = string
-    city             = string
-    region           = string
-    postal_code      = string
-    country_code     = string
-  })>
+	    first_name       = string
+	    last_name        = string
+	    organization     = string
+	    email            = string
+	    phone            = string
+	    address_line_one = string
+	    city             = string
+	    region           = string
+	    postal_code      = string
+	    country_code     = string
+	  })>
   	 trust_chain_ecdsa_pem  = <string>
   	 trust_chain_rsa_pem  = <string>
   
@@ -167,7 +167,7 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_third-party-cert"></a> [third-party-cert](#module\_third-party-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//third-party-cert | v1.3.3 |
+| <a name="module_third-party-cert"></a> [third-party-cert](#module\_third-party-cert) | git::https://github.com/akamai/terraform-templates-modules.git//third-party-cert | v1.3.3 |
 
 ## Inputs
 
