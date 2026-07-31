@@ -28,18 +28,18 @@ It supports:
 ├── terraform.tfvars      # User-supplied variable values
 ├── files.tf              # Generates CSR files for ECDSA and RSA certificates  
 ├── providers.tf          # Akamai provider configuration
-└── csr_ecdsa.pem         # Generated ECDSA CSR (auto-generated)
+├── csr_ecdsa.pem         # Generated ECDSA CSR (auto-generated)
 └── csr_rsa.pem           # Generated RSA CSR (auto-generated)
 ```
 
-## Scenario 1: Create a New Enrollment`
+## Scenario 1: Create a New Enrollment
 
 If you are creating certificate for the first time, you will create an enrollment with your domain details with the help of tfvars.
 
 ## Scenario 2: Upload a Certificate to an Existing Enrollment
 
 Once an enrollment exists/created, you can upload your RSA/ ECDSA cert and trust chain.
-````hcl
+```hcl
 enrollment_id = 12345
 
 certificate_rsa_pem   = file("rsa_certificate.pem")

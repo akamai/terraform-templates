@@ -27,11 +27,11 @@
  * ├── terraform.tfvars      # User-supplied variable values
  * ├── files.tf              # Generates CSR files for ECDSA and RSA certificates  
  * ├── providers.tf          # Akamai provider configuration
- * └── csr_ecdsa.pem         # Generated ECDSA CSR (auto-generated)
+ * ├── csr_ecdsa.pem         # Generated ECDSA CSR (auto-generated)
  * └── csr_rsa.pem           # Generated RSA CSR (auto-generated)
  * ```
  * 
- * ## Scenario 1: Create a New Enrollment`
+ * ## Scenario 1: Create a New Enrollment
  * 
  * If you are creating certificate for the first time, you will create an enrollment with your domain details with the help of tfvars. 
  * 
