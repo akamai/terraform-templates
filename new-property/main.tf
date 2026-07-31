@@ -69,19 +69,19 @@
  *
  * A common flow is as follows (with "prod" as the environment):
  * 1. Save the changes only (no activations) using the PM template/product:
- *     ```bash
- *     pwsh deploy.ps1 pm -Env prod -Save -Notes "Some user user notes"
- *     ```
+ * ```bash
+ * pwsh deploy.ps1 pm -Env prod -Save -Notes "Some user user notes"
+ * ```
  *
  * 2. Activate to staging:
- *     ```bash
- *     pwsh pm -Env prod -ActivateStaging
- *     ```
+ * ```bash
+ * pwsh deploy.ps1 pm -Env prod -ActivateStaging
+ * ```
  *
  * 3. Activate to production:
- *     ```bash
- *     pwsh pm -Env prod -ActivateProduction
- *     ```
+ * ```bash
+ * pwsh deploy.ps1 pm -Env prod -ActivateProduction
+ * ```
  *     
  * Options:
  * * Add the `-Debug` option to the command to log all the Terraform actions in a file stored in the specific environment directory.
@@ -89,6 +89,7 @@
  * * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
  * ```bash
  * pwsh deploy.ps1 pm -Env dev -Destroy
+ * ```
  */
 
 

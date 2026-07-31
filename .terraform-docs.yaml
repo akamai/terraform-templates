@@ -13,9 +13,9 @@ content: |-
 
   ```hcl
   module "example" {
-    {{"\t"}} source  = "<module-location>"
+    {{"\t"}}source  = "<module-location>"
   {{- if .Module.RequiredInputs }}
-    {{"\n\t"}} # Required variables
+    {{"\n\t"}}# Required variables
     {{- range .Module.RequiredInputs }}
     {{"\t"}} {{ .Name }}  = <{{ .Type }}>
     {{- end }}
