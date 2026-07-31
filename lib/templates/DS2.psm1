@@ -205,10 +205,6 @@ function Invoke-DS2Template {
     [hashtable]$BoundParams
   )
 
-  if ($BoundParams.ContainsKey('ActivateStaging')) {
-    throw "DataStream has no staging network. Use -ActivateProduction to activate the stream, or set activate_stream in the tfvars file and use -Save."
-  }
-
   $template = New-DS2Template -Environment $BoundParams['Environment'] -TemplateFolder $TemplateFolder
 
   if ($BoundParams.ContainsKey('Destroy')) {

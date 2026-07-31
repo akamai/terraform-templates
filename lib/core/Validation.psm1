@@ -126,7 +126,11 @@ function Test-AkamaiProductId {
 
 # Parameters always allowed for every template type.
 # 'Debug' is a PowerShell common parameter that may appear in $PSBoundParameters.
-$script:GlobalAllowedParams = @("TemplateType", "Help", "Force", "Debug")
+$script:GlobalAllowedParams = @("TemplateType", "Help", "Force", "Debug", "Verbose"
+     "ErrorAction", "WarningAction", "InformationAction", 
+     "ErrorVariable", "WarningVariable", "InformationVariable", 
+     "OutVariable", "OutBuffer", "PipelineVariable"
+)
 
 function Assert-TemplateParameters {
     <#

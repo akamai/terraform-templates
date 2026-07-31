@@ -68,28 +68,28 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
  ### Step 3: Run Terraform
  Run the deployment script `../deploy.ps1`. This script is written in PowerShell and acts as an orchestrator for Terraform. It allows to perform individual save and activation actions, it handles the multi-environment directory and files to avoid overwriting the state file. A debug/log mode can also be enabled.
 
-    A common flow is as follows (with "prod" as the environment):
-    1. Save the changes only (no activations) using the PM template/product:
+A common flow is as follows (with "prod" as the environment):
+1. Save the changes only (no activations) using the PM template/product:
     ```bash
     pwsh deploy.ps1 pm -Env prod -Save -Notes "Some user user notes"
     ```
 
-    2. Activate to staging:
+2. Activate to staging:
     ```bash
     pwsh pm -Env prod -ActivateStaging
     ```
 
-    3. Activate to production:
+3. Activate to production:
     ```bash
     pwsh pm -Env prod -ActivateProduction
     ```
 
-    Options:
-    * Add the `-Debug` option to the command to log all the Terraform actions in a file stored in the specific environment directory.
-    * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
-    * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
-    ```bash
-    pwsh deploy.ps1 pm -Env dev -Destroy
+Options:
+* Add the `-Debug` option to the command to log all the Terraform actions in a file stored in the specific environment directory.
+* Add the `-Dry` option to the command to do a dry-run (nothing is applied).
+* You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
+```bash
+pwsh deploy.ps1 pm -Env dev -Destroy
 ```
 
 # Usage
@@ -113,6 +113,7 @@ module "example" {
   	 etls  = <bool>
   	 group_id  = <string>
   	 hostnames  = <list(string)>
+  	 name  = <string>
   
 	 # Optional variables
   	 activate_to_production  = <bool> | default: false
@@ -171,6 +172,7 @@ No resources.
 | <a name="input_etls"></a> [etls](#input\_etls) | Boolean to switch between Enhanced and Standard TLS modes | `bool` | n/a | yes |
 | <a name="input_group_id"></a> [group\_id](#input\_group\_id) | Group ID for property/config creation. | `string` | n/a | yes |
 | <a name="input_hostnames"></a> [hostnames](#input\_hostnames) | List of hostnames. | `list(string)` | n/a | yes |
+| <a name="input_name"></a> [name](#input\_name) | Property name. | `string` | n/a | yes |
 | <a name="input_activate_to_production"></a> [activate\_to\_production](#input\_activate\_to\_production) | Set to true to directly activate on the production network. | `bool` | `false` | no |
 | <a name="input_activate_to_staging"></a> [activate\_to\_staging](#input\_activate\_to\_staging) | Set to true to directly activate on the staging network. | `bool` | `false` | no |
 | <a name="input_activation_notes"></a> [activation\_notes](#input\_activation\_notes) | Activation notes. Leave default value until DXE-2373 is resolved, unless you know what you are doing. | `string` | `"activated with terraform"` | no |
