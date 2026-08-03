@@ -4,7 +4,7 @@
 
 This Terraform module automates the creation and management of **Akamai Certificate Provisioning System (CPS)** enrollments for **Domain Validated (DV)** certificates with **Subject Alternative Names (SANs)**.
 
-The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations, After creation, the module automatically outputs DNS and HTTP challenge details into `dns-challenges.txt` and `http-challenges.txt`
+The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations. After creation, the module automatically outputs DNS and HTTP challenge details into `dns-challenges.txt` and `http-challenges.txt`.
 
 ## Prerequisites
 

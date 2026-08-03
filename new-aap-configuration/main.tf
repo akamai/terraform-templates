@@ -26,17 +26,17 @@
  *     A common flow is as follows (with "prod" as the environment):
  *     1. Save the changes only (no activations) using the AAP template/product:
  *     ```bash
- *     pwsh deploy.ps1 aap -Env prod -Save -Notes "Some user user notes"
+ *     PS> .\deploy.ps1 aap -Env prod -Save -Notes "Some user user notes"
  *     ```
  *
  *     2. Activate to staging:
  *     ```bash
- *     pwsh aap -Env prod -ActivateStaging
+ *     PS> .\deploy.ps1 aap -Env prod -ActivateStaging
  *     ```
  *
  *     3. Activate to production:
  *     ```bash
- *     pwsh aap -Env prod -ActivateProduction
+ *     PS> .\deploy.ps1 aap -Env prod -ActivateProduction
  *     ```
  *     
  *     Options:
@@ -44,7 +44,7 @@
  *     * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
  *     * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
  *     ```bash
- *     pwsh deploy.ps1 aap -Env dev -Destroy
+ *     PS> .\deploy.ps1 aap -Env dev -Destroy
  *     ```
  *
  * ## Known Errors

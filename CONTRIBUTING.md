@@ -516,7 +516,7 @@ git commit -m "chore: update dependencies"
 3. **Make your changes**:
    - Update code/templates
    - Update documentation (`main.tf`, `.tfvars.dist`)
-   - Test with: `pwsh deploy.ps1 <template> -Env dev -Save -Dry`
+   - Test with: `.\deploy.ps1 <template> -Env dev -Save -Dry`
    - Pre-commit hooks will run on commit (or manually: `pre-commit run --all-files`)
 
 4. **Commit with conventional format**:
@@ -590,7 +590,7 @@ When module repository changes (it follows the same release process):
 
 3. **Test changes**:
    ```bash
-   pwsh deploy.ps1 aap -Env dev -Save -Dry
+   PS> .\deploy.ps1 aap -Env dev -Save -Dry
    ```
 
 3. **Commit with semantic message**:
@@ -629,17 +629,17 @@ pwsh -Command "Invoke-Pester -Path ./tests/lib-modules.Tests.ps1 -Output Detaile
 Before submitting PR, test your changes:
 
 ```bash
-pwsh deploy.ps1 <template> -Env dev -Save
+PS> .\deploy.ps1 <template> -Env dev -Save
 
 # or
 
 # Dry-run (plan only, no changes)
-pwsh deploy.ps1 <template> -Env dev -Save -Dry
+PS> .\deploy.ps1 <template> -Env dev -Save -Dry
 
 # Examples:
-pwsh deploy.ps1 aap -Env dev -Save -Dry
-pwsh deploy.ps1 aapasm -Env qa -Save -Dry
-pwsh deploy.ps1 pm -Env dev -Save -Dry
+PS> .\deploy.ps1 aap -Env dev -Save -Dry
+PS> .\deploy.ps1 aapasm -Env qa -Save -Dry
+PS> .\deploy.ps1 pm -Env dev -Save -Dry
 ```
 
 ### Debug Mode
@@ -647,7 +647,7 @@ pwsh deploy.ps1 pm -Env dev -Save -Dry
 Enable detailed logging for troubleshooting:
 
 ```bash
-pwsh deploy.ps1 aap -Env dev -Save -Debug
+PS> .\deploy.ps1 aap -Env dev -Save -Debug
 # Logs saved to: ./new-aap-configuration/environments/dev/dev-akamai_tf.log
 ```
 
