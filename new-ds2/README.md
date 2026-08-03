@@ -80,21 +80,21 @@ module "example" {
 	 # Optional variables
   	 activate_stream  = <bool> | default: true
   	 azure_connector  = <object({
-    display_name   = string
-    account_name   = string
-    container_name = string
-    access_key     = string
-    path           = string
-  })> | default: null
+	    display_name   = string
+	    account_name   = string
+	    container_name = string
+	    access_key     = string
+	    path           = string
+	  })> | default: null
   	 datadog_connector  = <object({
-    display_name  = string
-    endpoint      = string
-    auth_token    = string
-    service       = optional(string)
-    source        = optional(string)
-    tags          = optional(string)
-    compress_logs = optional(bool)
-  })> | default: null
+	    display_name  = string
+	    endpoint      = string
+	    auth_token    = string
+	    service       = optional(string)
+	    source        = optional(string)
+	    tags          = optional(string)
+	    compress_logs = optional(bool)
+	  })> | default: null
   	 dataset_fields_ids  = <list(number)> | default: [
   1000,
   1002,
@@ -103,131 +103,131 @@ module "example" {
   1100
 ]
   	 dynatrace_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    api_token           = string
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    api_token           = string
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	  })> | default: null
   	 edgerc_path  = <string> | default: "~/.edgerc"
   	 elasticsearch_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    user_name           = string
-    password            = string
-    index_name          = string
-    content_type        = optional(string)
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-    tls_hostname        = optional(string)
-    ca_cert             = optional(string)
-    client_cert         = optional(string)
-    client_key          = optional(string)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    user_name           = string
+	    password            = string
+	    index_name          = string
+	    content_type        = optional(string)
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	    tls_hostname        = optional(string)
+	    ca_cert             = optional(string)
+	    client_cert         = optional(string)
+	    client_key          = optional(string)
+	  })> | default: null
   	 enable_midgress  = <bool> | default: false
   	 field_delimiter  = <string> | default: null
   	 gcs_connector  = <object({
-    display_name         = string
-    bucket               = string
-    private_key          = string
-    project_id           = string
-    service_account_name = string
-    path                 = optional(string)
-  })> | default: null
+	    display_name         = string
+	    bucket               = string
+	    private_key          = string
+	    project_id           = string
+	    service_account_name = string
+	    path                 = optional(string)
+	  })> | default: null
   	 https_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    authentication_type = string
-    content_type        = optional(string)
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-    user_name           = optional(string)
-    password            = optional(string)
-    compress_logs       = optional(bool)
-    tls_hostname        = optional(string)
-    ca_cert             = optional(string)
-    client_cert         = optional(string)
-    client_key          = optional(string)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    authentication_type = string
+	    content_type        = optional(string)
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	    user_name           = optional(string)
+	    password            = optional(string)
+	    compress_logs       = optional(bool)
+	    tls_hostname        = optional(string)
+	    ca_cert             = optional(string)
+	    client_cert         = optional(string)
+	    client_key          = optional(string)
+	  })> | default: null
   	 interval_in_secs  = <number> | default: 60
   	 log_format  = <string> | default: "JSON"
   	 loggly_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    auth_token          = string
-    tags                = optional(string)
-    content_type        = optional(string)
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    auth_token          = string
+	    tags                = optional(string)
+	    content_type        = optional(string)
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	  })> | default: null
   	 new_relic_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    auth_token          = string
-    content_type        = optional(string)
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    auth_token          = string
+	    content_type        = optional(string)
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	  })> | default: null
   	 notification_emails  = <list(string)> | default: []
   	 oracle_connector  = <object({
-    display_name      = string
-    bucket            = string
-    region            = string
-    namespace         = string
-    path              = string
-    access_key        = string
-    secret_access_key = string
-  })> | default: null
+	    display_name      = string
+	    bucket            = string
+	    region            = string
+	    namespace         = string
+	    path              = string
+	    access_key        = string
+	    secret_access_key = string
+	  })> | default: null
   	 s3_compatible_connector  = <object({
-    display_name      = string
-    endpoint          = string
-    bucket            = string
-    region            = string
-    access_key        = string
-    secret_access_key = string
-    path              = optional(string)
-  })> | default: null
+	    display_name      = string
+	    endpoint          = string
+	    bucket            = string
+	    region            = string
+	    access_key        = string
+	    secret_access_key = string
+	    path              = optional(string)
+	  })> | default: null
   	 s3_connector  = <object({
-    display_name      = string
-    bucket            = string
-    region            = string
-    access_key        = string
-    secret_access_key = string
-    path              = string
-  })> | default: null
+	    display_name      = string
+	    bucket            = string
+	    region            = string
+	    access_key        = string
+	    secret_access_key = string
+	    path              = string
+	  })> | default: null
   	 sampling_percentage  = <number> | default: null
   	 splunk_connector  = <object({
-    display_name          = string
-    endpoint              = string
-    event_collector_token = string
-    compress_logs         = optional(bool)
-    custom_header_name    = optional(string)
-    custom_header_value   = optional(string)
-    tls_hostname          = optional(string)
-    ca_cert               = optional(string)
-    client_cert           = optional(string)
-    client_key            = optional(string)
-  })> | default: null
+	    display_name          = string
+	    endpoint              = string
+	    event_collector_token = string
+	    compress_logs         = optional(bool)
+	    custom_header_name    = optional(string)
+	    custom_header_value   = optional(string)
+	    tls_hostname          = optional(string)
+	    ca_cert               = optional(string)
+	    client_cert           = optional(string)
+	    client_key            = optional(string)
+	  })> | default: null
   	 sumologic_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    collector_code      = string
-    content_type        = optional(string)
-    compress_logs       = optional(bool)
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    collector_code      = string
+	    content_type        = optional(string)
+	    compress_logs       = optional(bool)
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	  })> | default: null
   	 trafficpeak_connector  = <object({
-    display_name        = string
-    endpoint            = string
-    authentication_type = string
-    content_type        = string
-    user_name           = string
-    password            = string
-    custom_header_name  = optional(string)
-    custom_header_value = optional(string)
-    compress_logs       = optional(bool)
-  })> | default: null
+	    display_name        = string
+	    endpoint            = string
+	    authentication_type = string
+	    content_type        = string
+	    user_name           = string
+	    password            = string
+	    custom_header_name  = optional(string)
+	    custom_header_value = optional(string)
+	    compress_logs       = optional(bool)
+	  })> | default: null
   	 upload_file_prefix  = <string> | default: null
   	 upload_file_suffix  = <string> | default: null
 }
@@ -248,7 +248,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_ds2"></a> [ds2](#module\_ds2) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//ds2 | 5a76ae0616932940e23c334958e62cf9e487d6f5 |
+| <a name="module_ds2"></a> [ds2](#module\_ds2) | git::https://github.com/akamai/terraform-templates-modules.git//ds2 | v1.5.0 |
 
 ## Inputs
 

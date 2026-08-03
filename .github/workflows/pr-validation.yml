@@ -27,16 +27,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Setup SSH for GitHub module access
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan github.com >> ~/.ssh/known_hosts 2>/dev/null
-          echo "${{ secrets.DEPLOY_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          git config --global url."git@github.com:".insteadOf "https://github.com/"
-          git config --global url."git@github.com:".insteadOf "http://github.com/"
-
+        
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v4
         with:

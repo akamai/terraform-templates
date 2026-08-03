@@ -367,30 +367,6 @@ This repository uses **three automated workflows** that execute in sequence:
 - `feat:` or `feature:` → **Minor** (1.0.0 → 1.1.0)
 - `fix:` or `bugfix:` → **Patch** (1.0.0 → 1.0.1)
 
-### Setting Up Required Secrets
-
-#### DEPLOY_KEY for Private Modules
-
-For Terraform to access the `terraform-templates-modules` repository SSH access is required. See for example the module reference in the `new-aap-configuration/main.tf`:
-```
-source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.2.3"
-```
-
-Setup SSH for GitHub module access:
-
-1. Generate SSH key pair (no passphrase):
-   ```bash
-   ssh-keygen -t rsa -b 4096 -C "github-actions" -f deploy_key
-   ```
-
-2. Add **public key** (`deploy_key.pub`) to module repository:
-   - Go to module repo → Settings → Deploy keys
-   - Add key with read-only access
-
-3. Add **private key** (`deploy_key`) to this repository:
-   - Settings → Secrets and variables → Actions
-   - New repository secret: `DEPLOY_KEY`
-
 ## Branching Strategy
 
 This repository uses a **three-stage branching model** with automated CI/CD:
@@ -594,7 +570,7 @@ Always pin modules to specific versions using Git tags:
 
 ```hcl
 module "security" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
   # ...
 }
 ```

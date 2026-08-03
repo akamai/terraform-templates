@@ -11,20 +11,6 @@
  *
  * ---
  *
- * ## Authentication
- *
- * This module uses **Akamai EdgeGrid authentication**.
- *
- * Please refer to:
- * [DevOps Harmony / Setting up OpenAPI/EdgeGrid for PS]
- * (https://collaborate.akamai.com/confluence/pages/viewpage.action?pageId=748278616)
- *
- * Authentication details are provided via:
- * - `.edgerc` file
- * - `edgerc_section` variable
- *
- * ---
- *
  * ## Supported Zone Types
  *
  * ### PRIMARY
@@ -50,7 +36,7 @@
  *
  * ---
  *
- * ## Usage
+ * ## Basic Usage
  *
  * Basic usage of this module:
  *
@@ -157,7 +143,7 @@ provider "dns" {}
 # Module: New EdgeDNS (PRIMARY / SECONDARY)
 ## ----------------------------------------------------------------------------
 module "edns" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//edns?ref=v1.3.3"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//edns?ref=v1.3.3"
 
   zone_name   = var.zone_name
   zone_type   = var.zone_type
