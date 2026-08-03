@@ -36,28 +36,28 @@ Template (new-aap-configuration/main.tf)
 
 ```powershell
 # Save changes without activation
-pwsh deploy.ps1 aap -Env prod -Save -Notes "Version notes"
+PS> .\deploy.ps1 aap -Env prod -Save -Notes "Version notes"
 
 # Activate to staging
-pwsh deploy.ps1 aap -Env prod -ActivateStaging
+PS> .\deploy.ps1 aap -Env prod -ActivateStaging
 
 # Activate to production
-pwsh deploy.ps1 aapasm -Env qa -ActivateProduction
+PS> .\deploy.ps1 aapasm -Env qa -ActivateProduction
 
 # Activate to both staging and production simultaneously
-pwsh deploy.ps1 aap -Env prod -ActivateStaging -ActivateProduction
+PS> .\deploy.ps1 aap -Env prod -ActivateStaging -ActivateProduction
 
 # Dry-run (plan only, no apply)
-pwsh deploy.ps1 pm -Env dev -Save -Dry
+PS> .\deploy.ps1 pm -Env dev -Save -Dry
 
 # Debug mode (logs to {env}-akamai_tf.log)
-pwsh deploy.ps1 aap -Env prod -Save -Debug
+PS> .\deploy.ps1 aap -Env prod -Save -Debug
 
 # Skip drift-detection prompt
-pwsh deploy.ps1 aap -Env prod -Save -Force
+PS> .\deploy.ps1 aap -Env prod -Save -Force
 
 # Destroy all resources
-pwsh deploy.ps1 pm -Env dev -Destroy
+PS> .\deploy.ps1 pm -Env dev -Destroy
 ```
 
 ### Why This Script Exists
@@ -282,7 +282,7 @@ client_lists_ipblock = var.create_client_lists ? module.client-lists[0].client_l
 ### Enable Debug Logging
 
 ```powershell
-pwsh deploy.ps1 aap -Env dev -Save -Debug
+PS> .\deploy.ps1 aap -Env dev -Save -Debug
 ```
 
 This sets:
