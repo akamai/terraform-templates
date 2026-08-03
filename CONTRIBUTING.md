@@ -400,30 +400,6 @@ This repository uses **three automated workflows** that execute in sequence:
 - `feat:` or `feature:` → **Minor** (1.0.0 → 1.1.0)
 - `fix:` or `bugfix:` → **Patch** (1.0.0 → 1.0.1)
 
-### Setting Up Required Secrets
-
-#### DEPLOY_KEY for Private Modules
-
-For Terraform to access the `terraform-templates-modules` repository SSH access is required. See for example the module reference in the `new-aap-configuration/main.tf`:
-```
-source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.2.3"
-```
-
-Setup SSH for GitHub module access:
-
-1. Generate SSH key pair (no passphrase):
-   ```bash
-   ssh-keygen -t rsa -b 4096 -C "github-actions" -f deploy_key
-   ```
-
-2. Add **public key** (`deploy_key.pub`) to module repository:
-   - Go to module repo → Settings → Deploy keys
-   - Add key with read-only access
-
-3. Add **private key** (`deploy_key`) to this repository:
-   - Settings → Secrets and variables → Actions
-   - New repository secret: `DEPLOY_KEY`
-
 ## Branching Strategy
 
 This repository uses a **three-stage branching model** with automated CI/CD:
@@ -573,7 +549,7 @@ git commit -m "chore: update dependencies"
 3. **Make your changes**:
    - Update code/templates
    - Update documentation (`main.tf`, `.tfvars.dist`)
-   - Test with: `pwsh deploy.ps1 <template> -Env dev -Save -Dry`
+   - Test with: `.\deploy.ps1 <template> -Env dev -Save -Dry`
    - Pre-commit hooks will run on commit (or manually: `pre-commit run --all-files`)
 
 4. **Commit with conventional format**:
@@ -627,7 +603,7 @@ Always pin modules to specific versions using Git tags:
 
 ```hcl
 module "security" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.1.1"
   # ...
 }
 ```
@@ -647,7 +623,7 @@ When module repository changes (it follows the same release process):
 
 3. **Test changes**:
    ```bash
-   pwsh deploy.ps1 aap -Env dev -Save -Dry
+   PS> .\deploy.ps1 aap -Env dev -Save -Dry
    ```
 
 3. **Commit with semantic message**:
@@ -686,17 +662,17 @@ pwsh -Command "Invoke-Pester -Path ./tests/lib-modules.Tests.ps1 -Output Detaile
 Before submitting PR, test your changes:
 
 ```bash
-pwsh deploy.ps1 <template> -Env dev -Save
+PS> .\deploy.ps1 <template> -Env dev -Save
 
 # or
 
 # Dry-run (plan only, no changes)
-pwsh deploy.ps1 <template> -Env dev -Save -Dry
+PS> .\deploy.ps1 <template> -Env dev -Save -Dry
 
 # Examples:
-pwsh deploy.ps1 aap -Env dev -Save -Dry
-pwsh deploy.ps1 aapasm -Env qa -Save -Dry
-pwsh deploy.ps1 pm -Env dev -Save -Dry
+PS> .\deploy.ps1 aap -Env dev -Save -Dry
+PS> .\deploy.ps1 aapasm -Env qa -Save -Dry
+PS> .\deploy.ps1 pm -Env dev -Save -Dry
 ```
 
 ### Debug Mode
@@ -704,7 +680,7 @@ pwsh deploy.ps1 pm -Env dev -Save -Dry
 Enable detailed logging for troubleshooting:
 
 ```bash
-pwsh deploy.ps1 aap -Env dev -Save -Debug
+PS> .\deploy.ps1 aap -Env dev -Save -Debug
 # Logs saved to: ./new-aap-configuration/environments/dev/dev-akamai_tf.log
 ```
 

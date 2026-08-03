@@ -4,7 +4,7 @@
 
 This Terraform module automates the creation and management of **Akamai Certificate Provisioning System (CPS)** enrollments for **Domain Validated (DV)** certificates with **Subject Alternative Names (SANs)**.
 
-The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations, After creation, the module automatically outputs DNS and HTTP challenge details into [dns-challenges.txt] and [http-challenges.txt]
+The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations. After creation, the module automatically outputs DNS and HTTP challenge details into `dns-challenges.txt` and `http-challenges.txt`.
 
 ## Prerequisites
 
@@ -15,13 +15,14 @@ The module supports configuration of administrative and technical contacts, CSR 
 - **Recommendation**: Use a dedicated .edgerc section per account for clean separation.
 
 ## Project Structure
-
+```
 ├── provider.tf
 ├── main.tf
 ├── variables.tf
 ├── terraform.tfvars
 ├── files.tf
 └── dns-challenges.txt / http-challenges.txt
+```
 
 ### File Overview
 
@@ -43,8 +44,8 @@ The module supports configuration of administrative and technical contacts, CSR 
 
 **Output artifacts**
 - After successful enrollment creation in CPS, two files will be written at the root:
-    [dns-challenges.txt] → contains all DNS-based validation records
-    [http-challenges.txt] → contains all HTTP-based validation details
+    `dns-challenges.txt` → contains all DNS-based validation records
+    `http-challenges.txt` → contains all HTTP-based validation details
 
 - Each file includes the domain, path (or CNAME), and target value to be configured for CPS validation.
 
@@ -56,13 +57,13 @@ Update the placeholders (<...>) with actual customer or project-specific values 
 
 ## Note
 
-- Set [acknowledge\_pre\_verification\_warnings] = [true] only after confirming CPS warnings are acceptable.
+- Set `acknowledge_pre_verification_warnings` = `true` only after confirming CPS warnings are acceptable.
 
 - If you don’t set this flag to true, Terraform will fail the run with a error message such as **Enrollment cannot proceed until you acknowledge pre-verification warnings**
 
 - Only set it to false if you want to manually review and accept warnings through the Akamai Control Center UI before proceeding.
 
-- [sni\_only] = set it to [true] or [false] depending on the requirement.
+- `sni_only` = set it to `true` or `false` depending on the requirement.
 
 # Usage
 Basic usage of this module is as follows:
@@ -73,58 +74,58 @@ module "example" {
   
 	 # Required variables
   	 admin_contact  = <object({
-    first_name       = string
-    last_name        = string
-    organization     = string
-    email            = string
-    phone            = string
-    address_line_one = string
-    city             = string
-    region           = string
-    postal_code      = string
-    country_code     = string
-  })>
+	    first_name       = string
+	    last_name        = string
+	    organization     = string
+	    email            = string
+	    phone            = string
+	    address_line_one = string
+	    city             = string
+	    region           = string
+	    postal_code      = string
+	    country_code     = string
+	  })>
   	 cert_name  = <string>
   	 common_name  = <string>
   	 contract_id  = <string>
   	 csr  = <object({
-    country_code        = string
-    city                = string
-    organization        = string
-    organizational_unit = string
-    state               = string
-  })>
+	    country_code        = string
+	    city                = string
+	    organization        = string
+	    organizational_unit = string
+	    state               = string
+	  })>
   	 edgerc_section  = <string>
   	 network_configuration  = <object({
-    disallowed_tls_versions = list(string)
-    clone_dns_names         = bool
-    geography               = string
-    must_have_ciphers       = string
-    ocsp_stapling           = string
-    preferred_ciphers       = string
-  })>
+	    disallowed_tls_versions = list(string)
+	    clone_dns_names         = bool
+	    geography               = string
+	    must_have_ciphers       = string
+	    ocsp_stapling           = string
+	    preferred_ciphers       = string
+	  })>
   	 organization  = <object({
-    name             = string
-    phone            = string
-    address_line_one = string
-    address_line_two = string
-    city             = string
-    region           = string
-    postal_code      = string
-    country_code     = string
-  })>
+	    name             = string
+	    phone            = string
+	    address_line_one = string
+	    address_line_two = string
+	    city             = string
+	    region           = string
+	    postal_code      = string
+	    country_code     = string
+	  })>
   	 tech_contact  = <object({
-    first_name       = string
-    last_name        = string
-    organization     = string
-    email            = string
-    phone            = string
-    address_line_one = string
-    city             = string
-    region           = string
-    postal_code      = string
-    country_code     = string
-  })>
+	    first_name       = string
+	    last_name        = string
+	    organization     = string
+	    email            = string
+	    phone            = string
+	    address_line_one = string
+	    city             = string
+	    region           = string
+	    postal_code      = string
+	    country_code     = string
+	  })>
   
 	 # Optional variables
   	 acknowledge_pre_verification_warnings  = <bool> | default: true
@@ -157,7 +158,7 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dv-san-cert"></a> [dv-san-cert](#module\_dv-san-cert) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert | v1.3.3 |
+| <a name="module_dv-san-cert"></a> [dv-san-cert](#module\_dv-san-cert) | git::https://github.com/akamai/terraform-templates-modules.git//dv-san-cert | v1.3.3 |
 
 ## Inputs
 

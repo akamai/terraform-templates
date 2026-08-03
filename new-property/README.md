@@ -71,26 +71,26 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
 A common flow is as follows (with "prod" as the environment):
 1. Save the changes only (no activations) using the PM template/product:
 ```bash
-pwsh deploy.ps1 pm -Env prod -Save -Notes "Some user user notes"
+PS> .\deploy.ps1 pm -Env prod -Save -Notes "Some user notes"
 ```
 
 2. Activate to staging:
 ```bash
-pwsh deploy.ps1 pm -Env prod -ActivateStaging
+PS> .\deploy.ps1 pm -Env prod -ActivateStaging
 ```
 
 3. Activate to production:
 ```bash
-pwsh deploy.ps1 pm -Env prod -ActivateProduction
+PS> .\deploy.ps1 pm -Env prod -ActivateProduction
 ```
 
 Options:
 * Add the `-Debug` option to the command to log all the Terraform actions in a file stored in the specific environment directory.
 * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
 * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
-```bash
-pwsh deploy.ps1 pm -Env dev -Destroy
-```
+    ```bash
+    PS> .\deploy.ps1 pm -Env dev -Destroy
+    ```
 
 # Usage
 Basic usage of this module is as follows:
@@ -158,7 +158,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_property"></a> [property](#module\_property) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//delivery | v1.5.0 |
+| <a name="module_property"></a> [property](#module\_property) | git::https://github.com/akamai/terraform-templates-modules.git//delivery | v1.5.0 |
 
 ## Inputs
 

@@ -63,7 +63,7 @@
  * - TrafficPeak / Hydrolix (`trafficpeak_connector`)
  */
 module "ds2" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//ds2?ref=v1.5.0"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//ds2?ref=v1.5.0"
 
   # Scope
   name         = var.name

@@ -3,7 +3,7 @@
  * 
  * This Terraform module automates the creation and management of **Akamai Certificate Provisioning System (CPS)** enrollments for **Domain Validated (DV)** certificates with **Subject Alternative Names (SANs)**.
  * 
- * The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations, After creation, the module automatically outputs DNS and HTTP challenge details into [dns-challenges.txt] and [http-challenges.txt]
+ * The module supports configuration of administrative and technical contacts, CSR generation, network and TLS configurations. After creation, the module automatically outputs DNS and HTTP challenge details into `dns-challenges.txt` and `http-challenges.txt`.
  * 
  * ## Prerequisites
  * 
@@ -14,14 +14,15 @@
  * - **Recommendation**: Use a dedicated .edgerc section per account for clean separation.
  * 
  * ## Project Structure
- * 
+ * ```
  * ├── provider.tf
  * ├── main.tf
  * ├── variables.tf
  * ├── terraform.tfvars
  * ├── files.tf
  * └── dns-challenges.txt / http-challenges.txt
- * 
+ * ```
+ *
  * ### File Overview
  * 
  * | File | Description |
@@ -42,8 +43,8 @@
  * 
  * **Output artifacts**
  * - After successful enrollment creation in CPS, two files will be written at the root:
- *     [dns-challenges.txt] → contains all DNS-based validation records
- *     [http-challenges.txt] → contains all HTTP-based validation details
+ *     `dns-challenges.txt` → contains all DNS-based validation records
+ *     `http-challenges.txt` → contains all HTTP-based validation details
  * 
  * - Each file includes the domain, path (or CNAME), and target value to be configured for CPS validation.
  * 
@@ -55,18 +56,18 @@
  * 
  * ## Note
  * 
- * - Set [acknowledge_pre_verification_warnings] = [true] only after confirming CPS warnings are acceptable.
+ * - Set `acknowledge_pre_verification_warnings` = `true` only after confirming CPS warnings are acceptable.
  * 
  * - If you don’t set this flag to true, Terraform will fail the run with a error message such as **Enrollment cannot proceed until you acknowledge pre-verification warnings**
  * 
  * - Only set it to false if you want to manually review and accept warnings through the Akamai Control Center UI before proceeding.
  * 
- * - [sni_only] = set it to [true] or [false] depending on the requirement.
+ * - `sni_only` = set it to `true` or `false` depending on the requirement.
 */
 
 
 module "dv-san-cert" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.3.3"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//dv-san-cert?ref=v1.3.3"
 
   common_name                           = var.common_name
   allow_duplicate_common_name           = var.allow_duplicate_common_name
