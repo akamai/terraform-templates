@@ -26,17 +26,17 @@
  *     A common flow is as follows (with "prod" as the environment):
  *     1. Save the changes only (no activations) using the AAP template/product:
  *     ```bash
- *     pwsh deploy.ps1 aap -Env prod -Save -Notes "Some user user notes"
+ *     PS> .\deploy.ps1 aap -Env prod -Save -Notes "Some user user notes"
  *     ```
  *
  *     2. Activate to staging:
  *     ```bash
- *     pwsh aap -Env prod -ActivateStaging
+ *     PS> .\deploy.ps1 aap -Env prod -ActivateStaging
  *     ```
  *
  *     3. Activate to production:
  *     ```bash
- *     pwsh aap -Env prod -ActivateProduction
+ *     PS> .\deploy.ps1 aap -Env prod -ActivateProduction
  *     ```
  *     
  *     Options:
@@ -44,7 +44,7 @@
  *     * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
  *     * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
  *     ```bash
- *     pwsh deploy.ps1 aap -Env dev -Destroy
+ *     PS> .\deploy.ps1 aap -Env dev -Destroy
  *     ```
  *
  * ## Known Errors
@@ -62,7 +62,7 @@ data "akamai_contract" "contract" {
 
 module "client-lists" {
   count               = var.create_client_lists ? 1 : 0
-  source              = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/client-lists?ref=v1.3.3"
+  source              = "git::https://github.com/akamai/terraform-templates-modules.git//aap/client-lists?ref=v1.3.3"
   client_lists_prefix = substr(var.config_name, 0, 20)
   config_name         = var.config_name
   contract_id         = trimprefix(data.akamai_contract.contract.id, "ctr_")
@@ -81,7 +81,7 @@ locals {
 }
 
 module "security" {
-  source        = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.3.3"
+  source        = "git::https://github.com/akamai/terraform-templates-modules.git//aap/security?ref=v1.3.3"
   hostnames     = var.hostnames
   config_name   = var.config_name
   description   = var.description
@@ -132,7 +132,7 @@ module "security" {
 
 module "botman" {
   count              = var.enable_botman ? 1 : 0
-  source             = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/bot-manager?ref=v1.3.3"
+  source             = "git::https://github.com/akamai/terraform-templates-modules.git//aap/bot-manager?ref=v1.3.3"
   botman_type        = var.botman_type
   config_id          = module.security.config_id
   security_policy_id = module.security.security_policy_id
@@ -185,7 +185,7 @@ module "botman" {
 }
 
 module "activate-security" {
-  source                          = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap/activate-security?ref=v1.3.3"
+  source                          = "git::https://github.com/akamai/terraform-templates-modules.git//aap/activate-security?ref=v1.3.3"
   config_name                     = var.config_name
   config_id                       = module.security.config_id
   activate_to_staging             = var.activate_to_staging

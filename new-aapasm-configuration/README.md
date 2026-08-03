@@ -27,17 +27,17 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
     A common flow is as follows (with "prod" as the environment):
     1. Save the changes only:
     ```bash
-    pwsh deploy.ps1 aapasm -Env prod -Save -Notes "Some user user notes"
+    PS> .\deploy.ps1 aapasm -Env prod -Save -Notes "Some user user notes"
     ```
 
     2. Activate to staging:
     ```bash
-    pwsh deploy.ps1 aapasm -Env prod -ActivateStaging
+    PS> .\deploy.ps1 aapasm -Env prod -ActivateStaging
     ```
 
     3. Activate to production:
     ```bash
-    pwsh deploy.ps1 aapasm -Env prod -ActivateProduction
+    PS> .\deploy.ps1 aapasm -Env prod -ActivateProduction
     ```
 
     Options:
@@ -45,7 +45,7 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
     * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
     * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
     ```bash
-    pwsh deploy.ps1 aapasm -Env dev -Destroy
+    PS> .\deploy.ps1 aapasm -Env dev -Destroy
     ```
 
 ## Known Errors
@@ -208,11 +208,11 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security | v1.3.3 |
-| <a name="module_botman"></a> [botman](#module\_botman) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager | v1.3.3 |
-| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-lists | v1.3.3 |
-| <a name="module_client-reputation"></a> [client-reputation](#module\_client-reputation) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation | v1.3.3 |
-| <a name="module_security"></a> [security](#module\_security) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//aap-asm/security | v1.3.3 |
+| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security | v1.3.3 |
+| <a name="module_botman"></a> [botman](#module\_botman) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager | v1.3.3 |
+| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/client-lists | v1.3.3 |
+| <a name="module_client-reputation"></a> [client-reputation](#module\_client-reputation) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation | v1.3.3 |
+| <a name="module_security"></a> [security](#module\_security) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/security | v1.3.3 |
 
 ## Inputs
 

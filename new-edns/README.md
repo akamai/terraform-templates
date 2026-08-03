@@ -12,20 +12,6 @@ and automation standards as other official PS Terraform modules.
 
 ---
 
-## Authentication
-
-This module uses **Akamai EdgeGrid authentication**.
-
-Please refer to:
-[DevOps Harmony / Setting up OpenAPI/EdgeGrid for PS]
-(https://collaborate.akamai.com/confluence/pages/viewpage.action?pageId=748278616)
-
-Authentication details are provided via:
-- `.edgerc` file
-- `edgerc_section` variable
-
----
-
 ## Supported Zone Types
 
 ### PRIMARY
@@ -51,7 +37,7 @@ Authentication details are provided via:
 
 ---
 
-## Usage
+## Basic Usage
 
 Basic usage of this module:
 
@@ -163,96 +149,96 @@ module "example" {
   
 	 # Optional variables
   	 a_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 aaaa_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 caa_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 cname_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 destroy_mode  = <bool> | default: false
   	 edgerc_path  = <string> | default: null
   	 edgerc_section  = <string> | default: null
   	 force_empty_records  = <bool> | default: false
   	 hinfo_records  = <list(object({
-    name     = string
-    hardware = string
-    software = string
-    ttl      = number
-  }))> | default: []
+	    name     = string
+	    hardware = string
+	    software = string
+	    ttl      = number
+	  }))> | default: []
   	 loc_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 masters  = <list(string)> | default: []
   	 mx_records  = <list(object({
-    name               = string
-    target             = list(string)
-    ttl                = number
-    priority           = optional(number)
-    priority_increment = optional(number)
-  }))> | default: []
+	    name               = string
+	    target             = list(string)
+	    ttl                = number
+	    priority           = optional(number)
+	    priority_increment = optional(number)
+	  }))> | default: []
   	 ns_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 ptr_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 rp_records  = <list(object({
-    name    = string
-    mailbox = string
-    txt     = string
-    ttl     = number
-  }))> | default: []
+	    name    = string
+	    mailbox = string
+	    txt     = string
+	    ttl     = number
+	  }))> | default: []
   	 soa  = <object({
-    email        = string
-    name_server  = string
-    ttl          = number
-    refresh      = number
-    retry        = number
-    expiry       = number
-    nxdomain_ttl = number
-  })> | default: null
+	    email        = string
+	    name_server  = string
+	    ttl          = number
+	    refresh      = number
+	    retry        = number
+	    expiry       = number
+	    nxdomain_ttl = number
+	  })> | default: null
   	 spf_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
   	 srv_records  = <list(object({
-    name     = string
-    target   = list(string)
-    ttl      = number
-    priority = number
-    weight   = number
-    port     = number
-  }))> | default: []
+	    name     = string
+	    target   = list(string)
+	    ttl      = number
+	    priority = number
+	    weight   = number
+	    port     = number
+	  }))> | default: []
   	 tsig_key  = <object({
-    name      = string
-    algorithm = string
-    secret    = string
-  })> | default: null
+	    name      = string
+	    algorithm = string
+	    secret    = string
+	  })> | default: null
   	 txt_records  = <list(object({
-    name   = string
-    target = list(string)
-    ttl    = number
-  }))> | default: []
+	    name   = string
+	    target = list(string)
+	    ttl    = number
+	  }))> | default: []
 }
 ```
 
@@ -272,7 +258,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_edns"></a> [edns](#module\_edns) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//edns | v1.3.3 |
+| <a name="module_edns"></a> [edns](#module\_edns) | git::https://github.com/akamai/terraform-templates-modules.git//edns | v1.3.3 |
 
 ## Inputs
 

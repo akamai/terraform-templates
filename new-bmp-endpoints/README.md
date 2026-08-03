@@ -570,9 +570,9 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_api_definition"></a> [api\_definition](#module\_api\_definition) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/api-definition | v1.3.3 |
-| <a name="module_security_config_activation"></a> [security\_config\_activation](#module\_security\_config\_activation) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/security-config-activation | v1.3.3 |
-| <a name="module_transactional_endpoint"></a> [transactional\_endpoint](#module\_transactional\_endpoint) | git::ssh://git@github.com/akamai/terraform-templates-modules.git//bmp/transactional-endpoint | v1.3.3 |
+| <a name="module_api_definition"></a> [api\_definition](#module\_api\_definition) | git::https://github.com/akamai/terraform-templates-modules.git//bmp/api-definition | v1.3.3 |
+| <a name="module_security_config_activation"></a> [security\_config\_activation](#module\_security\_config\_activation) | git::https://github.com/akamai/terraform-templates-modules.git//bmp/security-config-activation | v1.3.3 |
+| <a name="module_transactional_endpoint"></a> [transactional\_endpoint](#module\_transactional\_endpoint) | git::https://github.com/akamai/terraform-templates-modules.git//bmp/transactional-endpoint | v1.3.3 |
 
 ## Inputs
 
