@@ -225,7 +225,9 @@ class AAPTemplate {
     
     [void] Destroy() {
         Write-Host "Destroying AAP configuration for environment: $($this.Environment)" -ForegroundColor Red
-        
+
+        Confirm-DestroyOperation -ResourceDescription "AAP configuration for environment: $($this.Environment)"
+
         $configPath = "environments/$($this.Environment)"
         $stateFileName = "$($this.Environment)-terraform.tfstate"
         
@@ -271,4 +273,54 @@ function New-AAPTemplate {
     return [AAPTemplate]::new($Environment, $TemplateFolder)
 }
 
-Export-ModuleMember -Function New-AAPTemplate
+function Get-AAPParamPolicy {
+    <#
+    .SYNOPSIS
+    Returns the parameter policy for the AAP template.
+    Called automatically by deploy.ps1 before routing begins.
+    #>
+    return @{
+        Required      = @("Environment")
+        RequiredHints = @{ Environment = "Use: -Env <environment>" }
+        Allowed       = @(
+            "Environment", "Save", "ActivateStaging", "ActivateProduction",
+            "Destroy", "VersionNotes", "SkipValidation", "Dry"
+        )
+        MustHaveOneOf = @("Save", "ActivateStaging", "ActivateProduction", "Destroy")
+    }
+}
+
+function Invoke-AAPTemplate {
+    <#
+    .SYNOPSIS
+    Dispatches an AAP deployment request received from deploy.ps1.
+    Owns all AAP-specific routing logic so that deploy.ps1 stays template-agnostic.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateFolder,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    $template = New-AAPTemplate -Environment $BoundParams['Environment'] -TemplateFolder $TemplateFolder
+
+    if ($BoundParams.ContainsKey('Destroy')) {
+        $template.Destroy()
+    }
+    else {
+        $template.Deploy(@{
+            Save               = $BoundParams.ContainsKey('Save')
+            ActivateStaging    = $BoundParams.ContainsKey('ActivateStaging')
+            ActivateProduction = $BoundParams.ContainsKey('ActivateProduction')
+            VersionNotes       = $BoundParams['VersionNotes']
+            Dry                = $BoundParams.ContainsKey('Dry')
+            SkipValidation     = $BoundParams.ContainsKey('SkipValidation')
+            Force              = $BoundParams.ContainsKey('Force')
+            Debug              = $BoundParams.ContainsKey('Debug')
+        })
+    }
+}
+
+Export-ModuleMember -Function New-AAPTemplate, Get-AAPParamPolicy, Invoke-AAPTemplate

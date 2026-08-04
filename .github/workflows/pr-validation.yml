@@ -51,32 +51,38 @@ jobs:
           terraform init -backend=false
           terraform validate
 
+      - name: Terraform Validate - BMP - New Transactional Endpoint
+        working-directory: ./new-bmp-endpoints
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - Datastream
+        working-directory: ./new-ds2
+        run: |
+          terraform init -backend=false
+          terraform validate
+      
+      - name: Terraform Validate - CPS - DV SAN Cert
+        working-directory: ./new-dv-san-cert
+        run: |
+          terraform init -backend=false
+          terraform validate
+
+      - name: Terraform Validate - EDNS 
+        working-directory: ./new-edns
+        run: |
+          terraform init -backend=false
+          terraform validate
+
       - name: Terraform Validate - Property
         working-directory: ./new-property
         run: |
           terraform init -backend=false
           terraform validate
 
-      - name: Terraform Validate - CPS - SAN Cert
-        working-directory: ./new-dv-san-cert
-        run: |
-          terraform init -backend=false
-          terraform validate
-
       - name: Terraform Validate - CPS - Third Party Cert
         working-directory: ./new-third-party-cert
-        run: |
-          terraform init -backend=false
-          terraform validate
-
-      - name: Terraform Validate - BMP - New Transactional Endpoint
-        working-directory: ./new-bmp-endpoints
-        run: |
-          terraform init -backend=false
-          terraform validate
-          
-      - name: Terraform Validate - EDNS 
-        working-directory: ./new-edns
         run: |
           terraform init -backend=false
           terraform validate
@@ -97,24 +103,28 @@ jobs:
         working-directory: ./new-aapasm-configuration
         run: tflint --recursive
 
-      - name: Run TFLint - Property
-        working-directory: ./new-property
+      - name: Run TFLint - BMP - New Transactional Endpoint
+        working-directory: ./new-bmp-endpoints
         run: tflint --recursive
 
-      - name: Run TFLint - CPS - SAN Cert
+      - name: Run TFLint - Datastream
+        working-directory: ./new-ds2
+        run: tflint --recursive
+
+      - name: Run TFLint - CPS - DV SAN Cert
         working-directory: ./new-dv-san-cert
         run: tflint --recursive
 
-      - name: Run TFLint - CPS - Third Party Cert
-        working-directory: ./new-third-party-cert
-        run: tflint --recursive
-      
       - name: Run TFLint - EDNS 
         working-directory: ./new-edns
         run: tflint --recursive
 
-      - name: Run TFLint - BMP - New Transactional Endpoint
-        working-directory: ./new-bmp-endpoints
+      - name: Run TFLint - Property
+        working-directory: ./new-property
+        run: tflint --recursive
+
+      - name: Run TFLint - CPS - Third Party Cert
+        working-directory: ./new-third-party-cert
         run: tflint --recursive
 
       - name: Run Trivy Security Scan

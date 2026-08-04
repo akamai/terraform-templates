@@ -22,13 +22,13 @@ Templates in this repo are **thin orchestrators** that:
 
 ```
 Template (new-aap-configuration/main.tf)
-  ├─> Module: client-lists (ref=v1.1.1)
-  ├─> Module: security (ref=v1.1.1)
-  ├─> Module: botman (conditional, ref=v1.1.1)
-  └─> Module: activate-security (ref=v1.1.1)
+  ├─> Module: client-lists (ref=v1.3.3)
+  ├─> Module: security (ref=v1.3.3)
+  ├─> Module: botman (conditional, ref=v1.3.3)
+  └─> Module: activate-security (ref=v1.3.3)
 ```
 
-**Current module version:** v1.1.1 (check all `main.tf` files before updates)
+**Current module version:** v1.3.3 (check all `main.tf` files before updates)
 
 ## Critical Workflow: The PowerShell Deploy Script
 
@@ -77,6 +77,10 @@ The `-TemplateType` parameter maps to directory names:
 - `aap` → `new-aap-configuration/`
 - `aapasm` → `new-aapasm-configuration/`
 - `pm` → `new-property/`
+- `cps` → `new-dv-san-cert/` or `new-third-party-cert/` (determined by `-CpsType dv-san-cert|third-party-cert`)
+- `bmp` → `new-bmp-endpoints/`
+- `edns` → `new-edns/`
+- `ds2` → `new-ds2/`
 
 ### Script Mechanics
 
@@ -189,22 +193,20 @@ This is expected—AAP auto-creates Rate Control Policies. The `deploy.ps1` scri
 2. Runs `terraform import` for the 3 default policies (origin_error, post_page_requests, page_view_requests)
 3. Retries the apply automatically
 
-**Implementation in deploy.ps1:**
-```powershell
-# After failed apply, imports rate policies from outputs
-$terraformOutput = terraform -chdir="$TemplateFolder" output -json | ConvertFrom-Json
-$configid = $terraformOutput.config_id.value
-$rate = $terraformOutput.rate.value
-terraform import module.security.akamai_appsec_rate_policy.origin_error "${configid}:${rate.origin}"
-terraform import module.security.akamai_appsec_rate_policy.post_page_requests "${configid}:${rate.post}"
-terraform import module.security.akamai_appsec_rate_policy.page_view_requests "${configid}:${rate.page}"
-```
+**Implementation:** This logic lives in `AAPTemplate.HandleApplyFailure()` in `lib/templates/AAP.psm1`. It:
+1. Runs a `terraform apply -refresh-only` pass to resolve rate policy IDs from state outputs
+2. Imports the 3 default rate policies via `terraform import`
+3. Re-plans with the updated state and retries the apply
 
 **Do not manually import these policies.**
 
 ## Contributing Standards
 
 **For complete contribution guidelines, see [CONTRIBUTING.md](../CONTRIBUTING.md).**
+
+### Adding a New Template
+
+Use the `add-new-template` skill for guided step-by-step assistance. In VS Code Copilot, simply describe the new template and the skill loads automatically. For Copilot CLI or Claude Code, explicitly load it: `Read .github/skills/add-new-template/SKILL.md then help me add a template for [product]`. See [CONTRIBUTING.md — Adding a New Template](../CONTRIBUTING.md#adding-a-new-template-agentic) for full details.
 
 ### Branching Strategy (Summary)
 
@@ -338,6 +340,14 @@ terraform {
 ```
 
 Updated to Akamai provider v9.x as of version 1.2.0 (Nov 2025).
+
+## Agent Behavior
+
+When working autonomously (agentic mode), follow these limits to avoid unproductive loops:
+
+- **Test failures**: attempt to fix and re-run failing tests at most **2 times**. If tests still fail after 2 fix attempts, stop, report the exact failing test names and error output, and ask for direction instead of continuing to iterate.
+- **Terraform errors**: if `terraform plan` or `terraform apply` fails for an unexpected reason (not a known AAP rate-policy quirk), attempt one fix and stop if it fails again.
+- **General errors**: after **2 consecutive failed attempts** at the same action, stop and explain what was tried and what is blocking progress.
 
 ## Additional Resources
 

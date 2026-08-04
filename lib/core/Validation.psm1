@@ -123,4 +123,117 @@ function Test-AkamaiProductId {
     }
 }
 
-Export-ModuleMember -Function Get-TfVarValue, Test-AkamaiProductId
+
+# Parameters always allowed for every template type.
+# 'Debug' is a PowerShell common parameter that may appear in $PSBoundParameters.
+$script:GlobalAllowedParams = @("TemplateType", "Help", "Force", "Debug", "Verbose"
+     "ErrorAction", "WarningAction", "InformationAction", 
+     "ErrorVariable", "WarningVariable", "InformationVariable", 
+     "OutVariable", "OutBuffer", "PipelineVariable"
+)
+
+function Assert-TemplateParameters {
+    <#
+    .SYNOPSIS
+    Validates that $PSBoundParameters contains only parameters declared as allowed
+    by the template's policy, that all required parameters are present, and that
+    at least one action parameter is provided when the policy requires it.
+
+    .DESCRIPTION
+    Called from deploy.ps1 after importing a template module. The template module
+    must export a Get-<Name>ParamPolicy function that returns a hashtable with:
+
+        Required      - [string[]] Parameters that must be present. Optional.
+        RequiredHints - [hashtable] Per-parameter hint appended to the Required error. Optional.
+        Allowed       - [string[]] Template-specific parameters that are permitted.
+                        The global params (TemplateType, Help, Force, Debug) are always
+                        added automatically.
+        MustHaveOneOf - [string[]] At least one of these must be present. Optional.
+
+    .PARAMETER TemplateType
+    The template type string (e.g. 'aap', 'cps'). Used in error messages.
+
+    .PARAMETER Policy
+    Hashtable returned by the template's Get-<Name>ParamPolicy function.
+
+    .PARAMETER BoundParams
+    Pass $PSBoundParameters from deploy.ps1.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateType,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$Policy,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    $allAllowed = @($Policy.Allowed) + $script:GlobalAllowedParams
+
+    # 1. Required parameters
+    if ($Policy.Required) {
+        foreach ($param in $Policy.Required) {
+            if (-not $BoundParams.ContainsKey($param)) {
+                $hint = if ($Policy.RequiredHints -and $Policy.RequiredHints[$param]) {
+                    " $($Policy.RequiredHints[$param])"
+                }
+                else { "" }
+                throw "$param parameter required for '$TemplateType' template.$hint"
+            }
+        }
+    }
+
+    # 2. Forbidden parameters — report the first offender with the full allowed list
+    $forbidden = @($BoundParams.Keys | Where-Object { $_ -notin $allAllowed })
+    if ($forbidden.Count -gt 0) {
+        $allowedDisplay = ($Policy.Allowed | Sort-Object | ForEach-Object { "-$_" }) -join ", "
+        throw "Parameter '-$($forbidden[0])' is not applicable for the '$TemplateType' template. " +
+              "Allowed parameters: $allowedDisplay"
+    }
+
+    # 3. At least one action required
+    if ($Policy.MustHaveOneOf) {
+        $present = @($Policy.MustHaveOneOf | Where-Object { $BoundParams.ContainsKey($_) })
+        if ($present.Count -eq 0) {
+            $paramList = ($Policy.MustHaveOneOf | ForEach-Object { "-$_" }) -join ", "
+            throw "Please specify at least one parameter: $paramList"
+        }
+    }
+}
+
+function Confirm-DestroyOperation {
+    <#
+    .SYNOPSIS
+    Prompts the user to confirm a destructive Terraform destroy operation.
+
+    .DESCRIPTION
+    Displays a warning and requires the user to type YES to proceed.
+    Throws if the user does not confirm, preventing the destroy from running.
+
+    .PARAMETER ResourceDescription
+    A short description of what is about to be destroyed, shown to the user.
+    Example: "AAP configuration for environment: prod"
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ResourceDescription
+    )
+
+    Write-Host ""
+    Write-Host "WARNING: You are about to DESTROY the following resource!" -ForegroundColor Red
+    Write-Host "  $ResourceDescription" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Type YES to confirm destruction:" -ForegroundColor Cyan
+
+    $confirmation = Read-Host
+
+    if ($confirmation -ne "YES") {
+        throw "Destroy operation cancelled by user."
+    }
+}
+
+Export-ModuleMember -Function Get-TfVarValue, Test-AkamaiProductId, Assert-TemplateParameters, Confirm-DestroyOperation

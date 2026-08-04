@@ -395,6 +395,8 @@ class BMPTemplate {
     [void] Destroy() {
         Write-Host "Destroying BMP configuration for environment: $($this.Environment)" -ForegroundColor Red
 
+        Confirm-DestroyOperation -ResourceDescription "BMP configuration for environment: $($this.Environment)"
+
         $configPath    = "environments/$($this.Environment)"
         $stateFileName = "$($this.Environment)-terraform.tfstate"
 
@@ -430,10 +432,6 @@ class BMPTemplate {
     }
 }
 
-# -------------------------------------------------------------------------
-# Factory function
-# -------------------------------------------------------------------------
-
 function New-BMPTemplate {
     [CmdletBinding()]
     param(
@@ -447,4 +445,69 @@ function New-BMPTemplate {
     return [BMPTemplate]::new($Environment, $TemplateFolder)
 }
 
-Export-ModuleMember -Function New-BMPTemplate
+function Get-BMPParamPolicy {
+    <#
+    .SYNOPSIS
+    Returns the parameter policy for the BMP template.
+    Called automatically by deploy.ps1 before routing begins.
+    #>
+    return @{
+        Required      = @("Environment")
+        RequiredHints = @{ Environment = "Use: -Env <environment>" }
+        Allowed       = @(
+            "Environment", "Destroy", "VersionNotes", "SkipValidation", "Dry",
+            "ActivateStaging", "ActivateProduction",
+            "SaveApi", "ActivateStagingApi", "ActivateProductionApi",
+            "SaveSec", "ActivateStagingSec", "ActivateProductionSec"
+        )
+        MustHaveOneOf = @(
+            "Destroy", "ActivateStaging", "ActivateProduction",
+            "SaveApi", "ActivateStagingApi", "ActivateProductionApi",
+            "SaveSec", "ActivateStagingSec", "ActivateProductionSec"
+        )
+    }
+}
+
+function Invoke-BMPTemplate {
+    <#
+    .SYNOPSIS
+    Dispatches a BMP deployment request received from deploy.ps1.
+    Owns all BMP-specific routing logic so that deploy.ps1 stays template-agnostic.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateFolder,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    $template = New-BMPTemplate -Environment $BoundParams['Environment'] -TemplateFolder $TemplateFolder
+
+    if ($BoundParams.ContainsKey('Destroy')) {
+        $template.Destroy()
+    }
+    else {
+        $template.Deploy(@{
+            # Global scope
+            ActivateStaging    = $BoundParams.ContainsKey('ActivateStaging')
+            ActivateProduction = $BoundParams.ContainsKey('ActivateProduction')
+            # API scope (Phase 1)
+            SaveApi               = $BoundParams.ContainsKey('SaveApi')
+            ActivateStagingApi    = $BoundParams.ContainsKey('ActivateStagingApi')
+            ActivateProductionApi = $BoundParams.ContainsKey('ActivateProductionApi')
+            # Security scope (Phase 2)
+            SaveSec               = $BoundParams.ContainsKey('SaveSec')
+            ActivateStagingSec    = $BoundParams.ContainsKey('ActivateStagingSec')
+            ActivateProductionSec = $BoundParams.ContainsKey('ActivateProductionSec')
+            # Common
+            VersionNotes       = $BoundParams['VersionNotes']
+            Dry                = $BoundParams.ContainsKey('Dry')
+            SkipValidation     = $BoundParams.ContainsKey('SkipValidation')
+            Force              = $BoundParams.ContainsKey('Force')
+            Debug              = $BoundParams.ContainsKey('Debug')
+        })
+    }
+}
+
+Export-ModuleMember -Function New-BMPTemplate, Get-BMPParamPolicy, Invoke-BMPTemplate

@@ -48,6 +48,42 @@ jobs:
           output-method: inject
           git-push: true
 
+      - name: Generate terraform-docs for BMP - New Transactional Endpoint
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-bmp-endpoints
+          config-file: ../.terraform-docs.yaml
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
+      - name: Generate terraform-docs for Datastream
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-ds2
+          config-file: ../.terraform-docs.yaml
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
+      - name: Generate terraform-docs for CPS - DV SAN Cert
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-dv-san-cert
+          config-file: ../.terraform-docs.yaml
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
+      - name: Generate terraform-docs for EDNS
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-edns
+          config-file: ../.terraform-docs.yaml
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
       - name: Generate terraform-docs for Property
         uses: terraform-docs/gh-actions@v1.4.1
         with:
@@ -57,37 +93,10 @@ jobs:
           output-method: inject
           git-push: true
 
-      - name: Generate terraform-docs for CPS - SAN Cert
-        uses: terraform-docs/gh-actions@v1.4.1
-        with:
-          working-dir: ./new-dv-san-cert
-          config-file: ../.terraform-docs.yaml
-          output-file: README.md
-          output-method: inject
-          git-push: true
-
       - name: Generate terraform-docs for CPS - Third Party Cert
         uses: terraform-docs/gh-actions@v1.4.1
         with:
           working-dir: ./new-third-party-cert
-          config-file: ../.terraform-docs.yaml
-          output-file: README.md
-          output-method: inject
-          git-push: true
-
-      - name: Generate terraform-docs for BMP - New Transactional Endpoint
-        uses: terraform-docs/gh-actions@v1.4.1
-        with:
-          working-dir: ./new-bmp-endpoints
-          config-file: ../.terraform-docs.yaml
-          output-file: README.md
-          output-method: inject
-          git-push: true
-          
-      - name: Generate terraform-docs for EDNS
-        uses: terraform-docs/gh-actions@v1.4.1
-        with:
-          working-dir: ./new-edns
           config-file: ../.terraform-docs.yaml
           output-file: README.md
           output-method: inject
