@@ -169,7 +169,7 @@ git checkout -b feat/add-custom-rate-policies
 - Pre-commit hooks will auto-run on `git commit` (formats code, updates `README.md`)
    - Or run manually: `pre-commit run --all-files`
 
-#### Adding New Templates
+#### Adding New Templates (Manual)
 
 To add a new template type (e.g., EdgeWorkers, ImageManager):
 
@@ -231,6 +231,39 @@ To add a new template type (e.g., EdgeWorkers, ImageManager):
    - Update this file (CONTRIBUTING.md) if needed
    - Add template-specific guidance to README.md
    - Create migration examples
+
+#### Adding a New Template (Agentic)
+
+Adding a new template type requires coordinated changes across three areas: a new Terraform configuration directory, a new PowerShell module in `lib/templates/`, and registration entries in `deploy.ps1`. The mandatory structure, naming conventions, and test requirements are documented in the dedicated Copilot skill.
+
+**If you are using GitHub Copilot in VS Code**, ask:
+> *"I need to add a new template for [product name]"*
+
+Copilot will automatically load the `add-new-template` skill and guide you through every step interactively.
+
+**If you are using GitHub Copilot CLI or Claude Code**, explicitly load the skill file at the start of your session:
+> *"Read .github/skills/add-new-template/SKILL.md then help me add a new template for [product name]"*
+
+These tools can read and follow the skill procedure but do not auto-discover VS Code skills.
+
+**If you are not using an AI coding agent**, read the skill files directly:
+
+| File | Contents |
+|---|---|
+| [`.github/skills/add-new-template/SKILL.md`](.github/skills/add-new-template/SKILL.md) | 7-step checklist: naming conventions, directory layout, module structure, `deploy.ps1` registration, and testing |
+| [`.github/skills/add-new-template/references/psm1-anatomy.md`](.github/skills/add-new-template/references/psm1-anatomy.md) | Fully annotated module structure with all mandatory class members and exported functions |
+| [`.github/skills/add-new-template/references/deploy-registration.md`](.github/skills/add-new-template/references/deploy-registration.md) | Exact edits required in `deploy.ps1` (three locations) |
+| [`.github/skills/add-new-template/references/tests-reference.md`](.github/skills/add-new-template/references/tests-reference.md) | Copy-paste Pester test blocks for all four required locations in `tests/deploy.Tests.ps1` |
+| [`.github/skills/add-new-template/assets/NewTemplate.psm1`](.github/skills/add-new-template/assets/NewTemplate.psm1) | Starter module with `{TemplateName}` placeholders ready to copy |
+
+**Checklist summary** (full detail in the skill):
+1. Choose a lowercase template type key and a PascalCase module name
+2. Create `new-{name}/` Terraform directory with environment subdirectories
+3. Create `lib/templates/{Name}.psm1` (class + `New-`, `Get-*ParamPolicy`, `Invoke-*`, `Export-ModuleMember`)
+4. Register in `deploy.ps1`: `ValidateSet`, `$templateModuleMap`, `$templateFolderMap`
+5. Add any new `deploy.ps1` parameters needed by the template
+6. Smoke-test with `pwsh deploy.ps1 {key} -Env dev -Save -Dry`
+7. Add Pester tests to `tests/deploy.Tests.ps1` (4 locations)
 
 ### 3. Commit with Conventional Commits
 

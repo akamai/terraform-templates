@@ -22,6 +22,7 @@ and run -Save.
 
 using module ../core/TerraformRunner.psm1
 using module ../core/Logger.psm1
+using module ../core/Validation.psm1
 
 class DS2Template {
   [string]$Environment
@@ -64,20 +65,6 @@ class DS2Template {
     }
 
     return $vars
-  }
-
-  [void] ConfirmDestroy() {
-    Write-Host ""
-    Write-Host "WARNING: You are about to DESTROY a DataStream 2 configuration!" -ForegroundColor Red
-    Write-Host "Stream : $($this.Environment)" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Type YES to confirm destruction:" -ForegroundColor Cyan
-
-    $confirmation = Read-Host
-
-    if ($confirmation -ne "YES") {
-      throw "Destroy operation cancelled by user."
-    }
   }
 
   [void] Deploy([hashtable]$params) {
@@ -149,7 +136,7 @@ class DS2Template {
     Write-Host "Destroying DataStream 2 configuration for environment: $($this.Environment)" -ForegroundColor Red
 
     $this.ValidatePrerequisites()
-    $this.ConfirmDestroy()
+    Confirm-DestroyOperation -ResourceDescription "DataStream 2 configuration for environment: $($this.Environment)"
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "$($this.Environment)-terraform.tfstate"
@@ -199,4 +186,39 @@ function New-DS2Template {
   return [DS2Template]::new($Environment, $TemplateFolder)
 }
 
-Export-ModuleMember -Function New-DS2Template
+function Get-DS2ParamPolicy {
+  return @{
+    Required      = @("Environment")
+    RequiredHints = @{ Environment = "Use: -Env <environment>" }
+    Allowed       = @("Environment", "Save", "ActivateProduction", "Destroy", "VersionNotes", "Dry")
+    MustHaveOneOf = @("Save", "ActivateProduction", "Destroy")
+  }
+}
+
+function Invoke-DS2Template {
+  [CmdletBinding()]
+  param(
+    [Parameter(Mandatory = $true)]
+    [string]$TemplateFolder,
+
+    [Parameter(Mandatory = $true)]
+    [hashtable]$BoundParams
+  )
+
+  $template = New-DS2Template -Environment $BoundParams['Environment'] -TemplateFolder $TemplateFolder
+
+  if ($BoundParams.ContainsKey('Destroy')) {
+    $template.Destroy($BoundParams.ContainsKey('Debug'))
+  }
+  else {
+    $template.Deploy(@{
+        Save               = $BoundParams.ContainsKey('Save')
+        ActivateProduction = $BoundParams.ContainsKey('ActivateProduction')
+        Dry                = $BoundParams.ContainsKey('Dry')
+        Force              = $BoundParams.ContainsKey('Force')
+        Debug              = $BoundParams.ContainsKey('Debug')
+      })
+  }
+}
+
+Export-ModuleMember -Function New-DS2Template, Get-DS2ParamPolicy, Invoke-DS2Template

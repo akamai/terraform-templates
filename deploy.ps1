@@ -176,74 +176,10 @@ Param(
     [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2")]
     [string]$TemplateType,
 
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("dv-san-cert", "third-party-cert")]
-    [string]$CpsType,
-
+    # --- Common parameters ---
     [Parameter(Mandatory = $false)]
     [Alias("Env")]
     [string]$Environment,
-
-    # --- BMP: API-scope actions ---
-    [Parameter(ParameterSetName = 'bmp-api-save')]
-    [switch]$SaveApi,
-
-    [Parameter(ParameterSetName = 'bmp-api-activate')]
-    [switch]$ActivateStagingApi,
-
-    [Parameter(ParameterSetName = 'bmp-api-activate')]
-    [switch]$ActivateProductionApi,
-
-    # --- BMP: SEC-scope actions ---
-    [Parameter(ParameterSetName = 'bmp-sec-save')]
-    [switch]$SaveSec,
-
-    [Parameter(ParameterSetName = 'bmp-sec-activate')]
-    [switch]$ActivateStagingSec,
-
-    [Parameter(ParameterSetName = 'bmp-sec-activate')]
-    [switch]$ActivateProductionSec,
-
-    [Parameter(Mandatory = $false)]
-    [Alias("Cert")]
-    [string]$CertNumber,
-
-    [Parameter(Mandatory = $false)]
-    [ValidateSet("primary", "secondary")]
-    [string]$ZoneType,
-
-    [Parameter(ParameterSetName = 'save')]
-    [switch]$Save,
-    
-    [Parameter(ParameterSetName = 'activate')]
-    [switch]$ActivateStaging,
-    
-    [Parameter(ParameterSetName = 'activate')]
-    [switch]$ActivateProduction,
-
-    [Parameter(ParameterSetName = 'cps-create')]
-    [string]$CreateCert,
-
-    [Parameter(ParameterSetName = 'cps-upload')]
-    [string]$UploadCert,
-
-    [Parameter(ParameterSetName = 'cps-destroy')]
-    [string]$DestroyCert,
-
-    [Parameter(ParameterSetName = 'bmp-api-save')]
-    [Parameter(ParameterSetName = 'bmp-api-activate')]
-    [Parameter(ParameterSetName = 'bmp-sec-save')]
-    [Parameter(ParameterSetName = 'bmp-sec-activate')]
-    [Parameter(ParameterSetName = 'save')]
-    [Parameter(ParameterSetName = 'activate')]
-    [switch]$Dry,
-
-    [Parameter(ParameterSetName = 'bmp-sec-save')]  
-    [Parameter(ParameterSetName = 'bmp-sec-activate')] 
-    [Parameter(ParameterSetName = 'activate')]
-    [Parameter(ParameterSetName = 'save')]
-    [Alias("Notes")]
-    [string]$VersionNotes,
 
     [Parameter(ParameterSetName = 'destroy')]
     [switch]$Destroy,
@@ -255,7 +191,80 @@ Param(
     [switch]$Force,
 
     [Parameter()]
-    [switch]$Help
+    [switch]$Help,
+
+    # --- AAP / AAPASM / PM / EDNS / DS2 parameters ---
+    [Parameter(ParameterSetName = 'save')]
+    [switch]$Save,
+
+    [Parameter(ParameterSetName = 'activate')]
+    [switch]$ActivateStaging,
+
+    [Parameter(ParameterSetName = 'activate')]
+    [switch]$ActivateProduction,
+
+    # VersionNotes is applicable to all templates except CPS
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [Parameter(ParameterSetName = 'activate')]
+    [Parameter(ParameterSetName = 'save')]
+    [Alias("Notes")]
+    [string]$VersionNotes,
+
+    # Dry is applicable to all templates except -DestroyCert (no plan phase).
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [Parameter(ParameterSetName = 'save')]
+    [Parameter(ParameterSetName = 'activate')]
+    [Parameter(ParameterSetName = 'cps-create')]
+    [Parameter(ParameterSetName = 'cps-upload')]
+    [switch]$Dry,
+
+    # --- EDNS parameters ---
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("primary", "secondary")]
+    [string]$ZoneType,
+
+    # --- BMP parameters ---
+    # Phase 1: API-scope actions
+    [Parameter(ParameterSetName = 'bmp-api-save')]
+    [switch]$SaveApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateStagingApi,
+
+    [Parameter(ParameterSetName = 'bmp-api-activate')]
+    [switch]$ActivateProductionApi,
+
+    # Phase 2: Security-scope actions
+    [Parameter(ParameterSetName = 'bmp-sec-save')]
+    [switch]$SaveSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateStagingSec,
+
+    [Parameter(ParameterSetName = 'bmp-sec-activate')]
+    [switch]$ActivateProductionSec,
+
+    # --- CPS parameters ---
+    [Parameter(Mandatory = $false)]
+    [ValidateSet("dv-san-cert", "third-party-cert")]
+    [string]$CpsType,
+
+    [Parameter(Mandatory = $false)]
+    [Alias("Cert")]
+    [string]$CertNumber,
+
+    [Parameter(ParameterSetName = 'cps-create')]
+    [string]$CreateCert,
+
+    [Parameter(ParameterSetName = 'cps-upload')]
+    [string]$UploadCert,
+
+    [Parameter(ParameterSetName = 'cps-destroy')]
+    [string]$DestroyCert
 )
 
 # Start timing
@@ -292,7 +301,9 @@ if (-not (Test-Path $modulePath)) {
 }
 Import-Module $modulePath -Force
 
-# Map template type to folder name
+# Map template types to their default folder names.
+# Modules that need custom folder logic (e.g. CPS) export Get-<Name>TemplateFolder
+# and that function takes precedence over this map.
 $templateFolderMap = @{
     "aap"    = "new-aap-configuration"
     "aapasm" = "new-aapasm-configuration"
@@ -302,248 +313,34 @@ $templateFolderMap = @{
     "ds2"    = "new-ds2"
 }
 
-if ($TemplateType -eq "cps") {
-    if (-not $CpsType) {
-        throw "CpsType is required for CPS template. Use: -CpsType dv-san-cert or -CpsType third-party-cert"
-    }
-    $TemplateFolder = "new-$CpsType"
+$folderFnName = "Get-${moduleName}TemplateFolder"
+if (Get-Command $folderFnName -ErrorAction SilentlyContinue) {
+    $TemplateFolder = & $folderFnName -BoundParams $PSBoundParameters
+}
+elseif ($templateFolderMap.ContainsKey($TemplateType)) {
+    $TemplateFolder = $templateFolderMap[$TemplateType]
 }
 else {
-    $TemplateFolder = $templateFolderMap[$TemplateType]
+    throw "No folder mapping found for '$TemplateType'. Ensure the module exports Get-${moduleName}TemplateFolder."
 }
 
 # Route to appropriate template handler
 try {
-    switch ($moduleName) {
-        "AAP" {
-            if (-not $Environment) {
-                throw "Environment parameter required for AAP template. Use: -Env <environment>"
-            }
-            
-            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
-                throw "CPS parameters not applicable for AAP template"
-            }
-            
-            $template = New-AAPTemplate -Environment $Environment -TemplateFolder $TemplateFolder
-            
-            if ($Destroy) {
-                $template.Destroy()
-            }
-            elseif ($Save -or $ActivateStaging -or $ActivateProduction) {
-                $template.Deploy(@{
-                        Save               = $Save.IsPresent
-                        ActivateStaging    = $ActivateStaging.IsPresent
-                        ActivateProduction = $ActivateProduction.IsPresent
-                        VersionNotes       = $VersionNotes
-                        Dry                = $Dry.IsPresent
-                        SkipValidation     = $SkipValidation.IsPresent
-                        Force              = $Force.IsPresent
-                        Debug              = $PSBoundParameters.ContainsKey('Debug')
-                    })
-            }
-            else {
-                throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
-            }
-        }
-        
-        "AAPASM" {
-            if (-not $Environment) {
-                throw "Environment parameter required for AAP+ASM template. Use: -Env <environment>"
-            }
-            
-            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
-                throw "CPS parameters not applicable for AAP+ASM template"
-            }
-            
-            $template = New-AAPASMTemplate -Environment $Environment -TemplateFolder $TemplateFolder
-            
-            if ($Destroy) {
-                $template.Destroy()
-            }
-            elseif ($Save -or $ActivateStaging -or $ActivateProduction) {
-                $template.Deploy(@{
-                        Save               = $Save.IsPresent
-                        ActivateStaging    = $ActivateStaging.IsPresent
-                        ActivateProduction = $ActivateProduction.IsPresent
-                        VersionNotes       = $VersionNotes
-                        Dry                = $Dry.IsPresent
-                        SkipValidation     = $SkipValidation.IsPresent
-                        Force              = $Force.IsPresent
-                        Debug              = $PSBoundParameters.ContainsKey('Debug')
-                    })
-            }
-            else {
-                throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
-            }
-        }
-        
-        "PropertyManager" {
-            if (-not $Environment) {
-                throw "Environment parameter required for Property Manager template. Use: -Env <environment>"
-            }
-            
-            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
-                throw "CPS parameters not applicable for Property Manager template"
-            }
-            
-            $template = New-PropertyManagerTemplate -Environment $Environment -TemplateFolder $TemplateFolder
-            
-            if ($Destroy) {
-                $template.Destroy()
-            }
-            elseif ($Save -or $ActivateStaging -or $ActivateProduction) {
-                $template.Deploy(@{
-                        Save               = $Save.IsPresent
-                        ActivateStaging    = $ActivateStaging.IsPresent
-                        ActivateProduction = $ActivateProduction.IsPresent
-                        VersionNotes       = $VersionNotes
-                        Dry                = $Dry.IsPresent
-                        SkipValidation     = $SkipValidation.IsPresent
-                        Force              = $Force.IsPresent
-                        Debug              = $PSBoundParameters.ContainsKey('Debug')
-                    })
-            }
-            else {
-                throw "Please specify at least one parameter: -Save, -ActivateStaging, -ActivateProduction, or -Destroy"
-            }
-        }
-        
-        "CPS" {
-            if ($Environment -or $Save -or $ActivateStaging -or $ActivateProduction -or $VersionNotes -or $SkipValidation) {
-                throw "Security template parameters not applicable for CPS template"
-            }
-            
-            # Determine action and cert number
-            $action = $null
-            if ($CreateCert) {
-                $action = "create"
-                $CertNumber = $CreateCert
-            }
-            elseif ($UploadCert) {
-                $action = "upload"
-                $CertNumber = $UploadCert
-            }
-            elseif ($DestroyCert) {
-                $action = "destroy"
-                $CertNumber = $DestroyCert
-            }
-            else {
-                throw "Please specify at least one parameter: -CreateCert, -UploadCert, or -DestroyCert"
-            }
-            
-            $template = New-CPSTemplate -CpsType $CpsType -CertNumber $CertNumber -TemplateFolder $TemplateFolder
-            
-            switch ($action) {
-                "create" { $template.CreateCert($Dry.IsPresent, $Force.IsPresent, $PSBoundParameters.ContainsKey('Debug')) }
-                "upload" { $template.UploadCert($Dry.IsPresent, $Force.IsPresent, $PSBoundParameters.ContainsKey('Debug')) }
-                "destroy" { $template.DestroyCert($PSBoundParameters.ContainsKey('Debug')) }
-            }
-        }
-
-        "BMP" {
-            if (-not $Environment) {
-                throw "Environment parameter required for BMP template. Use: -Env <environment>"
-            }
-
-            $template = New-BMPTemplate -Environment $Environment -TemplateFolder $TemplateFolder
-
-            if ($Destroy) {
-                $template.Destroy()
-            }
-            elseif ( $ActivateStaging -or $ActivateProduction -or
-                    $SaveApi -or $ActivateStagingApi -or $ActivateProductionApi -or
-                    $SaveSec -or $ActivateStagingSec -or $ActivateProductionSec) {
-                $template.Deploy(@{
-                    # Global scope
-                    ActivateStaging    = $ActivateStaging.IsPresent
-                    ActivateProduction = $ActivateProduction.IsPresent
-                    # API scope
-                    SaveApi               = $SaveApi.IsPresent
-                    ActivateStagingApi    = $ActivateStagingApi.IsPresent
-                    ActivateProductionApi = $ActivateProductionApi.IsPresent
-                    # SEC scope
-                    SaveSec               = $SaveSec.IsPresent
-                    ActivateStagingSec    = $ActivateStagingSec.IsPresent
-                    ActivateProductionSec = $ActivateProductionSec.IsPresent
-                    # Common
-                    VersionNotes       = $VersionNotes
-                    Dry                = $Dry.IsPresent
-                    SkipValidation     = $SkipValidation.IsPresent
-                    Force              = $Force.IsPresent
-                    Debug              = $PSBoundParameters.ContainsKey('Debug')
-                })
-            }
-            else {
-                throw "Please specify at least one parameter: -Save, -SaveApi, -SaveSec, -ActivateStaging[Api|Sec], -ActivateProduction[Api|Sec], or -Destroy"
-            }
-        }
-        
-        "EDNS" {
-            if (-not $Environment) {
-                throw "Environment parameter required for EDNS template. Use: -Env <environment>"
-            }
-
-            if (-not $ZoneType) {
-                throw "ZoneType parameter required for EDNS template. Use: -ZoneType primary|secondary"
-            }
-
-            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
-                throw "CPS parameters are not applicable for EDNS template"
-            }
-
-            $template = New-EDNSTemplate `
-                -Environment $Environment `
-                -ZoneType $ZoneType `
-                -TemplateFolder $TemplateFolder
-
-            if ($Destroy) {
-                $template.Destroy($PSBoundParameters.ContainsKey('Debug'))
-            }
-            else {
-                # -Force defaults to $true for EDNS: the zone's NS/SOA data sources
-                # trigger false-positive drift on every refresh, so the prompt would
-                # fire unconditionally. Explicit -Force flag is still respected.
-                $template.Deploy($Dry.IsPresent, $true, $PSBoundParameters.ContainsKey('Debug'))
-            }
-        }
-        
-        "DS2" {
-            if (-not $Environment) {
-                throw "Environment parameter required for DS2 template. Use: -Env <environment>"
-            }
-
-            if ($CertNumber -or $CreateCert -or $UploadCert -or $DestroyCert -or $CpsType) {
-                throw "CPS parameters are not applicable for DS2 template"
-            }
-
-            # DataStream has a single activation dimension (no staging network).
-            if ($ActivateStaging) {
-                throw "DataStream has no staging network. Use -ActivateProduction to activate the stream, or set activate_stream in the tfvars file and use -Save."
-            }
-
-            $template = New-DS2Template -Environment $Environment -TemplateFolder $TemplateFolder
-
-            if ($Destroy) {
-                $template.Destroy($PSBoundParameters.ContainsKey('Debug'))
-            }
-            elseif ($Save -or $ActivateProduction) {
-                $template.Deploy(@{
-                        Save               = $Save.IsPresent
-                        ActivateProduction = $ActivateProduction.IsPresent
-                        Dry                = $Dry.IsPresent
-                        Force              = $Force.IsPresent
-                        Debug              = $PSBoundParameters.ContainsKey('Debug')
-                    })
-            }
-            else {
-                throw "Please specify at least one parameter: -Save, -ActivateProduction, or -Destroy"
-            }
-        }
-        
-        default {
-            throw "Unknown template module: $moduleName"
-        }
+    # 1. Validate parameters against the template's declared policy.
+    $policyFnName = "Get-${moduleName}ParamPolicy"
+    if (Get-Command $policyFnName -ErrorAction SilentlyContinue) {
+        Assert-TemplateParameters `
+            -TemplateType $TemplateType `
+            -Policy      (& $policyFnName) `
+            -BoundParams $PSBoundParameters
     }
+
+    # 2. Dispatch to the template's own handler — no template-specific logic here.
+    $invokeFnName = "Invoke-${moduleName}Template"
+    if (-not (Get-Command $invokeFnName -ErrorAction SilentlyContinue)) {
+        throw "Template dispatch function not found: $invokeFnName. Ensure the module exports this function."
+    }
+    & $invokeFnName -TemplateFolder $TemplateFolder -BoundParams $PSBoundParameters
 }
 catch {
     Write-Error "Deployment failed: $_"

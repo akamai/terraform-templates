@@ -1,0 +1,26 @@
+# =================================================
+# {TemplateName} — dev environment
+# Copy this file to dev.tfvars and fill in the values.
+# =================================================
+
+# -------------------------------------------------
+# Authentication
+# -------------------------------------------------
+edgerc_path    = "~/.edgerc"
+edgerc_section = "default"
+
+# -------------------------------------------------
+# Common
+# -------------------------------------------------
+environment = "dev"
+group_name  = "My Akamai Group"
+
+# -------------------------------------------------
+# Notifications
+# -------------------------------------------------
+# emails = ["ops-team@example.com"]
+
+# -------------------------------------------------
+# TODO: Add product-specific variables below.
+# Match variable names declared in variables.tf.
+# -------------------------------------------------

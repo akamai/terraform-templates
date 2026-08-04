@@ -9,6 +9,7 @@ Supports plan, apply and safe destroy workflow.
 
 using module ../core/TerraformRunner.psm1
 using module ../core/Logger.psm1
+using module ../core/Validation.psm1
 
 class EDNSTemplate {
   [string]$Environment
@@ -60,21 +61,6 @@ class EDNSTemplate {
     }
     if ($this.ZoneType -notin @("primary", "secondary")) {
       throw "Invalid ZoneType: $($this.ZoneType)"
-    }
-  }
-  [void] ConfirmDestroy() {
-    $zoneName = "$($this.Environment) / $($this.ZoneType)"
-
-    Write-Host ""
-    Write-Host "WARNING: You are about to DESTROY an Edge DNS zone!" -ForegroundColor Red
-    Write-Host "Zone: $zoneName" -ForegroundColor Yellow
-    Write-Host ""
-    Write-Host "Type YES to confirm destruction:" -ForegroundColor Cyan
-
-    $confirmation = Read-Host
-
-    if ($confirmation -ne "YES") {
-      throw "Destroy operation cancelled by user."
     }
   }
 
@@ -152,7 +138,7 @@ class EDNSTemplate {
 
     $this.ValidatePrerequisites()
 
-    $this.ConfirmDestroy()
+    Confirm-DestroyOperation -ResourceDescription "Edge DNS $($this.ZoneType) zone for environment: $($this.Environment)"
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "edns-$($this.ZoneType).tfstate"
@@ -252,4 +238,50 @@ function New-EDNSTemplate {
   return [EDNSTemplate]::new($Environment, $ZoneType, $TemplateFolder)
 }
 
-Export-ModuleMember -Function New-EDNSTemplate
+function Get-EDNSParamPolicy {
+    <#
+    .SYNOPSIS
+    Returns the parameter policy for the Edge DNS template.
+    Called automatically by deploy.ps1 before routing begins.
+    #>
+    return @{
+        Required      = @("Environment", "ZoneType")
+        RequiredHints = @{
+            Environment = "Use: -Env <environment>"
+            ZoneType    = "Use: -ZoneType primary|secondary"
+        }
+        Allowed       = @("Environment", "ZoneType", "Save", "Destroy", "Dry")
+    }
+}
+
+function Invoke-EDNSTemplate {
+    <#
+    .SYNOPSIS
+    Dispatches an Edge DNS deployment request received from deploy.ps1.
+    Owns all EDNS-specific routing logic so that deploy.ps1 stays template-agnostic.
+    #>
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TemplateFolder,
+
+        [Parameter(Mandatory = $true)]
+        [hashtable]$BoundParams
+    )
+
+    $template = New-EDNSTemplate `
+        -Environment    $BoundParams['Environment'] `
+        -ZoneType       $BoundParams['ZoneType'] `
+        -TemplateFolder $TemplateFolder
+
+    if ($BoundParams.ContainsKey('Destroy')) {
+        $template.Destroy($BoundParams.ContainsKey('Debug'))
+    }
+    else {
+        # -Force is hardcoded to $true for EDNS: the zone's NS/SOA data sources
+        # trigger false-positive drift on every refresh, so the prompt would
+        # fire unconditionally. Explicit -Force flag is still respected.
+        $template.Deploy($BoundParams.ContainsKey('Dry'), $true, $BoundParams.ContainsKey('Debug'))
+    }
+}
+
+Export-ModuleMember -Function New-EDNSTemplate, Get-EDNSParamPolicy, Invoke-EDNSTemplate
