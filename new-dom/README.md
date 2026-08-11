@@ -14,13 +14,13 @@ There is a standard schedule of DOM background jobs (crons) and validates the do
 
 ## Step 1: Create Domain Ownership Records
 
-Run Terraform in this directory to create the domain ownership records:
+Run the deployment script to create/update the domain ownership records:
 
- ```
- terraform init
- terraform plan
- terraform apply
- ```
+    .\deploy.ps1 dom -Run
+
+Use `-Dry` to preview without applying:
+
+    .\deploy.ps1 dom -Run -Dry
 
 This creates the necessary records in Akamai and outputs the TXT record values you need to add to your DNS.
 
