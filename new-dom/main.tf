@@ -100,8 +100,7 @@
 
 
 module "dom_validation" {
-  source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//dom?ref=v2.0.0"
-
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//dom?ref=v2.0.0"
   domain_validation_entries = var.domain_validation_entries
   enable_validation         = var.enable_validation
   edgerc_path               = var.edgerc_path
