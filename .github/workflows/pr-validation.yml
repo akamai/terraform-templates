@@ -87,6 +87,12 @@ jobs:
           terraform init -backend=false
           terraform validate
 
+      - name: Terraform Validate - DOM
+        working-directory: ./new-dom
+        run: |
+          terraform init -backend=false
+          terraform validate
+
       - name: Setup TFLint
         uses: terraform-linters/setup-tflint@v6
         with:
@@ -125,6 +131,10 @@ jobs:
 
       - name: Run TFLint - CPS - Third Party Cert
         working-directory: ./new-third-party-cert
+        run: tflint --recursive
+
+      - name: Run TFLint - DOM
+        working-directory: ./new-dom
         run: tflint --recursive
 
       - name: Run Trivy Security Scan

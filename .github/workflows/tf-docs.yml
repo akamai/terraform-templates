@@ -101,3 +101,12 @@ jobs:
           output-file: README.md
           output-method: inject
           git-push: true
+
+      - name: Generate terraform-docs for DOM
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-dom
+          config-file: ../.terraform-docs.yaml
+          output-file: README.md
+          output-method: inject
+          git-push: true

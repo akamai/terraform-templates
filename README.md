@@ -66,6 +66,11 @@ ps-terraform-templates/
 │   ├── main.tf
 │   ├── variables.tf
 │   └── README.md
+├── new-dom/                        # Domain Ownership Management template
+│   ├── files.tf                    # Supports HOST, DOMAIN, and WILDCARD scopes
+│   ├── main.tf
+│   ├── variables.tf
+│   └── README.md
 └── README.md
 ```
 
@@ -261,6 +266,19 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-Help` | Display detailed help information |
 
+#### Domain Ownership Management (DOM) Template
+
+> DOM validates domain ownership records and generates TXT/CNAME challenge outputs. It is a run-style template only.
+
+| Parameter | Description |
+|-----------|-------------|
+| First Argument | `dom` - Domain Ownership Management |
+| `-Run` | Create or refresh DOM validation records and output files |
+| `-Dry` | Show Terraform plan without applying changes |
+| `-Help` | Display detailed help information |
+
+> **Note:** DOM does not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, or `-Destroy`.
+
 ### Configuration
 
 Each template has environment-specific configurations in `environments/{env}/{env}.tfvars` (or `environments/{env}/{zone_type}.tfvars` for EDNS):
@@ -377,6 +395,14 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Safely tear down the DataStream 2 configuration for the dev environment
 .\deploy.ps1 ds2 -Env dev -Destroy
+
+# --- Domain Ownership Management (DOM) ---
+
+# Generate DOM ownership records and output the challenge files
+.\deploy.ps1 dom -Run
+
+# Preview the DOM Terraform plan without applying changes
+.\deploy.ps1 dom -Run -Dry
 ```
 
 ## Troubleshooting

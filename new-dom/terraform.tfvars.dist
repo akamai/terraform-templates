@@ -1,0 +1,42 @@
+edgerc_section = "default"
+
+domain_validation_entries = [
+  {
+    domain_name       = "example.com"
+    validation_scope  = "HOST" 
+    validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
+  },
+  {
+    domain_name       = "example.com"
+    validation_scope  = "DOMAIN"
+    validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
+  },
+  {
+    domain_name       = "*.wildcard.example.com"
+    validation_scope  = "WILDCARD"
+    validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
+  }
+  
+]
+
+enable_validation = false  # Set to true to enable validation
+
+/*
+
+Ex: # Specify domains you want to search or leave blank/null
+
+domain_search_entries = [
+  {
+    domain_name      = "example.com"
+    validation_scope = "HOST"
+  }
+]
+*/
+
+domain_search_entries = [
+   {
+    domain_name      = "example.com"
+    validation_scope = "HOST"
+  }
+ 
+]
