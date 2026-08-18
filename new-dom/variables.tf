@@ -51,7 +51,7 @@ variable "domain_validation_entries" {
       WILDCARD entries start with '*.' and cover only first-level subdomains of the base domain;
       DOMAIN entries cover the apex and all subdomains;
       HOST entries cannot overlap with DOMAIN entries (e.g., host.example.com conflicts with example.com);
-      validation_method must be one of: DNS_TXT, DNS_CNAME, HTTP.
+      validation_method must be one of: DNS_TXT, DNS_CNAME, HTTP; HTTP is only valid for HOST entries.
     EOT
   }
 }
