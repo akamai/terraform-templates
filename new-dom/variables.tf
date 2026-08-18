@@ -1,14 +1,20 @@
 variable "domain_validation_entries" {
   description = "A list of objects with hostnames, domains, or wildcards to DOM validate"
   type = list(object({
-    domain_name      = string
-    validation_scope = string
-    validation_method = optional(string, "DNS_TXT")  # Default to "DNS_TXT"
+    domain_name       = string
+    validation_scope  = string
+    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"
   }))
   default = []
   validation {
-    condition = length(var.domain_validation_entries) <= 1000
+    condition     = length(var.domain_validation_entries) <= 1000
     error_message = "Maximum of 1000 domain validation entries allowed."
+  }
+  validation {
+    condition = length(distinct([
+      for entry in var.domain_validation_entries : lower(entry.domain_name)
+    ])) == length(var.domain_validation_entries)
+    error_message = "domain_validation_entries must not contain duplicate domain names."
   }
   validation {
     condition = (
@@ -35,7 +41,7 @@ variable "domain_validation_entries" {
           ] : lower(entry.domain_name) != domain_name && !endswith(lower(entry.domain_name), format(".%s", domain_name))
         ])
       ])
-      && alltrue([  # Validation for validation_method
+      && alltrue([ # Validation for validation_method
         for entry in var.domain_validation_entries : contains(["DNS_TXT", "DNS_CNAME", "HTTP"], entry.validation_method)
       ])
     )

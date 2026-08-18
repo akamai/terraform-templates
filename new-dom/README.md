@@ -53,7 +53,7 @@ Configure your domains in `terraform.tfvars`:
             validation_scope = "DOMAIN"
         },
          {
-            domain_name      = "*.wildcard.example.com"
+            domain_name      = "*.example.com"
             validation_scope = "WILDCARD"
          }
        ]
@@ -76,8 +76,8 @@ Configure your domains in `terraform.tfvars`:
   ## Requirements
 
   ```
-  Terraform >= 1.5
-  Akamai Provider >= 9.2.0
+  Terraform >= 1.9.0
+  Akamai Provider >= 10.0
   ```
 
   ## Akamai API Credentials
@@ -107,9 +107,9 @@ module "example" {
 	    validation_scope = string
 	  }))> | default: []
   	 domain_validation_entries  = <list(object({
-	    domain_name      = string
-	    validation_scope = string
-	    validation_method = optional(string, "DNS_TXT")  # Default to "DNS_TXT"
+	    domain_name       = string
+	    validation_scope  = string
+	    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"
 	  }))> | default: []
   	 edgerc_path  = <string> | default: "~/.edgerc"
   	 enable_validation  = <bool> | default: false
@@ -120,8 +120,9 @@ module "example" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.5 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
 | <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 10.0 |
+| <a name="requirement_local"></a> [local](#requirement\_local) | ~> 2.5 |
 
 ## Resources
 
@@ -143,7 +144,7 @@ module "example" {
 |------|-------------|------|---------|:--------:|
 | <a name="input_edgerc_section"></a> [edgerc\_section](#input\_edgerc\_section) | Section in the .edgerc file | `string` | n/a | yes |
 | <a name="input_domain_search_entries"></a> [domain\_search\_entries](#input\_domain\_search\_entries) | List of domains to search validation status for, independent of domain\_validation\_entries | <pre>list(object({<br/>    domain_name      = string<br/>    validation_scope = string<br/>  }))</pre> | `[]` | no |
-| <a name="input_domain_validation_entries"></a> [domain\_validation\_entries](#input\_domain\_validation\_entries) | A list of objects with hostnames, domains, or wildcards to DOM validate | <pre>list(object({<br/>    domain_name      = string<br/>    validation_scope = string<br/>    validation_method = optional(string, "DNS_TXT")  # Default to "DNS_TXT"<br/>  }))</pre> | `[]` | no |
+| <a name="input_domain_validation_entries"></a> [domain\_validation\_entries](#input\_domain\_validation\_entries) | A list of objects with hostnames, domains, or wildcards to DOM validate | <pre>list(object({<br/>    domain_name       = string<br/>    validation_scope  = string<br/>    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"<br/>  }))</pre> | `[]` | no |
 | <a name="input_edgerc_path"></a> [edgerc\_path](#input\_edgerc\_path) | Path to the .edgerc file | `string` | `"~/.edgerc"` | no |
 | <a name="input_enable_validation"></a> [enable\_validation](#input\_enable\_validation) | Set to true to enable domain validation | `bool` | `false` | no |
 

@@ -1,5 +1,5 @@
 resource "local_file" "dom_challenges" {
-  content  = <<EOT
+  content = <<EOT
 # CNAME Validation Challenges
 ${yamlencode(module.dom_validation.cname_validation_challenges)}
 
@@ -11,8 +11,8 @@ EOT
 }
 
 resource "local_file" "validation_entries" {
-  content  = join("\n", [
-    for entry in var.domain_validation_entries : 
+  content = join("\n", [
+    for entry in var.domain_validation_entries :
     "Domain: ${entry.domain_name} | Method: ${entry.validation_method} | Scope: ${entry.validation_scope}"
   ])
   filename = "${path.root}/dom_validation_entries.txt"

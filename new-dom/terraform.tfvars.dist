@@ -2,7 +2,7 @@ edgerc_section = "default"
 
 domain_validation_entries = [
   {
-    domain_name       = "example.com"
+    domain_name       = "host.example.com"
     validation_scope  = "HOST" 
     validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
   },
@@ -12,7 +12,7 @@ domain_validation_entries = [
     validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
   },
   {
-    domain_name       = "*.wildcard.example.com"
+    domain_name       = "*.example.com"
     validation_scope  = "WILDCARD"
     validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
   }

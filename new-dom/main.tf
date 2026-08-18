@@ -56,7 +56,7 @@
  *             validation_scope = "DOMAIN"
  *         },
  *          {
- *             domain_name      = "*.wildcard.example.com"
+ *             domain_name      = "*.example.com"
  *             validation_scope = "WILDCARD"
  *          }
  *        ]
@@ -81,8 +81,8 @@
  *   ## Requirements
  *  
  *   ```
- *   Terraform >= 1.5
- *   Akamai Provider >= 9.2.0
+ *   Terraform >= 1.9.0
+  *   Akamai Provider >= 10.0
  *   ```
  *
  *   ## Akamai API Credentials
@@ -96,15 +96,21 @@
  *
  *   Configure this in your Akamai control panel when setting up API credentials. Ensure your .edgerc file references the correct section with these permissions.
  */
- 
+
 
 
 module "dom_validation" {
   source = "git::https://github.com/akamai/terraform-templates-modules.git//dom?ref=v2.0.0"
 
-  domain_validation_entries = var.domain_validation_entries
-  enable_validation         = var.enable_validation
-  edgerc_path               = var.edgerc_path
-  edgerc_section            = var.edgerc_section
-  domain_search_entries     = var.domain_search_entries
+  domain_validation_entries = [
+    for entry in var.domain_validation_entries : {
+      domain_name       = entry.domain_name
+      validation_scope  = upper(entry.validation_scope)
+      validation_method = entry.validation_method
+    }
+  ]
+  enable_validation     = var.enable_validation
+  edgerc_path           = var.edgerc_path
+  edgerc_section        = var.edgerc_section
+  domain_search_entries = var.domain_search_entries
 }
