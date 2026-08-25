@@ -52,11 +52,11 @@
  *             validation_scope = "HOST"
  *          },
  *          {
- *             domain_name      = "example.com"
+ *             domain_name      = "tflab.com"
  *             validation_scope = "DOMAIN"
  *         },
  *          {
- *             domain_name      = "*.example.com"
+ *             domain_name      = "*.tfdom.com"
  *             validation_scope = "WILDCARD"
  *          }
  *        ]
@@ -76,7 +76,7 @@
  *   3. HOST entries cannot overlap with DOMAIN entries (e.g., host.example.com conflicts with example.com)
  *   4. WILDCARD entries must start with *. and contain a valid base domain
  *   5. HOST and DOMAIN entries cannot use wildcard prefix
- *
+ *   6. validation_method must be one of: DNS_TXT, DNS_CNAME, HTTP; HTTP is only valid for HOST entries 
  *
  *   ## Requirements
  *  
