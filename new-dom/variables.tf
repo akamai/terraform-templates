@@ -42,12 +42,12 @@ variable "domain_validation_entries" {
         ])
       ])
       && alltrue([
-         for entry in var.domain_validation_entries : (
-           contains(["DNS_TXT", "DNS_CNAME", "HTTP"], entry.validation_method)
-           && (entry.validation_method != "HTTP" || upper(entry.validation_scope) == "HOST")
-         )
-       ])
-     )
+        for entry in var.domain_validation_entries : (
+          contains(["DNS_TXT", "DNS_CNAME", "HTTP"], entry.validation_method)
+          && (entry.validation_method != "HTTP" || upper(entry.validation_scope) == "HOST")
+        )
+      ])
+    )
     error_message = <<-EOT
       validation_scope must be HOST, DOMAIN, or WILDCARD;
       HOST entries are exact names;
