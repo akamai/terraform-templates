@@ -1,3 +1,31 @@
+# [2.0.0](https://github.com/akamai/terraform-templates/compare/v1.5.0...v2.0.0) (2026-09-02)
+
+
+### Features
+
+* **aapasm:** add multi-policy support with policy_defaults and policies map ([0860522](https://github.com/akamai/terraform-templates/commit/0860522ec29d1964bdca179544d1dd492237cdc3))
+
+
+### BREAKING CHANGES
+
+* **aapasm:** the aapasm template is incompatible with v1.x on every
+surface. To upgrade, users must:
+1. Rewrite tfvars: the ~80 flat policy variables are replaced by
+   policy_defaults (baseline) plus a policies map; each policy requires
+   policy_name, policy_prefix (4 uppercase alphanumerics, unique) and
+   hostnames. Follow the new *.tfvars.dist examples.
+2. Update output references: security_policy_id is now security_policy_ids,
+   a map keyed by policy name.
+3. Migrate existing Terraform state: resource addresses moved from
+   module.security / module.client-reputation / module.bot-manager to
+   module.security-config and module.security-policy["<key>"]. Without
+   state migration, terraform will plan a destroy and recreate of the
+   security configuration.
+The old aap-asm/security, client-reputation and bot-manager modules were
+removed from terraform-templates-modules in v2.0.0.
+
+
+
 # [1.5.0](https://github.com/akamai/terraform-templates/compare/v1.4.0...v1.5.0) (2026-07-15)
 
 
