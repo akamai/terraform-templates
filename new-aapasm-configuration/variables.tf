@@ -33,7 +33,7 @@ variable "akamai_account_key" {
 }
 
 # -------------------------------------------------
-# Common Variables 
+# Common Variables
 # -------------------------------------------------
 variable "edgerc_path" {
   description = "Specify path to the Akamai EdgeGrid authentication file that contains your Akamai API tokens. Typically ~/.edgerc."
@@ -72,18 +72,6 @@ variable "version_notes" {
   description = "Property version notes."
   type        = string
   default     = "Initial Config"
-}
-
-variable "hostnames" {
-  description = "Hostnames to protect by the security config"
-  type        = list(string)
-
-  validation {
-    condition = alltrue([
-      for h in var.hostnames : h == lower(h)
-    ])
-    error_message = "All hostnames must be lowercase."
-  }
 }
 
 variable "emails" {
@@ -132,53 +120,10 @@ variable "inspection_size" {
 }
 
 # -------------------------------------------------
-# Protections
-# -------------------------------------------------
-variable "enable_waf" {
-  description = "Enable Web Application Firewall Protection"
-  type        = bool
-}
-
-variable "enable_request_constraints" {
-  description = "Enable API Requests Constraints Protection"
-  type        = bool
-}
-
-variable "enable_ip_geo" {
-  description = "Enable IP/Geo Firewall Protection"
-  type        = bool
-}
-
-variable "enable_malware" {
-  description = "Enable Malware Protection"
-  type        = bool
-}
-
-variable "enable_rate" {
-  description = "Enable Rate Protection"
-  type        = bool
-}
-
-variable "enable_client_reputation" {
-  description = "Enable Client Reputation Protection"
-  type        = bool
-}
-
-variable "enable_slow_post" {
-  description = "Enable Slow POST Protection"
-  type        = bool
-}
-
-variable "enable_botman" {
-  description = "Enable Bot Management Protection"
-  type        = bool
-}
-
-# -------------------------------------------------
 # Client Lists
 # -------------------------------------------------
 variable "create_client_lists" {
-  description = "Request body inspection limit"
+  description = "Set to true to create new client lists, false to use existing IDs"
   type        = bool
   default     = true
 }
@@ -202,6 +147,12 @@ variable "client_lists_geoblock" {
   default     = []
 }
 
+variable "client_lists_asnblock" {
+  description = "ID(s) for the ASN Block Client List"
+  type        = list(string)
+  default     = []
+}
+
 # Bypass Lists
 variable "client_lists_securitybypass" {
   description = "ID(s) for the Security Bypass Client List"
@@ -221,373 +172,219 @@ variable "client_lists_pragmabypass" {
   default     = []
 }
 
-variable "client_lists_reputationbypass" {
-  description = "ID(s) for the Reputation Bypass Client List"
-  type        = list(string)
-  default     = []
+# -------------------------------------------------
+# Policy Defaults
+# -------------------------------------------------
+variable "policy_defaults" {
+  description = "Default values for all security policies. Each policy inherits these unless it provides its own override."
+  type = object({
+    # Protection Toggles
+    enable_waf                 = bool
+    enable_request_constraints = bool
+    enable_ip_geo              = bool
+    enable_malware             = bool
+    enable_rate                = bool
+    enable_slow_post           = bool
+    enable_client_reputation   = bool
+    enable_botman              = bool
+
+    # DoS Protection
+    dos_origin_error_action       = string
+    dos_post_page_requests_action = string
+    dos_page_view_requests_action = string
+    slow_post_action              = string
+
+    # WAF Actions
+    waf_policy_action   = string
+    waf_wat_action      = string
+    waf_protocol_action = string
+    waf_sql_action      = string
+    waf_xss_action      = string
+    waf_cmd_action      = string
+    waf_lfi_action      = string
+    waf_rfi_action      = string
+    waf_platform_action = string
+    penalty_box_action  = string
+
+    # Client Reputation Actions
+    rep_web_attackers_high         = optional(string, "alert")
+    rep_web_attackers_high_shared  = optional(string, "alert")
+    rep_web_attackers_low          = optional(string, "none")
+    rep_web_attackers_low_shared   = optional(string, "none")
+    rep_dos_attackers_high         = optional(string, "alert")
+    rep_dos_attackers_high_shared  = optional(string, "alert")
+    rep_dos_attackers_low          = optional(string, "none")
+    rep_dos_attackers_low_shared   = optional(string, "none")
+    rep_scanning_tools_high        = optional(string, "alert")
+    rep_scanning_tools_high_shared = optional(string, "alert")
+    rep_scanning_tools_low         = optional(string, "none")
+    rep_scanning_tools_low_shared  = optional(string, "none")
+    rep_web_scrapers_high          = optional(string, "alert")
+    rep_web_scrapers_high_shared   = optional(string, "alert")
+    rep_web_scrapers_low           = optional(string, "none")
+    rep_web_scrapers_low_shared    = optional(string, "none")
+
+    # Bot Manager General Settings
+    botman_type               = optional(string, "bvm")
+    add_akamai_bot_header     = optional(bool, false)
+    enable_active_detections  = optional(bool, false)
+    enable_browser_validation = optional(bool, false)
+    remove_botman_cookies     = optional(bool, true)
+    third_party_proxy         = optional(bool, false)
+
+    # Bot Category Actions
+    bot_site_monitoring_and_web_development = optional(string, "alert")
+    bot_academic_or_research                = optional(string, "alert")
+    bot_job_search_engine                   = optional(string, "alert")
+    bot_artificial_intelligence_ai          = optional(string, "alert")
+    bot_online_advertising                  = optional(string, "alert")
+    bot_ecommerce_search_engine             = optional(string, "alert")
+    bot_web_search_engine                   = optional(string, "alert")
+    bot_enterprise_data_aggregator          = optional(string, "alert")
+    bot_financial_services                  = optional(string, "alert")
+    bot_social_media_or_blog                = optional(string, "alert")
+    bot_web_archiver                        = optional(string, "alert")
+    bot_business_intelligence               = optional(string, "alert")
+    bot_news_aggregator                     = optional(string, "alert")
+    bot_rss_feed_reader                     = optional(string, "alert")
+    bot_financial_account_aggregator        = optional(string, "alert")
+    bot_media_or_entertainment_search       = optional(string, "alert")
+    bot_seo_analytics_or_marketing          = optional(string, "alert")
+
+    # Bot Transparent Detection Actions
+    bot_impersonators_of_known_bots            = optional(string, "alert")
+    bot_development_frameworks                 = optional(string, "alert")
+    bot_http_libraries                         = optional(string, "alert")
+    bot_web_services_libraries                 = optional(string, "alert")
+    bot_open_source_crawlersscraping_platforms = optional(string, "alert")
+    bot_headless_browsersautomation_tools      = optional(string, "alert")
+    bot_declared_bots_keyword_match            = optional(string, "alert")
+    bot_aggressive_web_crawlers                = optional(string, "alert")
+    bot_browser_impersonator                   = optional(string, "alert")
+    bot_web_scraper_reputation                 = optional(string, "alert")
+
+    # Bot Active Detection Actions
+    bot_cookie_integrity_failed                       = optional(string, "alert")
+    bot_session_validation                            = optional(string, "alert")
+    bot_client_disabled_javascript_noscript_triggered = optional(string, "alert")
+    bot_javascript_fingerprint_anomaly                = optional(string, "alert")
+    bot_javascript_fingerprint_not_received           = optional(string, "alert")
+  })
 }
 
 # -------------------------------------------------
-# Specifics for the Security Policy
+# Policies
 # -------------------------------------------------
-# Security Policy Details
-variable "policy_name" {
-  description = "Name for the security policy"
-  type        = string
-}
+variable "policies" {
+  description = "Map of security policies to create. Each key is a stable identifier (renaming destroys/recreates). Required per entry: policy_name, policy_prefix, hostnames. All other fields are optional and override policy_defaults when set."
+  type = map(object({
+    # Required
+    policy_name   = string
+    policy_prefix = string
+    hostnames     = list(string)
 
-variable "policy_prefix" {
-  description = "Prefix for the security policy"
-  type        = string
-}
+    # Protection Toggles (optional overrides)
+    enable_waf                 = optional(bool)
+    enable_request_constraints = optional(bool)
+    enable_ip_geo              = optional(bool)
+    enable_malware             = optional(bool)
+    enable_rate                = optional(bool)
+    enable_slow_post           = optional(bool)
+    enable_client_reputation   = optional(bool)
+    enable_botman              = optional(bool)
 
-# Dos Protection
-variable "dos_origin_error_action" {
-  description = "Action for the Origin Error"
-  type        = string
-}
+    # DoS Protection
+    dos_origin_error_action       = optional(string)
+    dos_post_page_requests_action = optional(string)
+    dos_page_view_requests_action = optional(string)
+    slow_post_action              = optional(string)
 
-variable "dos_post_page_requests_action" {
-  description = "Action for the POST Page Requests"
-  type        = string
-}
+    # WAF Actions
+    waf_policy_action   = optional(string)
+    waf_wat_action      = optional(string)
+    waf_protocol_action = optional(string)
+    waf_sql_action      = optional(string)
+    waf_xss_action      = optional(string)
+    waf_cmd_action      = optional(string)
+    waf_lfi_action      = optional(string)
+    waf_rfi_action      = optional(string)
+    waf_platform_action = optional(string)
+    penalty_box_action  = optional(string)
 
-variable "dos_page_view_requests_action" {
-  description = "Action for the Page View Requests"
-  type        = string
-}
+    # Client Reputation Actions
+    rep_web_attackers_high         = optional(string)
+    rep_web_attackers_high_shared  = optional(string)
+    rep_web_attackers_low          = optional(string)
+    rep_web_attackers_low_shared   = optional(string)
+    rep_dos_attackers_high         = optional(string)
+    rep_dos_attackers_high_shared  = optional(string)
+    rep_dos_attackers_low          = optional(string)
+    rep_dos_attackers_low_shared   = optional(string)
+    rep_scanning_tools_high        = optional(string)
+    rep_scanning_tools_high_shared = optional(string)
+    rep_scanning_tools_low         = optional(string)
+    rep_scanning_tools_low_shared  = optional(string)
+    rep_web_scrapers_high          = optional(string)
+    rep_web_scrapers_high_shared   = optional(string)
+    rep_web_scrapers_low           = optional(string)
+    rep_web_scrapers_low_shared    = optional(string)
 
-variable "slow_post_action" {
-  description = "Action for the slow POST Protection"
-  type        = string
-}
+    # Bot Manager General Settings
+    botman_type               = optional(string)
+    add_akamai_bot_header     = optional(bool)
+    enable_active_detections  = optional(bool)
+    enable_browser_validation = optional(bool)
+    remove_botman_cookies     = optional(bool)
+    third_party_proxy         = optional(bool)
 
-# Web Application Firewall (WAF) Actions
-variable "waf_policy_action" {
-  description = "Action for WAF attack group: Web Policy Violation"
-  type        = string
-}
+    # Bot Category Actions
+    bot_site_monitoring_and_web_development = optional(string)
+    bot_academic_or_research                = optional(string)
+    bot_job_search_engine                   = optional(string)
+    bot_artificial_intelligence_ai          = optional(string)
+    bot_online_advertising                  = optional(string)
+    bot_ecommerce_search_engine             = optional(string)
+    bot_web_search_engine                   = optional(string)
+    bot_enterprise_data_aggregator          = optional(string)
+    bot_financial_services                  = optional(string)
+    bot_social_media_or_blog                = optional(string)
+    bot_web_archiver                        = optional(string)
+    bot_business_intelligence               = optional(string)
+    bot_news_aggregator                     = optional(string)
+    bot_rss_feed_reader                     = optional(string)
+    bot_financial_account_aggregator        = optional(string)
+    bot_media_or_entertainment_search       = optional(string)
+    bot_seo_analytics_or_marketing          = optional(string)
 
-variable "waf_wat_action" {
-  description = "Action for WAF attack group: Web Attack Tool"
-  type        = string
-}
+    # Bot Transparent Detection Actions
+    bot_impersonators_of_known_bots            = optional(string)
+    bot_development_frameworks                 = optional(string)
+    bot_http_libraries                         = optional(string)
+    bot_web_services_libraries                 = optional(string)
+    bot_open_source_crawlersscraping_platforms = optional(string)
+    bot_headless_browsersautomation_tools      = optional(string)
+    bot_declared_bots_keyword_match            = optional(string)
+    bot_aggressive_web_crawlers                = optional(string)
+    bot_browser_impersonator                   = optional(string)
+    bot_web_scraper_reputation                 = optional(string)
 
-variable "waf_protocol_action" {
-  description = "Action for WAF attack group: Web Protocol Attack"
-  type        = string
-}
+    # Bot Active Detection Actions
+    bot_cookie_integrity_failed                       = optional(string)
+    bot_session_validation                            = optional(string)
+    bot_client_disabled_javascript_noscript_triggered = optional(string)
+    bot_javascript_fingerprint_anomaly                = optional(string)
+    bot_javascript_fingerprint_not_received           = optional(string)
+  }))
 
-variable "waf_sql_action" {
-  description = "Action for WAF attack group: SQL Injection"
-  type        = string
-}
-
-variable "waf_xss_action" {
-  description = "Action for WAF attack group: Cross Site Scripting"
-  type        = string
-}
-
-variable "waf_cmd_action" {
-  description = "Action for WAF attack group: Command Injection"
-  type        = string
-}
-
-variable "waf_lfi_action" {
-  description = "Action for WAF attack group: Local File Inclusion"
-  type        = string
-}
-
-variable "waf_rfi_action" {
-  description = "Action for WAF attack group: Remote File Inclusion"
-  type        = string
-}
-
-variable "waf_platform_action" {
-  description = "Action for WAF attack group: Web Platform Attack"
-  type        = string
-}
-
-variable "penalty_box_action" {
-  description = "Action for WAF Penalty Box"
-  type        = string
-}
-
-# Client Reputation Actions
-variable "rep_web_attackers_high" {
-  description = "Action for Reputation Profile:  Web Attackers (High Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_attackers_high_shared" {
-  description = "Action for Reputation Profile:  Web Attackers (High Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_attackers_low" {
-  description = "Action for Reputation Profile: Web Attackers (Low Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_attackers_low_shared" {
-  description = "Action for Reputation Profile: Web Attackers (Low Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_dos_attackers_high" {
-  description = "Action for Reputation Profile: DoS Attackers (High Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_dos_attackers_high_shared" {
-  description = "Action for Reputation Profile: DoS Attackers (High Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_dos_attackers_low" {
-  description = "Action for Reputation Profile: DoS Attackers (Low Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_dos_attackers_low_shared" {
-  description = "Action for Reputation Profile: DoS Attackers (Low Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_scanning_tools_high" {
-  description = "Action for Reputation Profile: Scanning Tools (High Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_scanning_tools_high_shared" {
-  description = "Action for Reputation Profile: Scanning Tools (High Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_scanning_tools_low" {
-  description = "Action for Reputation Profile: Scanning Tools (Low Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_scanning_tools_low_shared" {
-  description = "Action for Reputation Profile: Scanning Tools (Low Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_scrapers_high" {
-  description = "Action for Reputation Profile: Web Scrapers (High Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_scrapers_high_shared" {
-  description = "Action for Reputation Profile: Web Scrapers (High Threat) SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_scrapers_low" {
-  description = "Action for Reputation Profile: Web Scrapers (Low Threat) NON-SHARED IPs"
-  type        = string
-}
-
-variable "rep_web_scrapers_low_shared" {
-  description = "Action for Reputation Profile: Web Scrapers (Low Threat) SHARED IPs"
-  type        = string
-}
-
-# Bot Manager General Settings
-variable "botman_type" {
-  description = "Chose based on the available entitlement: BVM (Bot Visibility and Management) or BMS (Bot Management Standard)"
-  type        = string
   validation {
-    condition     = can(index(["bvm", "bms"], var.botman_type))
-    error_message = "Invalid value for Botman Type. Allowed values are bvm or bms."
+    condition     = length(var.policies) > 0
+    error_message = "At least one policy must be defined."
   }
-}
 
-variable "add_akamai_bot_header" {
-  description = "Adds a header named Akamai-Bot to bot request forwarded to the origin. The header contains details like: bot type, Botnet ID, action, detection method, and bot score details, if applicable"
-  type        = bool
-}
-
-variable "enable_active_detections" {
-  description = "These methods interact with the requesting client using a combination of JavaScript and cookies to try to confirm that the request comes from a human using a real web browser"
-  type        = bool
-}
-
-variable "enable_browser_validation" {
-  description = "Confirm that requests come from a browser. Enable use browser validation detection anywhere you expect browsers to visit the URL"
-  type        = bool
-}
-
-variable "remove_botman_cookies" {
-  description = "Remove Bot Manager cookies before sending request to origin"
-  type        = bool
-}
-
-variable "third_party_proxy" {
-  description = "If you use a third-party proxy service between two Akamai Edge servers for things like A/B testing, content translation, or content adaption engines, turn this on to improve detection accuracy"
-  type        = bool
-}
-
-# Bot Category Actions
-variable "bot_site_monitoring_and_web_development" {
-  description = "Action for Akamai Bot Category: Site Monitoring and Web Development Bots"
-  type        = string
-}
-
-variable "bot_academic_or_research" {
-  description = "Action for Akamai Bot Category: Academic or Research Bots"
-  type        = string
-}
-
-variable "bot_job_search_engine" {
-  description = "Action for Akamai Bot Category: Job Search Engine Bots"
-  type        = string
-}
-
-variable "bot_artificial_intelligence_ai" {
-  description = "Action for Akamai Bot Category: Artificial Intelligence (AI) Bots"
-  type        = string
-}
-
-variable "bot_online_advertising" {
-  description = "Action for Akamai Bot Category: Online Advertising Bots"
-  type        = string
-}
-
-variable "bot_ecommerce_search_engine" {
-  description = "Action for Akamai Bot Category: E-Commerce Search Engine Bots"
-  type        = string
-}
-
-variable "bot_web_search_engine" {
-  description = "Action for Akamai Bot Category: Web Search Engine Bots"
-  type        = string
-}
-
-variable "bot_enterprise_data_aggregator" {
-  description = "Action for Akamai Bot Category: Enterprise Data Aggregator Bots"
-  type        = string
-}
-
-variable "bot_financial_services" {
-  description = "Action for Akamai Bot Category: Financial Services Bots"
-  type        = string
-}
-
-variable "bot_social_media_or_blog" {
-  description = "Action for Akamai Bot Category: Social Media or Blog Bots"
-  type        = string
-}
-
-variable "bot_web_archiver" {
-  description = "Action for Akamai Bot Category: Web Archiver Bots"
-  type        = string
-}
-
-variable "bot_business_intelligence" {
-  description = "Action for Akamai Bot Category: Business Intelligence Bots"
-  type        = string
-}
-
-variable "bot_news_aggregator" {
-  description = "Action for Akamai Bot Category: News Aggregator Bots"
-  type        = string
-}
-
-variable "bot_rss_feed_reader" {
-  description = "Action for Akamai Bot Category: RSS Feed Reader Bots"
-  type        = string
-}
-
-variable "bot_financial_account_aggregator" {
-  description = "Action for Akamai Bot Category: Financial Account Aggregator Bots"
-  type        = string
-}
-
-variable "bot_media_or_entertainment_search" {
-  description = "Action for Akamai Bot Category: Media or Entertainment Search Bots"
-  type        = string
-}
-
-variable "bot_seo_analytics_or_marketing" {
-  description = "Action for Akamai Bot Category: SEO, Analytics or Marketing Bots"
-  type        = string
-}
-
-# Bot Transparent Detections Actions
-variable "bot_impersonators_of_known_bots" {
-  description = "Action for Bot Transparent Detections: Impersonators of Known Bots "
-  type        = string
-}
-
-variable "bot_development_frameworks" {
-  description = "Action for Bot Transparent Detections: Development Frameworks "
-  type        = string
-}
-
-variable "bot_http_libraries" {
-  description = "Action for Bot Transparent Detections: HTTP Libraries "
-  type        = string
-}
-
-variable "bot_web_services_libraries" {
-  description = "Action for Bot Transparent Detections: Web Services Libraries "
-  type        = string
-}
-
-variable "bot_open_source_crawlersscraping_platforms" {
-  description = "Action for Bot Transparent Detections: Open Source Crawlers/Scraping Platforms "
-  type        = string
-}
-
-variable "bot_headless_browsersautomation_tools" {
-  description = "Action for Bot Transparent Detections: Headless Browsers/Automation Tools"
-  type        = string
-}
-
-variable "bot_declared_bots_keyword_match" {
-  description = "Action for Bot Transparent Detections: Declared Bots (Keyword Match) "
-  type        = string
-}
-
-variable "bot_aggressive_web_crawlers" {
-  description = "Action for Bot Transparent Detections: Aggressive Web Crawlers"
-  type        = string
-}
-
-variable "bot_browser_impersonator" {
-  description = "Action for Bot Transparent Detections: Browser Impersonator"
-  type        = string
-}
-
-variable "bot_web_scraper_reputation" {
-  description = "Action for Bot Transparent Detections: Web Scraper Reputation "
-  type        = string
-}
-
-# Bot Active Detections Actions
-variable "bot_cookie_integrity_failed" {
-  description = "Bot Active Detections Actions: Cookie Integrity Failed "
-  type        = string
-}
-
-variable "bot_session_validation" {
-  description = "Bot Active Detections Actions: Session Validation "
-  type        = string
-}
-
-variable "bot_client_disabled_javascript_noscript_triggered" {
-  description = "Bot Active Detections Actions: Client Disabled JavaScript (Noscript Triggered)"
-  type        = string
-}
-
-variable "bot_javascript_fingerprint_anomaly" {
-  description = "Bot Active Detections Actions: JavaScript Fingerprint Anomaly"
-  type        = string
-}
-
-variable "bot_javascript_fingerprint_not_received" {
-  description = "Bot Active Detections Actions: JavaScript Fingerprint Not Received"
-  type        = string
+  validation {
+    condition = alltrue([
+      for p in values(var.policies) : alltrue([for h in p.hostnames : h == lower(h)])
+    ])
+    error_message = "All hostnames in policies must be lowercase."
+  }
 }
