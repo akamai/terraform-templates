@@ -9,7 +9,7 @@ or activate to both networks simultaneously. Also supports certificate managemen
 This script uses a modular architecture with template handlers in lib/templates/ and shared functionality in lib/core/.
 
 .PARAMETER TemplateType
-Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2
+Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2 ,dom
 
 .PARAMETER CpsType
 Specifies the CPS certificate type when TemplateType is 'cps'. Available values: dv-san-cert, third-party-cert
@@ -95,6 +95,14 @@ PS> .\deploy.ps1 aapasm -Env dev -ActivateStaging -Debug
 Create and Activate to staging network an AAP+ASM configuration for the dev environment with debug logging
 
 .EXAMPLE
+PS> .\deploy.ps1 pm -Env prod -Save -Notes "Some user notes"
+Create/Save delivery configurations for prod environment without activations
+
+.EXAMPLE
+PS> .\deploy.ps1 pm -Env dev -ActivateStaging -Debug
+Create and Activate to staging network a delivery configuration for the dev environment with debug logging
+
+.EXAMPLE
 PS> .\deploy.ps1 pm -Env qa -ActivateProduction -Notes "Some user notes"
 Create and Activate to production network a property manager configuration for qa environment
 
@@ -166,6 +174,14 @@ Deploy and activate the DataStream 2 stream in the prod environment
 PS> .\deploy.ps1 ds2 -Env dev -Destroy
 Tear down the DataStream 2 configuration for the dev environment
 
+.EXAMPLE
+PS> .\deploy.ps1 dom -Run -Dry 
+Safely execute DOM addition/validation/search to preview changes
+
+.EXAMPLE
+PS> .\deploy.ps1 dom -Run 
+Execute DOM addition/validation/search and see results in outputfiles (dom_*.txt)
+
 .LINK
 https://github.com/akamai/terraform-templates
 #>
@@ -173,7 +189,7 @@ https://github.com/akamai/terraform-templates
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2")]
+    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2" , "dom")]
     [string]$TemplateType,
 
     # --- Common parameters ---
@@ -220,7 +236,12 @@ Param(
     [Parameter(ParameterSetName = 'activate')]
     [Parameter(ParameterSetName = 'cps-create')]
     [Parameter(ParameterSetName = 'cps-upload')]
+    [Parameter(ParameterSetName = 'dom-run')]
     [switch]$Dry,
+
+      # --- DOM: Specific action ---
+    [Parameter(ParameterSetName = 'dom-run', Mandatory = $true)]
+    [switch]$Run,
 
     # --- EDNS parameters ---
     [Parameter(Mandatory = $false)]
@@ -290,6 +311,7 @@ $templateModuleMap = @{
     "bmp"    = "BMP" 
     "edns"   = "EDNS"
     "ds2"    = "DS2"
+    "dom"    = "DOM"
 }
 
 $moduleName = $templateModuleMap[$TemplateType]
@@ -311,6 +333,7 @@ $templateFolderMap = @{
     "bmp"    = "new-bmp-endpoints"
     "edns"   = "new-edns"
     "ds2"    = "new-ds2"
+    "dom"    = "new-dom"
 }
 
 $folderFnName = "Get-${moduleName}TemplateFolder"
