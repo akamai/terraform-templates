@@ -424,6 +424,35 @@ Logs are written to: `environments/{env}/{env}-akamai_tf.log`
 
 For EDNS, the zone type is included in the log filename: `environments/{env}/{env}-{zone_type}-akamai_tf.log` (e.g., `environments/dev/dev-primary-akamai_tf.log`)
 
+#### Log Rotation
+
+Every `-Debug` run starts with a fresh log file. If a debug log already exists at the target path, it is automatically renamed by appending the previous run's timestamp before the extension, so historical runs are preserved side by side:
+
+```
+environments/dev/dev-akamai_tf.log                   # current run
+environments/dev/dev-akamai_tf.20260907-091205.log   # previous run
+environments/dev/dev-akamai_tf.20260906-174233.log   # older run
+```
+
+The timestamp is taken from the previous file's last-write time (`yyyyMMdd-HHmmss`). Empty log files from aborted runs are removed instead of being archived. Rotated archives match the same `*akamai_tf.log` `.gitignore` pattern, so they are not accidentally committed.
+
+#### API Call Rate Summary
+
+At the end of every `-Debug` run (whether the deployment succeeded or failed), an **API Call Rate Summary** is printed to the console. It parses the debug log, groups Akamai API calls (`*.luna.akamaiapis.net`) by minute and by endpoint prefix, and reports the call counts — useful for spotting rate-limit hotspots and understanding where a slow run is spending its time:
+
+```
+================================
+API Call Rate Summary - dev
+================================
+Minute (UTC)      Endpoint prefix                 Calls
+----------------  ------------------------------  -----
+2026/09/07 09:12  /appsec                         14
+2026/09/07 09:12  /papi                           6
+2026/09/07 09:13  /appsec                         21
+```
+
+The summary is produced automatically — no extra flags required. It reads the log path that `-Debug` just wrote to, so the counts always correspond to the current run.
+
 ## Provider Information
 
 This repository uses:
