@@ -38,7 +38,7 @@ plan
 terraform.rc
 
 # Akamai log
-*akamai_tf.log
+*.log
 
 # Backend config files
 config.backend
