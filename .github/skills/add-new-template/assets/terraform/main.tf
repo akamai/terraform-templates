@@ -8,7 +8,7 @@
 # }
 #
 # module "my-module" {
-#   source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//{product}/my-module?ref=vX.Y.Z"
+#   source = "git::ssh://git@github.com/akamai/terraform-templates-modules.git//{product}/my-module?ref=v2.0.4"
 #
 #   contract_id = trimprefix(data.akamai_contract.contract.id, "ctr_")
 #   group_id    = trimprefix(data.akamai_contract.contract.group_id, "grp_")
