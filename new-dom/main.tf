@@ -102,7 +102,7 @@
 
 module "dom_validation" {
   source = "git::https://github.com/akamai/terraform-templates-modules.git//dom?ref=v2.0.4"
-  
+
   domain_validation_entries = var.domain_validation_entries
   enable_validation         = var.enable_validation
   domain_search_entries     = var.domain_search_entries
