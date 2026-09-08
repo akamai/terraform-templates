@@ -92,6 +92,46 @@ class DOMTemplate {
 
         Write-Host "✓ DOM run completed successfully" -ForegroundColor Green
     }
+
+    [void] Destroy([bool]$debug) {
+        Write-Host "Destroying DOM configuration..." -ForegroundColor Red
+
+        Confirm-DestroyOperation -ResourceDescription "DOM configuration"
+        $this.ValidatePrerequisites()
+
+        $configPath = "."
+        $stateFileName = "terraform.tfstate"
+        $logPath = "./$($this.TemplateFolder)/dom-akamai_tf.log"
+        $varFile = "./terraform.tfvars"
+
+        Initialize-TerraformBackend `
+            -TemplateFolder $this.TemplateFolder `
+            -ConfigPath $configPath `
+            -StateFileName $stateFileName
+
+        if ($debug) {
+            Enable-TerraformDebugLogging -LogPath $logPath
+        }
+
+        $exitCode = Invoke-TerraformDestroy `
+            -TemplateFolder $this.TemplateFolder `
+            -VarFilePath $varFile `
+            -AutoApprove
+
+        if ($exitCode -ne 0) {
+            if ($debug) {
+                Write-Host "`nDebug log saved to: $logPath" -ForegroundColor Yellow
+                Disable-TerraformDebugLogging
+            }
+            throw "Terraform destroy failed for DOM"
+        }
+
+        if ($debug) {
+            Disable-TerraformDebugLogging
+        }
+
+        Write-Host "✓ DOM destruction completed successfully" -ForegroundColor Green
+    }
 }
 
 function New-DOMTemplate {
@@ -106,8 +146,8 @@ function New-DOMTemplate {
 
 function Get-DOMParamPolicy {
     return @{
-        Allowed       = @("Run", "Dry")
-        MustHaveOneOf = @("Run")
+        Allowed       = @("Run", "Dry", "Destroy")
+        MustHaveOneOf = @("Run", "Destroy")
     }
 }
 
@@ -123,12 +163,17 @@ function Invoke-DOMTemplate {
 
     $template = New-DOMTemplate -TemplateFolder $TemplateFolder
 
-    $template.Deploy(@{
-        Run   = $BoundParams.ContainsKey('Run')
-        Dry   = $BoundParams.ContainsKey('Dry')
-        Force = $BoundParams.ContainsKey('Force')
-        Debug = $BoundParams.ContainsKey('Debug')
-    })
+    if ($BoundParams.ContainsKey('Destroy')) {
+        $template.Destroy($BoundParams.ContainsKey('Debug'))
+    }
+    else {
+        $template.Deploy(@{
+            Run   = $BoundParams.ContainsKey('Run')
+            Dry   = $BoundParams.ContainsKey('Dry')
+            Force = $BoundParams.ContainsKey('Force')
+            Debug = $BoundParams.ContainsKey('Debug')
+        })
+    }
 }
 
 Export-ModuleMember -Function New-DOMTemplate, Get-DOMParamPolicy, Invoke-DOMTemplate

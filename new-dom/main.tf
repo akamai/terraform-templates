@@ -20,6 +20,7 @@
  *  
  *  .\deploy.ps1 dom -Run -Dry 
  *  .\deploy.ps1 dom -Run 
+ *  .\deploy.ps1 dom -Destroy
  *  ```
  *
  * This creates the necessary records in Akamai and outputs the TXT record values you need to add to your DNS.
@@ -40,6 +41,13 @@
  *
  *
  * ## Configuration
+ *
+ * ## Generated Output Files
+ *
+ * A successful `dom -Run` operation creates the following files in the template directory and also prints the same information in the terminal output:
+ * - `dom_challenges.txt` — TXT and CNAME validation challenge values to publish in DNS
+ * - `dom_validation_entries.txt` — the configured validation entries with scope and method
+ * - `dom_search_results.txt` — the domain search results returned by the DOM API
  *
  * ## Domain Validation Entries
  *
@@ -78,39 +86,24 @@
  *   5. HOST and DOMAIN entries cannot use wildcard prefix
  *   6. validation_method must be one of: DNS_TXT, DNS_CNAME, HTTP; HTTP is only valid for HOST entries 
  *
- *   ## Requirements
- *  
- *   ```
- *   Terraform >= 1.9.0
-  *   Akamai Provider >= 10.0
- *   ```
+ *   ## Prerequisites
  *
- *   ## Akamai API Credentials
+ *   Before you start, make sure you have:
+ * * [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.9.0
+ * * [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) 7+ to run the deployment script  
+ * * Akamai Provider >= 10.0
+ * * Akamai API credentials (typically in `~/.edgerc`) with read-write access to Domain Ownership Manager
+ *
  *   
- *   The Akamai API user configured in your Terraform credentials must have the following access level:
- *
- *   ```
- *   API Service: Domain Ownership Manager
- *   Access Level: READ-WRITE
- *   ```
- *
- *   Configure this in your Akamai control panel when setting up API credentials. Ensure your .edgerc file references the correct section with these permissions.
+ *  
  */
 
 
 
 module "dom_validation" {
-  source = "git::https://github.com/akamai/terraform-templates-modules.git//dom?ref=v2.0.0"
-
-  domain_validation_entries = [
-    for entry in var.domain_validation_entries : {
-      domain_name       = entry.domain_name
-      validation_scope  = upper(entry.validation_scope)
-      validation_method = entry.validation_method
-    }
-  ]
-  enable_validation     = var.enable_validation
-  edgerc_path           = var.edgerc_path
-  edgerc_section        = var.edgerc_section
-  domain_search_entries = var.domain_search_entries
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//dom?ref=v2.0.4"
+  
+  domain_validation_entries = var.domain_validation_entries
+  enable_validation         = var.enable_validation
+  domain_search_entries     = var.domain_search_entries
 }

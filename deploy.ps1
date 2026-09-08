@@ -182,6 +182,10 @@ Safely execute DOM addition/validation/search to preview changes
 PS> .\deploy.ps1 dom -Run 
 Execute DOM addition/validation/search and see results in outputfiles (dom_*.txt)
 
+.EXAMPLE
+PS> .\deploy.ps1 dom -Destroy
+Tear down the DOM configuration (removes all domain ownership entries)
+
 .LINK
 https://github.com/akamai/terraform-templates
 #>

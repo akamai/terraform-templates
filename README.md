@@ -67,11 +67,12 @@ ps-terraform-templates/
 │   ├── variables.tf
 │   └── README.md
 ├── new-dom/                        # Domain Ownership Management template
-│   ├── files.tf                    # Supports HOST, DOMAIN, and WILDCARD scopes
+│   ├── files.tf                    # Generates challenge / validation / search output files
 │   ├── main.tf
 │   ├── provider.tf
 │   ├── terraform.tfvars.dist
 │   ├── variables.tf
+│   ├── outputs.tf
 │   └── versions.tf
 └── README.md
 ```
@@ -280,15 +281,15 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 
 > **Note:** DOM uses a single template-level tfvars file (`new-dom/terraform.tfvars`) instead of per-environment files.
 
-> **Note:** DOM runs through `-Run` only. It does not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Destroy`, `-Notes`, or `-SkipValidation`.
+> **Note:** DOM supports `-Run` and `-Destroy`. It does not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation`.
 
-> **Note:** `-Dry` shows the Terraform plan only. A full `-Run` can generate/update validation and search output files (for example, `dom_challenges.txt`, `dom_validation_entries.txt`, and `dom_search_results.txt`) in the template directory.
-
+> **Note:** `-Dry` shows the Terraform plan only. A full `-Run` can generate/update validation and search output files (for example, `dom_challenges.txt`, `dom_validation_entries.txt`, and `dom_search_results.txt`) in the template directory, and the same values are also printed to the terminal.
 
 | Parameter | Description |
 |-----------|-------------|
 | First Argument | `dom` - Domain Ownership Management |
-| `-Run` | Execute DOM workflow (create/update, validate, and/or search per `terraform.tfvars`) |
+| `-Run` | Execute the DOM workflow (create/update, validate, and/or search per `terraform.tfvars`) |
+| `-Destroy` | Remove the DOM configuration and tear down existing domain ownership records |
 | `-Dry` | Show Terraform plan without applying changes |
 | `-Force` | Skip the drift-detection prompt and continue automatically |
 | `-Debug` | Enable detailed logging to `dom-akamai_tf.log` |
@@ -419,6 +420,9 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Execute DOM workflow
 .\deploy.ps1 dom -Run
+
+# Remove DOM configuration
+.\deploy.ps1 dom -Destroy
 ```
 
 ## Troubleshooting

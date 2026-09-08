@@ -5,7 +5,6 @@ variable "domain_validation_entries" {
     validation_scope  = string
     validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"
   }))
-  default = []
   validation {
     condition     = length(var.domain_validation_entries) <= 1000
     error_message = "Maximum of 1000 domain validation entries allowed."
@@ -74,6 +73,7 @@ variable "edgerc_path" {
 variable "edgerc_section" {
   description = "Section in the .edgerc file"
   type        = string
+  default     = "default"
 }
 
 variable "domain_search_entries" {

@@ -876,6 +876,19 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Not -Match "Parameter set cannot be resolved"
             $r.Output | Should -Match "Configuration file not found"
         }
+
+        It "Should fail when -Run and -Destroy are combined" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should accept -Destroy alone (proceeds past parameter validation)" {
+            $r = Invoke-Deploy @("dom", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Not -Match "is not applicable for the 'dom' template"
+        }
     }
 
     Context "Invalid TemplateType" {
@@ -1029,6 +1042,12 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
 
         It "CPS -DestroyCert: should exit non-zero with cancellation message when user enters 'no'" {
             $r = Invoke-DeployWithInput -Arguments @("cps", "-CpsType", "dv-san-cert", "-DestroyCert", "cert1") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "DOM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("dom", "-Destroy") -StdinInput "no"
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
         }

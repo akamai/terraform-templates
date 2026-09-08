@@ -20,9 +20,10 @@ Run Terraform in this directory to create the domain ownership records:
 
  .\deploy.ps1 dom -Run -Dry
  .\deploy.ps1 dom -Run
+ .\deploy.ps1 dom -Destroy
  ```
 
-This creates the necessary records in Akamai and outputs the TXT record values you need to add to your DNS.
+This creates the necessary records in Akamai and outputs the TXT record values you need to add to your DNS. A successful `dom -Run` also writes the same results to `dom_challenges.txt`, `dom_validation_entries.txt`, and `dom_search_results.txt` in the template directory, and the same information is printed to the terminal output.
 
 ## Step 2: Configure DNS Records
 
@@ -74,23 +75,13 @@ Configure your domains in `terraform.tfvars`:
   5. HOST and DOMAIN entries cannot use wildcard prefix
   6. validation\_method must be one of: DNS\_TXT, DNS\_CNAME, HTTP; HTTP is only valid for HOST entries
 
-  ## Requirements
+  ## Prerequisites
 
-  ```
-  Terraform >= 1.9.0
-  Akamai Provider >= 10.0
-  ```
-
-  ## Akamai API Credentials
-
-  The Akamai API user configured in your Terraform credentials must have the following access level:
-
-  ```
-  API Service: Domain Ownership Manager
-  Access Level: READ-WRITE
-  ```
-
-  Configure this in your Akamai control panel when setting up API credentials. Ensure your .edgerc file references the correct section with these permissions.
+  Before you start, make sure you have:
+* [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.9.0
+* [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) 7+ to run the deployment script  
+* Akamai Provider >= 10.0
+* Akamai API credentials (typically in `~/.edgerc`) with read-write access to Domain Ownership Manager
 
 # Usage
 Basic usage of this module is as follows:
@@ -100,19 +91,19 @@ module "example" {
   	 source  = "<module-location>"
   
 	 # Required variables
-  	 edgerc_section  = <string>
+  	 domain_validation_entries  = <list(object({
+	    domain_name       = string
+	    validation_scope  = string
+	    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"
+	  }))>
   
 	 # Optional variables
   	 domain_search_entries  = <list(object({
 	    domain_name      = string
 	    validation_scope = string
 	  }))> | default: []
-  	 domain_validation_entries  = <list(object({
-	    domain_name       = string
-	    validation_scope  = string
-	    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"
-	  }))> | default: []
   	 edgerc_path  = <string> | default: "~/.edgerc"
+  	 edgerc_section  = <string> | default: "default"
   	 enable_validation  = <bool> | default: false
 }
 ```
@@ -137,19 +128,24 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dom_validation"></a> [dom\_validation](#module\_dom\_validation) | git::https://github.com/akamai/terraform-templates-modules.git//dom | v2.0.0 |
+| <a name="module_dom_validation"></a> [dom\_validation](#module\_dom\_validation) | ../../../dom_modules/terraform-templates-modules/dom | n/a |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_edgerc_section"></a> [edgerc\_section](#input\_edgerc\_section) | Section in the .edgerc file | `string` | n/a | yes |
+| <a name="input_domain_validation_entries"></a> [domain\_validation\_entries](#input\_domain\_validation\_entries) | A list of objects with hostnames, domains, or wildcards to DOM validate | <pre>list(object({<br/>    domain_name       = string<br/>    validation_scope  = string<br/>    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"<br/>  }))</pre> | n/a | yes |
 | <a name="input_domain_search_entries"></a> [domain\_search\_entries](#input\_domain\_search\_entries) | List of domains to search validation status for, independent of domain\_validation\_entries | <pre>list(object({<br/>    domain_name      = string<br/>    validation_scope = string<br/>  }))</pre> | `[]` | no |
-| <a name="input_domain_validation_entries"></a> [domain\_validation\_entries](#input\_domain\_validation\_entries) | A list of objects with hostnames, domains, or wildcards to DOM validate | <pre>list(object({<br/>    domain_name       = string<br/>    validation_scope  = string<br/>    validation_method = optional(string, "DNS_TXT") # Default to "DNS_TXT"<br/>  }))</pre> | `[]` | no |
 | <a name="input_edgerc_path"></a> [edgerc\_path](#input\_edgerc\_path) | Path to the .edgerc file | `string` | `"~/.edgerc"` | no |
+| <a name="input_edgerc_section"></a> [edgerc\_section](#input\_edgerc\_section) | Section in the .edgerc file | `string` | `"default"` | no |
 | <a name="input_enable_validation"></a> [enable\_validation](#input\_enable\_validation) | Set to true to enable domain validation | `bool` | `false` | no |
 
 ## Outputs
 
-No outputs.
+| Name | Description |
+|------|-------------|
+| <a name="output_cname_validation_challenges"></a> [cname\_validation\_challenges](#output\_cname\_validation\_challenges) | Map of domain\_name => CNAME record value to publish in DNS. |
+| <a name="output_domain_search_results"></a> [domain\_search\_results](#output\_domain\_search\_results) | Results of the domain ownership search (null when domain\_search\_entries is empty). |
+| <a name="output_txt_validation_challenges"></a> [txt\_validation\_challenges](#output\_txt\_validation\_challenges) | Map of domain\_name => TXT record value to publish in DNS. |
+| <a name="output_validation_entries"></a> [validation\_entries](#output\_validation\_entries) | Configured domain validation entries (domain\_name, validation\_scope, validation\_method). |
 <!-- END_TF_DOCS -->
