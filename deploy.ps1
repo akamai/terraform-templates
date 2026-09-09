@@ -155,7 +155,7 @@ PS> .\deploy.ps1 edns -Env qa -ZoneType secondary -Destroy
 Safely destroy SECONDARY Edge DNS zone in qa environment
 
 .EXAMPLE
-PS> ç
+PS> .\deploy.ps1 ds2 -Env dev -Save
 Create or update a DataStream 2 configuration in the dev environment (activation driven by the tfvars activate_stream value)
 
 .EXAMPLE
