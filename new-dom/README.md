@@ -23,7 +23,7 @@ Run Terraform in this directory to create the domain ownership records:
  .\deploy.ps1 dom -Destroy
  ```
 
-This creates the necessary records in Akamai and outputs the TXT record values you need to add to your DNS. A successful `dom -Run` also writes the same results to `dom_challenges.txt`, `dom_validation_entries.txt`, and `dom_search_results.txt` in the template directory, and the same information is printed to the terminal output.
+This creates the necessary records in Akamai and outputs the TXT record values you need to add to your DNS.
 
 ## Step 2: Configure DNS Records
 
@@ -38,6 +38,13 @@ In the `terraform.tfvars` file update the `enable_validation = true`
  This triggers immediate validation of your domains instead of waiting for the background validation jobs.
 
 ## Configuration
+
+## Generated Output Files
+
+A successful `dom -Run` operation creates the following files in the template directory and also prints the same information in the terminal output:
+- `dom_challenges.txt` — TXT and CNAME validation challenge values to publish in DNS
+- `dom_validation_entries.txt` — the configured validation entries with scope and method
+- `dom_search_results.txt` — the domain search results returned by the DOM API
 
 ## Domain Validation Entries
 
@@ -128,7 +135,7 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_dom_validation"></a> [dom\_validation](#module\_dom\_validation) | ../../../dom_modules/terraform-templates-modules/dom | n/a |
+| <a name="module_dom_validation"></a> [dom\_validation](#module\_dom\_validation) | git::https://github.com/akamai/terraform-templates-modules.git//dom | v2.0.4 |
 
 ## Inputs
 
