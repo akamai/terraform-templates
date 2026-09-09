@@ -444,7 +444,7 @@ At the end of every `-Debug` run (whether the deployment succeeded or failed), a
 ================================
 API Call Rate Summary - dev
 ================================
-Minute (UTC)      Endpoint prefix                 Calls
+Minute            Endpoint prefix                 Calls
 ----------------  ------------------------------  -----
 2026/09/07 09:12  /appsec                         14
 2026/09/07 09:12  /papi                           6
