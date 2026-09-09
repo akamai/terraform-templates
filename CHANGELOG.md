@@ -1,3 +1,14 @@
+# [2.1.0](https://github.com/akamai/terraform-templates/compare/v2.0.0...v2.1.0) (2026-09-09)
+
+
+### Features
+
+* **dom:** fixing wildcard to accept any levels and also made * prefix optional for wildcard ([b87c41f](https://github.com/akamai/terraform-templates/commit/b87c41fc55c39a4f63fd8f52d2f78bac7c3d6548))
+* **dom:** formatting main.tf ([5462d7e](https://github.com/akamai/terraform-templates/commit/5462d7ee62bb32af35d6c51dcc920a766a6914ba))
+* **dom:** updating dom template with new changes ([82366fd](https://github.com/akamai/terraform-templates/commit/82366fd2a5674ea6cb3663f05f1a7963de165330))
+
+
+
 # [2.0.0](https://github.com/akamai/terraform-templates/compare/v1.5.0...v2.0.0) (2026-09-02)
 
 
