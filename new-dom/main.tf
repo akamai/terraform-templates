@@ -64,7 +64,7 @@
  *             validation_scope = "DOMAIN"
  *         },
  *          {
- *             domain_name      = "*.tfdom.com"
+ *             domain_name      = "tfdom.com" # '*.' prefix is optional; UI takes the base only
  *             validation_scope = "WILDCARD"
  *          }
  *        ]
@@ -73,7 +73,7 @@
  * ## Validation Scopes
  *
  *   1. **HOST**: Use for exact domains. For example, blog.example.com validates only that specific hostname.
- *   2. **WILDCARD**: Use for first-level subdomains. For example, *.example.com validates blog.example.com and 123.example.com, but not xyz.blog.example.com or the apex example.com.
+ *   2. **WILDCARD**: Use for first-level subdomains of the specified base domain. The `*.` prefix is optional (the Akamai UI takes just the base domain). For example, `app.example.com` or `*.app.example.com` both validate `api.app.example.com` and any other first-level subdomain of `app.example.com`, but not `deep.api.app.example.com` or the apex `app.example.com`.
  *   3. **DOMAIN**: Use for exact domains and all subdomains. For example, example.com validates blog.example.com, 123.blog.example.com, x.123.blog.example.com, and the apex domain.
  *
  *
@@ -82,7 +82,7 @@
  *   1. Maximum of 1000 domain validation entries
  *   2. Validation scope must be HOST, DOMAIN, or WILDCARD (case-insensitive)
  *   3. HOST entries cannot overlap with DOMAIN entries (e.g., host.example.com conflicts with example.com)
- *   4. WILDCARD entries must start with *. and contain a valid base domain
+ *   4. WILDCARD entries take a base domain (e.g., `example.com` or `app.example.com`); the `*.` prefix is optional and stripped before sending to the API
  *   5. HOST and DOMAIN entries cannot use wildcard prefix
  *   6. validation_method must be one of: DNS_TXT, DNS_CNAME, HTTP; HTTP is only valid for HOST entries 
  *

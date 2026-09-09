@@ -183,6 +183,7 @@ Domain Ownership Management:
 - Optional immediate validation execution
 - Optional domain ownership search output generation
 - Outputs challenge/search files in template directory for operational use
+- WILDCARD entries accept either `example.com` or `*.example.com` — the `*.` prefix is optional
 
 ## Usage
 

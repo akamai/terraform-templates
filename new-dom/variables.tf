@@ -26,7 +26,7 @@ variable "domain_validation_entries" {
             !can(regex("^\\*\\.", entry.domain_name))
             && can(regex("^[^.]+\\..+$", entry.domain_name))
             ) : upper(entry.validation_scope) == "WILDCARD" ? (
-            can(regex("^\\*\\.[^.]+\\.[^.]+$", entry.domain_name))
+            can(regex("^(\\*\\.)?[^.]+(\\.[^.]+)+$", entry.domain_name))
             ) : (
             !can(regex("^\\*\\.", entry.domain_name))
             && can(regex("^[^.]+\\..+$", entry.domain_name))
@@ -50,7 +50,7 @@ variable "domain_validation_entries" {
     error_message = <<-EOT
       validation_scope must be HOST, DOMAIN, or WILDCARD;
       HOST entries are exact names;
-      WILDCARD entries start with '*.' and cover only first-level subdomains of the base domain;
+      WILDCARD entries take a base domain (e.g., example.com or app.example.com) and cover only first-level subdomains of that base; the '*.' prefix is optional and stripped if provided;
       DOMAIN entries cover the apex and all subdomains;
       HOST entries cannot overlap with DOMAIN entries (e.g., host.example.com conflicts with example.com);
       validation_method must be one of: DNS_TXT, DNS_CNAME, HTTP; HTTP is only valid for HOST entries.
