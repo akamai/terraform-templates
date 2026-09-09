@@ -62,6 +62,10 @@ Describe "Template Modules - Module Loading" {
             { Import-Module "$PSScriptRoot/../lib/templates/DS2.psm1" -Force } | Should -Not -Throw
         }
 
+        It "Should load DOM module" {
+            { Import-Module "$PSScriptRoot/../lib/templates/DOM.psm1" -Force } | Should -Not -Throw
+        }
+
         It "Should load EDNS module" {
             { Import-Module "$PSScriptRoot/../lib/templates/EDNS.psm1" -Force } | Should -Not -Throw
         }
@@ -79,6 +83,7 @@ Describe "Template Modules - Param Policy Contract" {
         Import-Module "$PSScriptRoot/../lib/templates/BMP.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/CPS.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/DS2.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/DOM.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/EDNS.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/PropertyManager.psm1" -Force
     }
@@ -102,6 +107,10 @@ Describe "Template Modules - Param Policy Contract" {
 
         It "DS2 module exports Get-DS2ParamPolicy" {
             Get-Command "Get-DS2ParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "DOM module exports Get-DOMParamPolicy" {
+            Get-Command "Get-DOMParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
 
         It "EDNS module exports Get-EDNSParamPolicy" {
@@ -144,6 +153,12 @@ Describe "Template Modules - Param Policy Contract" {
             $p.Allowed | Should -Not -BeNullOrEmpty
         }
 
+        It "Get-DOMParamPolicy returns a hashtable with Allowed" {
+            $p = Get-DOMParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
         It "Get-EDNSParamPolicy returns a hashtable with Allowed" {
             $p = Get-EDNSParamPolicy
             $p | Should -BeOfType [hashtable]
@@ -175,6 +190,10 @@ Describe "Template Modules - Param Policy Contract" {
 
         It "DS2 module exports Invoke-DS2Template" {
             Get-Command "Invoke-DS2Template" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "DOM module exports Invoke-DOMTemplate" {
+            Get-Command "Invoke-DOMTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
 
         It "EDNS module exports Invoke-EDNSTemplate" {
@@ -832,6 +851,46 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         }
     }
 
+    Context "Domain Ownership Management (dom) parameter validation" {
+        It "Should fail without -Run parameter" {
+            $r = Invoke-Deploy @("dom")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Please specify at least one parameter"
+        }
+
+        It "Should fail when -Env is passed" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Env", "dev")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-Environment' is not applicable for the 'dom' template"
+        }
+
+        It "Should fail when non-DOM template parameters are passed" {
+            $r = Invoke-Deploy @("dom", "-Run", "-CpsType", "dv-san-cert")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'dom' template"
+        }
+
+        It "Should accept -Run with -Dry (no parameter set conflict)" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Dry")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Match "Configuration file not found"
+        }
+
+        It "Should fail when -Run and -Destroy are combined" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should accept -Destroy alone (proceeds past parameter validation)" {
+            $r = Invoke-Deploy @("dom", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Not -Match "is not applicable for the 'dom' template"
+        }
+    }
+
     Context "Invalid TemplateType" {
         It "Should fail with an invalid TemplateType value" {
             $r = Invoke-Deploy @("invalid")
@@ -983,6 +1042,12 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
 
         It "CPS -DestroyCert: should exit non-zero with cancellation message when user enters 'no'" {
             $r = Invoke-DeployWithInput -Arguments @("cps", "-CpsType", "dv-san-cert", "-DestroyCert", "cert1") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "DOM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("dom", "-Destroy") -StdinInput "no"
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
         }

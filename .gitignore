@@ -52,3 +52,6 @@ lib/**/.cache/
 *challenges.txt
 *.pem
 unit-testing/
+dom_challenges.txt
+dom_search_results.txt
+dom_validation_entries.txt
