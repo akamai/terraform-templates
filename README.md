@@ -434,7 +434,7 @@ environments/dev/dev-akamai_tf.20260907-091205.log   # previous run
 environments/dev/dev-akamai_tf.20260906-174233.log   # older run
 ```
 
-The timestamp is taken from the previous file's last-write time (`yyyyMMdd-HHmmss`). Empty log files from aborted runs are removed instead of being archived. Rotated archives match the same `*akamai_tf.log` `.gitignore` pattern, so they are not accidentally committed.
+The timestamp is taken from the previous file's last-write time (`yyyyMMdd-HHmmss`). Empty log files from aborted runs are removed instead of being archived. Rotated archives match the same `*akamai_tf*.log` `.gitignore` pattern, so they are not accidentally committed.
 
 #### API Call Rate Summary
 
