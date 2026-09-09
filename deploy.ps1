@@ -368,11 +368,29 @@ try {
         throw "Template dispatch function not found: $invokeFnName. Ensure the module exports this function."
     }
     & $invokeFnName -TemplateFolder $TemplateFolder -BoundParams $PSBoundParameters
+    $deployFailed = $false
 }
 catch {
     Write-Error "Deployment failed: $_"
-    exit 1
+    $deployFailed = $true
 }
+finally {
+    # API rate summary is part of Debug mode: parses the Terraform DEBUG log
+    # and reports Akamai API call counts per endpoint prefix per minute.
+    if ($PSBoundParameters.ContainsKey('Debug')) {
+        $envLabel = if ($Environment) { $Environment }
+                    elseif ($CertNumber) { $CertNumber }
+                    else { 'unknown' }
+        try {
+            Write-ApiRateSummary -EnvironmentName $envLabel
+        }
+        catch {
+            Write-Warning "Failed to produce API rate summary: $_"
+        }
+    }
+}
+
+if ($deployFailed) { exit 1 }
 
 # Execution summary
 Write-ExecutionSummary -StartTime $ScriptStartTime
