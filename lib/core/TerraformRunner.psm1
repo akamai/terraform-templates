@@ -31,8 +31,14 @@ function Initialize-TerraformBackend {
         [bool]$Force = $false
     )
     
-    # Create backend config file
-    $backendConfig = "path=`"./$ConfigPath/$StateFileName`""
+    # Normalize ConfigPath: '.' or empty produces path="terraform.tfstate" (no './././' which confuses terraform's local backend into wiping state).
+    # For env-scoped templates (ConfigPath like "environments/dev") keep the original "./<path>" format so behavior is unchanged.
+    $stateRelPath = if ([string]::IsNullOrWhiteSpace($ConfigPath) -or $ConfigPath -eq ".") {
+        $StateFileName
+    } else {
+        "./$ConfigPath/$StateFileName"
+    }
+    $backendConfig = "path=`"$stateRelPath`""
     $backendConfigPath = "./$TemplateFolder/$ConfigPath/config.backend"
     $stateFilePath = "./$TemplateFolder/$ConfigPath/$StateFileName"
     $stateFileExistedBeforeInit = Test-Path $stateFilePath

@@ -66,6 +66,14 @@ ps-terraform-templates/
 │   ├── main.tf
 │   ├── variables.tf
 │   └── README.md
+├── new-dom/                        # Domain Ownership Management template
+│   ├── files.tf                    # Generates challenge / validation / search output files
+│   ├── main.tf
+│   ├── provider.tf
+│   ├── terraform.tfvars.dist
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── versions.tf
 └── README.md
 ```
 
@@ -82,6 +90,7 @@ Navigate to **Akamai Control Center → Identity & Access Management**:
    - **Client Lists API** (for client lists)
    - **Edge DNS API** (for DNS zone management)
    - **DataStream API / Datastream Config** (for DataStream 2 log streaming)
+   - **Domain Ownership Manager API** (for DOM validation/search operations)
 2. Generate credentials: `client_secret`, `access_token`, `client_token`, `host`
 
 ### 2. Get Account Switch Key
@@ -167,6 +176,14 @@ DataStream 2 (DS-managed / Decoupled):
 - Support for 14+ destination connectors (AWS S3, Datadog, Splunk, Azure, GCS, TrafficPeak, and more)
 - Granular control over log formats (JSON or STRUCTURED), dataset fields, sampling percentages, and midgress tracking
 - Streamlined deployment with a single activation dimension directly driven by environment configurations
+
+### 🧾 new-dom
+Domain Ownership Management:
+- Create or update domain ownership validation requests
+- Optional immediate validation execution
+- Optional domain ownership search output generation
+- Outputs challenge/search files in template directory for operational use
+- WILDCARD entries accept either `example.com` or `*.example.com` — the `*.` prefix is optional
 
 ## Usage
 
@@ -260,6 +277,25 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-Force` | Skip the drift-detection prompt and continue automatically |
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-Help` | Display detailed help information |
+
+#### Domain Ownership Management (DOM) Template
+
+> **Note:** DOM uses a single template-level tfvars file (`new-dom/terraform.tfvars`) instead of per-environment files.
+
+> **Note:** DOM supports `-Run` and `-Destroy`. It does not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation`.
+
+> **Note:** `-Dry` shows the Terraform plan only. A full `-Run` can generate/update validation and search output files (for example, `dom_challenges.txt`, `dom_validation_entries.txt`, and `dom_search_results.txt`) in the template directory, and the same values are also printed to the terminal.
+
+| Parameter | Description |
+|-----------|-------------|
+| First Argument | `dom` - Domain Ownership Management |
+| `-Run` | Execute the DOM workflow (create/update, validate, and/or search per `terraform.tfvars`) |
+| `-Destroy` | Remove the DOM configuration and tear down existing domain ownership records |
+| `-Dry` | Show Terraform plan without applying changes |
+| `-Force` | Skip the drift-detection prompt and continue automatically |
+| `-Debug` | Enable detailed logging to `dom-akamai_tf.log` |
+| `-Help` | Display detailed help information |
+
 
 ### Configuration
 
@@ -377,6 +413,17 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Safely tear down the DataStream 2 configuration for the dev environment
 .\deploy.ps1 ds2 -Env dev -Destroy
+
+# --- Domain Ownership Management (DOM) ---
+
+# Preview DOM plan only
+.\deploy.ps1 dom -Run -Dry
+
+# Execute DOM workflow
+.\deploy.ps1 dom -Run
+
+# Remove DOM configuration
+.\deploy.ps1 dom -Destroy
 ```
 
 ## Troubleshooting
