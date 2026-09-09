@@ -355,7 +355,7 @@ function Write-ApiRateSummary {
     }
 
     $timeWidth     = if ($Granularity -eq 'second') { 19 } else { 16 }
-    $timeLabel     = if ($Granularity -eq 'second') { 'Second (UTC)' } else { 'Minute (UTC)' }
+    $timeLabel     = if ($Granularity -eq 'second') { 'Second' } else { 'Minute' }
     $endpointWidth = 30
     $rowFmt        = "{0,-$timeWidth}  {1,-$endpointWidth}  {2}"
 
