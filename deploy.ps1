@@ -79,6 +79,18 @@ Skips product ID validation. Use this if product IDs have changed or for testing
 Skips the drift-detection prompt. When drift is detected before applying changes, the script normally
 prompts for confirmation. Pass -Force to bypass this prompt and continue automatically.
 
+.PARAMETER BackendType
+Selects the Terraform backend to use. Defaults to 'local'.
+Supported values: local, s3, gcs, azurerm, remote, http, consul, pg, kubernetes, oss, cos.
+
+For any non-local backend the user must create a properly-formed config.backend file
+inside the target env folder (e.g. ./new-aap-configuration/environments/dev/config.backend)
+BEFORE invoking deploy.ps1. deploy.ps1 will validate the file and never overwrite it for
+non-local backends. For -BackendType local, config.backend is auto-generated as it always was.
+
+The value is exported as $env:TF_BACKEND_TYPE for the current process so shared modules
+(and CI scripts) can pick it up without threading it through every function.
+
 .PARAMETER Help
 Displays detailed help information about the script.
 
@@ -186,6 +198,14 @@ Execute DOM addition/validation/search and see results in outputfiles (dom_*.txt
 PS> .\deploy.ps1 dom -Destroy
 Tear down the DOM configuration (removes all domain ownership entries)
 
+.EXAMPLE
+PS> .\deploy.ps1 aap -Env dev -Save -BackendType s3
+Save changes using a remote S3 backend. Requires config.backend to already exist at
+./new-aap-configuration/environments/dev/config.backend with valid S3 backend keys
+(bucket, key, region, endpoints, access_key, secret_key, etc.). deploy.ps1 will validate
+the file and never overwrite it. For -BackendType local (default) config.backend is
+auto-generated as before.
+
 .LINK
 https://github.com/akamai/terraform-templates
 #>
@@ -209,6 +229,10 @@ Param(
 
     [Parameter()]
     [switch]$Force,
+
+    [Parameter()]
+    [ValidateSet('local','s3','gcs','azurerm','remote','http','consul','pg','kubernetes','oss','cos')]
+    [string]$BackendType = 'local',
 
     [Parameter()]
     [switch]$Help,
@@ -300,6 +324,10 @@ if ($Help -or $args -contains "Help" -or $args -contains "-Help" -or $args -cont
     Get-Help $PSCommandPath -Full
     exit 0
 }
+
+# Backend type is surfaced via env var so Initialize-TerraformBackend picks it up
+# without every template module having to thread it through.
+$env:TF_BACKEND_TYPE = $BackendType
 
 # Import core modules
 Import-Module "$PSScriptRoot/lib/core/TerraformRunner.psm1" -Force
