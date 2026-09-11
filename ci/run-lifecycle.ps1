@@ -48,7 +48,6 @@ $commonArgs = @{
     'Environment' = $Environment; 
     'Force' = $true; 
     '-BackendType' = 's3';
-    '-Dry' = $true
 }
 
 # EDNS needs -ZoneType regardless of phase.
@@ -93,6 +92,7 @@ function Invoke-Destroy {
     if ($Phase -ne 'Destroy') { return }
 
     # Single -Destroy call works for every template (BMP module tears down both phases).
+    Write-Host "Invoking destroy for template $Template with common args: $commonArgs"
     & ./deploy.ps1 $Template @commonArgs -Destroy
     if ($LASTEXITCODE -ne 0) {
         Write-Warning "$Template destroy exited with $LASTEXITCODE — investigate orphans in the sandbox."
