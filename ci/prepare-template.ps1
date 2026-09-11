@@ -16,7 +16,7 @@ validate config.backend + write backend.tf. Locals are unaffected.
 .PARAMETER Template
 Template short name (aap|aapasm|pm|bmp|edns|ds2).
 
-.PARAMETER Env
+.PARAMETER Environment
 Environment folder name (typically 'test').
 
 .PARAMETER TfvarsName
@@ -49,7 +49,7 @@ GitHub run id — used to uniquify the S3 state key so failed runs don't collide
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Template,
-    [Parameter(Mandatory = $true)][string]$Env,
+    [Parameter(Mandatory = $true)][string]$Environment,
     [Parameter(Mandatory = $true)][string]$TfvarsName,
     [Parameter(Mandatory = $true)][string]$SecretName,
     [Parameter(Mandatory = $true)][AllowEmptyString()][string]$TfvarsContent,
@@ -76,7 +76,7 @@ if (-not $templateFolderMap.ContainsKey($Template)) {
 }
 
 $folder = $templateFolderMap[$Template]
-$envDir = Join-Path $folder "environments/$Env"
+$envDir = Join-Path $folder "environments/$Environment"
 
 # Test env folder must exist for the template. Missing folder is a soft skip.
 if (-not (Test-Path $envDir)) {
@@ -104,7 +104,7 @@ $TfvarsContent | Out-File -FilePath $tfvarsPath -Force -Encoding utf8
 Write-Host "Wrote tfvars: $tfvarsPath ($($TfvarsContent.Length) chars)"
 
 # S3 state key: one per template + variant so parallel runs and reruns are isolated.
-$stateKey = "ps-terraform-templates/$Template/$Env-$TfvarsName-$RunId.tfstate"
+$stateKey = "ps-terraform-templates/$Template/$Environment-$TfvarsName-$RunId.tfstate"
 
 $backendConfigPath = Join-Path $envDir 'config.backend'
 $backendConfig = @"

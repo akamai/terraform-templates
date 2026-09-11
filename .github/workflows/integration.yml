@@ -149,7 +149,7 @@ jobs:
         run: |
           ./ci/prepare-template.ps1 `
             -Template   '${{ matrix.template }}' `
-            -Env        '${{ matrix.env }}' `
+            -Environment        '${{ matrix.env }}' `
             -TfvarsName '${{ matrix.tfvarsName }}' `
             -SecretName '${{ matrix.secretName }}' `
             -TfvarsContent $env:TFVARS_CONTENT `
@@ -169,7 +169,7 @@ jobs:
           ./ci/run-lifecycle.ps1 `
             -Phase    Deploy `
             -Template '${{ matrix.template }}' `
-            -Env      '${{ matrix.env }}' `
+            -Environment      '${{ matrix.env }}' `
             -Variant  '${{ matrix.variant }}' `
             -RunId    '${{ github.run_id }}'
 
@@ -181,7 +181,7 @@ jobs:
           ./ci/run-lifecycle.ps1 `
             -Phase    Destroy `
             -Template '${{ matrix.template }}' `
-            -Env      '${{ matrix.env }}' `
+            -Environment      '${{ matrix.env }}' `
             -Variant  '${{ matrix.variant }}' `
             -RunId    '${{ github.run_id }}'
 
@@ -191,7 +191,7 @@ jobs:
         run: |
           ./ci/cleanup-template.ps1 `
             -Template   '${{ matrix.template }}' `
-            -Env        '${{ matrix.env }}' `
+            -Environment        '${{ matrix.env }}' `
             -TfvarsName '${{ matrix.tfvarsName }}'
 
       - name: Row summary

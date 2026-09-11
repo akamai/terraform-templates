@@ -13,7 +13,7 @@ Called with `if: always()` in the workflow.
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Template,
-    [Parameter(Mandatory = $true)][string]$Env,
+    [Parameter(Mandatory = $true)][string]$Environment,
     [Parameter(Mandatory = $true)][string]$TfvarsName
 )
 
@@ -32,8 +32,8 @@ $folder = $templateFolderMap[$Template]
 if (-not $folder) { return }
 
 $paths = @(
-    (Join-Path $folder "environments/$Env/$TfvarsName"),
-    (Join-Path $folder "environments/$Env/config.backend"),
+    (Join-Path $folder "environments/$Environment/$TfvarsName"),
+    (Join-Path $folder "environments/$Environment/config.backend"),
     (Join-Path $folder 'backend.tf')
 )
 

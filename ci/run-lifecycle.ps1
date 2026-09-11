@@ -19,7 +19,7 @@ Interactive prompts are suppressed via env vars set before invoking deploy.ps1:
 .PARAMETER Template
 Template short name.
 
-.PARAMETER Env
+.PARAMETER Environment
 Environment folder (typically 'test').
 
 .PARAMETER Variant
@@ -32,7 +32,7 @@ Optional variant token:
 param(
     [Parameter(Mandatory = $true)][ValidateSet('Deploy','Destroy')][string]$Phase,
     [Parameter(Mandatory = $true)][string]$Template,
-    [Parameter(Mandatory = $true)][string]$Env,
+    [Parameter(Mandatory = $true)][string]$Environment,
     [Parameter(Mandatory = $false)][string]$Variant = '',
     [Parameter(Mandatory = $true)][string]$RunId
 )
@@ -44,7 +44,7 @@ $env:TF_BACKEND_TYPE         = 's3'
 $env:TF_INPUT                = 'false'
 
 $notes = "ci-$RunId"
-$commonArgs = @('-Env', $Env, '-Force', '-BackendType', 's3', '-Notes', $notes)
+$commonArgs = @('-Env', $Environment, '-Force', '-BackendType', 's3', '-Notes', $notes)
 
 # EDNS needs -ZoneType regardless of phase.
 if ($Template -eq 'edns') {
