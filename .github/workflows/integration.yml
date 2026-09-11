@@ -116,7 +116,7 @@ jobs:
       - name: Setup Powershell Modules
         shell: pwsh
         run: |
-          Install-Module Akamai.Contracts
+          Install-Module Akamai.Contracts -Force -Scope CurrentUser -SkipPublisherCheck
 
       - name: Look up tfvars secret for this row
         id: secret
