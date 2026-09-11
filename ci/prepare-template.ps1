@@ -20,7 +20,7 @@ Template short name (aap|aapasm|pm|bmp|edns|ds2).
 Environment folder name (typically 'test').
 
 .PARAMETER TfvarsName
-Basename of the .tfvars file to write (e.g. 'test.tfvars', 'primary.tfvars').
+Basename of the .tfvars file to write (e.g. 'test.tfvars', 'test-primary.tfvars').
 
 .PARAMETER SecretName
 Name of the GitHub secret whose contents become the .tfvars body.
