@@ -113,6 +113,11 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Setup Powershell Modules
+        shell: pwsh
+        run: |
+          Install-Module Akamai.Contracts
+
       - name: Look up tfvars secret for this row
         id: secret
         shell: pwsh

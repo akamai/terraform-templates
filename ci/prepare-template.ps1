@@ -104,7 +104,8 @@ $TfvarsContent | Out-File -FilePath $tfvarsPath -Force -Encoding utf8
 Write-Host "Wrote tfvars: $tfvarsPath ($($TfvarsContent.Length) chars)"
 
 # S3 state key: one per template + variant so parallel runs and reruns are isolated.
-$stateKey = "$folder/$Environment-$TfvarsName.tfstate"
+$cleanName = $TfvarsName -replace '\.tfvars$', ''
+$stateKey = "$folder/$Environment-$cleanName.tfstate"
 
 $backendConfigPath = Join-Path $envDir 'config.backend'
 $backendConfig = @"
