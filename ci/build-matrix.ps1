@@ -64,8 +64,8 @@ function Get-RowsForTemplate {
         'edns' {
             # Two rows: primary + secondary. tfvars filename tracks the zone type.
             return @(
-                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName "$Env-primary.tfvars"   -SecretName 'TFVARS_EDNS_PRIMARY'   -Variant 'primary'),
-                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName "$Env-secondary.tfvars" -SecretName 'TFVARS_EDNS_SECONDARY' -Variant 'secondary')
+                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName 'primary.tfvars'   -SecretName 'TFVARS_EDNS_PRIMARY'   -Variant 'primary'),
+                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName 'secondary.tfvars' -SecretName 'TFVARS_EDNS_SECONDARY' -Variant 'secondary')
             )
         }
         'bmp' {
