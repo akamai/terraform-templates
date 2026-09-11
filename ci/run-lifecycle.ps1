@@ -44,14 +44,19 @@ $env:TF_BACKEND_TYPE         = 's3'
 $env:TF_INPUT                = 'false'
 
 $notes = "ci-$RunId"
-$commonArgs = @('-Environment', $Environment, '-Force', '-BackendType', 's3', '-Notes', $notes)
+$commonArgs = @{
+    'Environment' = $Environment; 
+    'Force' = $true; 
+    '-BackendType' = 's3';
+    '-Dry' = $true
+}
 
 # EDNS needs -ZoneType regardless of phase.
 if ($Template -eq 'edns') {
     if ($Variant -notin @('primary','secondary')) {
         throw "EDNS row requires Variant 'primary' or 'secondary' (got '$Variant')."
     }
-    $commonArgs += @('-ZoneType', $Variant)
+    $commonArgs['-ZoneType'] = $Variant
 }
 
 function Invoke-Deploy {
@@ -70,7 +75,15 @@ function Invoke-Deploy {
     if ($Template -eq 'ds2') {
         # DS2 activation is driven by the tfvars 'activate_stream' value. Save-only is enough.
         & ./deploy.ps1 ds2 @commonArgs -Save
+    }
+
+    if ($Template -eq 'edns') {
+        # EDNS activation is driven by the tfvars 'activate_stream' value. Save-only is enough.
+        & ./deploy.ps1 $Template @commonArgs -Save
+
     } else {
+        Write-Host "Invoking deploy for template $Template with common args: $commonArgs"
+        $commonArgs['-Notes'] = $notes
         & ./deploy.ps1 $Template @commonArgs -ActivateStaging
     }
     if ($LASTEXITCODE -ne 0) { throw "$Template deploy failed with exit code $LASTEXITCODE" }
