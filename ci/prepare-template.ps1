@@ -104,7 +104,7 @@ $TfvarsContent | Out-File -FilePath $tfvarsPath -Force -Encoding utf8
 Write-Host "Wrote tfvars: $tfvarsPath ($($TfvarsContent.Length) chars)"
 
 # S3 state key: one per template + variant so parallel runs and reruns are isolated.
-$stateKey = "ps-terraform-templates/$Template/$Environment-$TfvarsName-$RunId.tfstate"
+$stateKey = "$folder/$Environment-$TfvarsName.tfstate"
 
 $backendConfigPath = Join-Path $envDir 'config.backend'
 $backendConfig = @"
@@ -125,3 +125,17 @@ Write-Host "Wrote backend config: $backendConfigPath (key=$stateKey)"
 
 "skip=false"       | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 "tfvarsPath=$tfvarsPath" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+
+
+skip_credentials_validation = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+skip_s3_checksum            = true
+use_lockfile                = true
+bucket                      = "terraform-templates-state"
+key                         = "new-edns/test-primary-terraform.tfstate"
+region                      = "us-mia-1"
+endpoints                   = { s3 = "https://us-mia-1.linodeobjects.com" }
+access_key                  = "V8C3PI1Q422W35OIS8PD"
+secret_key                  = "rUsVbdpoUWmZLfeuJLyl5y0FjEoTTOzWZed9zbzj"
