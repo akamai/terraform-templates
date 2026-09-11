@@ -64,20 +64,20 @@ function Get-RowsForTemplate {
         'edns' {
             # Two rows: primary + secondary. tfvars filename tracks the zone type.
             return @(
-                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName 'primary.tfvars'   -SecretName 'TFVARS_EDNS_PRIMARY'   -Variant 'primary'),
-                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName 'secondary.tfvars' -SecretName 'TFVARS_EDNS_SECONDARY' -Variant 'secondary')
+                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName 'primary-terraform'   -SecretName 'TFVARS_EDNS_PRIMARY'   -Variant 'primary'),
+                (New-MatrixRow -Template 'edns' -Env $Env -TfvarsName 'secondary-terraform' -SecretName 'TFVARS_EDNS_SECONDARY' -Variant 'secondary')
             )
         }
         'bmp' {
             # Single row; run-lifecycle.ps1 executes Phase 1 then Phase 2 sequentially against the same tfvars.
             return @(
-                (New-MatrixRow -Template 'bmp' -Env $Env -TfvarsName "$Env.tfvars" -SecretName 'TFVARS_BMP' -Variant 'two-phase')
+                (New-MatrixRow -Template 'bmp' -Env $Env -TfvarsName "$Env-terraform" -SecretName 'TFVARS_BMP' -Variant 'two-phase')
             )
         }
         default {
             $secret = "TFVARS_$($Template.ToUpper())"
             return @(
-                (New-MatrixRow -Template $Template -Env $Env -TfvarsName "$Env.tfvars" -SecretName $secret)
+                (New-MatrixRow -Template $Template -Env $Env -TfvarsName "$Env-terraform" -SecretName $secret)
             )
         }
     }

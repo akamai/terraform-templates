@@ -50,6 +50,9 @@ $commonArgs = @{
     '-BackendType' = 's3';
 }
 
+# Enable dry-run mode for all deploy and destroy operations for testing purposes
+#$commonArgs['-Dry'] = $true
+
 # EDNS needs -ZoneType regardless of phase.
 if ($Template -eq 'edns') {
     if ($Variant -notin @('primary','secondary')) {
