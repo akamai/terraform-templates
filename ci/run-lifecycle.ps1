@@ -44,7 +44,7 @@ $env:TF_BACKEND_TYPE         = 's3'
 $env:TF_INPUT                = 'false'
 
 $notes = "ci-$RunId"
-$commonArgs = @('-Env', $Environment, '-Force', '-BackendType', 's3', '-Notes', $notes)
+$commonArgs = @('-Environment', $Environment, '-Force', '-BackendType', 's3', '-Notes', $notes)
 
 # EDNS needs -ZoneType regardless of phase.
 if ($Template -eq 'edns') {
