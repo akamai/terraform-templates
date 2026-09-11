@@ -223,6 +223,12 @@ function Confirm-DestroyOperation {
         [string]$ResourceDescription
     )
 
+    # CI escape hatch: set CI_AUTO_CONFIRM_DESTROY=1 to skip the interactive prompt.
+    if ($env:CI_AUTO_CONFIRM_DESTROY -eq '1') {
+        Write-Host "CI_AUTO_CONFIRM_DESTROY=1: auto-confirming destroy of '$ResourceDescription'." -ForegroundColor Yellow
+        return
+    }
+
     Write-Host ""
     Write-Host "WARNING: You are about to DESTROY the following resource!" -ForegroundColor Red
     Write-Host "  $ResourceDescription" -ForegroundColor Yellow

@@ -1,0 +1,244 @@
+name: Template Integration (Full Lifecycle)
+
+# Full save → activate-staging → destroy runs against the Akamai sandbox account,
+# backed by Linode Object Storage for remote Terraform state.
+#
+# Triggers:
+#   • workflow_dispatch — pick templates + env manually.
+#   • pull_request       — auto-detects changed templates, ONLY runs when the PR
+#                          carries the 'run-integration' label. This gate prevents
+#                          every WIP push from firing real Akamai activations.
+#
+# CPS is intentionally excluded — cert issuance / third-party CSR flows are a poor
+# fit for automated lifecycle testing.
+
+on:
+  workflow_dispatch:
+    inputs:
+      templates:
+        description: 'Comma-separated templates to test (aap,aapasm,pm,bmp,edns,ds2). Empty = all.'
+        default: ''
+      env:
+        description: 'Environment folder to use (must exist under environments/<env>/).'
+        type: choice
+        options: [test]
+        default: test
+  pull_request:
+    types: [labeled, synchronize, reopened]
+    paths:
+      - 'new-aap-configuration/**'
+      - 'new-aapasm-configuration/**'
+      - 'new-property/**'
+      - 'new-bmp-endpoints/**'
+      - 'new-edns/**'
+      - 'new-ds2/**'
+      - 'lib/**'
+      - 'deploy.ps1'
+      - 'ci/**'
+      - '.github/workflows/integration.yml'
+
+concurrency:
+  group: akamai-sandbox-integration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  TF_VERSION: '1.12.1'
+
+jobs:
+  detect:
+    name: Detect changed templates
+    # Gate: dispatch always runs; PR only runs when 'run-integration' label is present.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.pull_request.labels.*.name, 'run-integration')
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build.outputs.matrix }}
+      any:    ${{ steps.build.outputs.any }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths (PR only)
+        if: github.event_name == 'pull_request'
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            aap:    ['new-aap-configuration/**']
+            aapasm: ['new-aapasm-configuration/**']
+            pm:     ['new-property/**']
+            bmp:    ['new-bmp-endpoints/**']
+            edns:   ['new-edns/**']
+            ds2:    ['new-ds2/**']
+            shared: ['lib/**', 'deploy.ps1', 'ci/**', '.github/workflows/integration.yml']
+
+      - name: Build matrix
+        id: build
+        shell: pwsh
+        run: ./ci/build-matrix.ps1
+        env:
+          EVENT:          ${{ github.event_name }}
+          INPUT_LIST:     ${{ inputs.templates }}
+          INPUT_ENV:      ${{ inputs.env }}
+          CHANGE_AAP:     ${{ steps.changes.outputs.aap }}
+          CHANGE_AAPASM:  ${{ steps.changes.outputs.aapasm }}
+          CHANGE_PM:      ${{ steps.changes.outputs.pm }}
+          CHANGE_BMP:     ${{ steps.changes.outputs.bmp }}
+          CHANGE_EDNS:    ${{ steps.changes.outputs.edns }}
+          CHANGE_DS2:     ${{ steps.changes.outputs.ds2 }}
+          CHANGE_SHARED:  ${{ steps.changes.outputs.shared }}
+
+  test:
+    name: ${{ matrix.template }} ${{ matrix.variant && format('({0})', matrix.variant) || '' }}
+    needs: detect
+    if: needs.detect.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.detect.outputs.matrix) }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Setup Powershell Modules
+        shell: pwsh
+        run: |
+          Install-Module Akamai.Contracts -Force -Scope CurrentUser -SkipPublisherCheck
+
+      - name: Look up tfvars secret for this row
+        id: secret
+        shell: pwsh
+        # Secret values cannot be dynamically referenced in `env:` blocks, so we
+        # resolve the right one via a switch and expose it to later steps.
+        run: |
+          $map = @{
+            'TFVARS_AAP'            = $env:TFVARS_AAP
+            'TFVARS_AAPASM'         = $env:TFVARS_AAPASM
+            'TFVARS_PM'             = $env:TFVARS_PM
+            'TFVARS_BMP'            = $env:TFVARS_BMP
+            'TFVARS_EDNS_PRIMARY'   = $env:TFVARS_EDNS_PRIMARY
+            'TFVARS_EDNS_SECONDARY' = $env:TFVARS_EDNS_SECONDARY
+            'TFVARS_DS2'            = $env:TFVARS_DS2
+          }
+          $val = $map['${{ matrix.secretName }}']
+          if (-not $val) { throw "Secret '${{ matrix.secretName }}' is not set." }
+          # Pass through via env file to avoid printing to the log.
+          "TFVARS_CONTENT<<__EOF__" | Out-File $env:GITHUB_ENV -Append
+          $val                       | Out-File $env:GITHUB_ENV -Append
+          "__EOF__"                  | Out-File $env:GITHUB_ENV -Append
+        env:
+          TFVARS_AAP:            ${{ secrets.TFVARS_AAP }}
+          TFVARS_AAPASM:         ${{ secrets.TFVARS_AAPASM }}
+          TFVARS_PM:             ${{ secrets.TFVARS_PM }}
+          TFVARS_BMP:            ${{ secrets.TFVARS_BMP }}
+          TFVARS_EDNS_PRIMARY:   ${{ secrets.TFVARS_EDNS_PRIMARY }}
+          TFVARS_EDNS_SECONDARY: ${{ secrets.TFVARS_EDNS_SECONDARY }}
+          TFVARS_DS2:            ${{ secrets.TFVARS_DS2 }}
+
+      - name: Prepare template
+        id: prep
+        shell: pwsh
+        run: |
+          ./ci/prepare-template.ps1 `
+            -Template   '${{ matrix.template }}' `
+            -Environment        '${{ matrix.env }}' `
+            -TfvarsName '${{ matrix.tfvarsName }}' `
+            -SecretName '${{ matrix.secretName }}' `
+            -TfvarsContent $env:TFVARS_CONTENT `
+            -EdgercContent $env:EDGERC_CONTENT `
+            -LinodeBucket    '${{ secrets.LINODE_OBJECT_STORAGE_BUCKET }}' `
+            -LinodeAccessKey '${{ secrets.LINODE_OBJECT_STORAGE_ACCESS_KEY }}' `
+            -LinodeSecretKey '${{ secrets.LINODE_OBJECT_STORAGE_SECRET_KEY }}' `
+            -RunId '${{ github.run_id }}'
+        env:
+          EDGERC_CONTENT: ${{ secrets.AKAMAI_EDGERC }}
+
+      - name: Deploy
+        id: deploy
+        if: steps.prep.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          ./ci/run-lifecycle.ps1 `
+            -Phase    Deploy `
+            -Template '${{ matrix.template }}' `
+            -Environment      '${{ matrix.env }}' `
+            -Variant  '${{ matrix.variant }}' `
+            -RunId    '${{ github.run_id }}'
+
+      - name: Destroy (always)
+        id: destroy
+        if: always() && steps.prep.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          ./ci/run-lifecycle.ps1 `
+            -Phase    Destroy `
+            -Template '${{ matrix.template }}' `
+            -Environment      '${{ matrix.env }}' `
+            -Variant  '${{ matrix.variant }}' `
+            -RunId    '${{ github.run_id }}'
+
+      - name: Cleanup rendered files
+        if: always()
+        shell: pwsh
+        run: |
+          ./ci/cleanup-template.ps1 `
+            -Template   '${{ matrix.template }}' `
+            -Environment        '${{ matrix.env }}' `
+            -TfvarsName '${{ matrix.tfvarsName }}'
+
+      - name: Row summary
+        if: always()
+        shell: pwsh
+        run: |
+          $label = '${{ matrix.template }}' + $(if ('${{ matrix.variant }}') { ' (${{ matrix.variant }})' } else { '' })
+          if ('${{ steps.prep.outputs.skip }}' -eq 'true') {
+            $status = '⚠️ skipped: no test env'
+          } elseif ('${{ steps.deploy.outcome }}' -ne 'success') {
+            $status = '❌ deploy failed'
+          } elseif ('${{ steps.destroy.outcome }}' -ne 'success') {
+            $status = '⚠️ deploy ok / destroy failed'
+          } else {
+            $status = '✅ pass'
+          }
+          $row = "| $label | ${{ matrix.env }} | $status |"
+          if (-not (Test-Path $env:GITHUB_STEP_SUMMARY)) { New-Item -Path $env:GITHUB_STEP_SUMMARY -ItemType File | Out-Null }
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "| Template | Env | Result |"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value "|---|---|---|"
+          Add-Content -Path $env:GITHUB_STEP_SUMMARY -Value $row
+
+  report:
+    name: Report
+    needs: test
+    if: always() && needs.detect.outputs.any == 'true' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const result = '${{ needs.test.result }}';
+            const emoji  = result === 'success' ? '✅' : (result === 'skipped' ? '⚠️' : '❌');
+            const body = [
+              `${emoji} **Integration test result:** \`${result}\``,
+              '',
+              `See the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}) for the per-template summary.`
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
