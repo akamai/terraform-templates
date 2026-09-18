@@ -320,6 +320,40 @@ enable_rate      = true
 Further environments can be created by replicating and adjusting each `environments/{env}/{env}.tfvars`.  
 Refer to each template's `README.md` for detailed configuration options.
 
+### Remote Backend (optional)
+
+By default `deploy.ps1` uses Terraform's **local** backend and stores state under `<template>/environments/<env>/{env}-terraform.tfstate`. To use any remote backend (S3, GCS, Azure Blob, Linode Object Storage, etc.) pass `-BackendType <type>` on the deploy command.
+
+**Rules for non-local backends:**
+
+- You must create `config.backend` in the target env folder **before** invoking `deploy.ps1`. The path is `./<template>/environments/<env>/config.backend` (or `./<template>/config.backend` for root-scoped templates like CPS/DOM).
+- The file uses Terraform's `-backend-config=<file>` HCL fragment format (`key = "value"` per line, `#` comments allowed).
+- `deploy.ps1` will validate the file exists and does not contain only a local `path=` entry. It never overwrites the file for remote backends.
+- `backend.tf` at the template root is regenerated on every run with the declared backend type; it is gitignored.
+
+Example — Linode Object Storage:
+
+```hcl
+# ./new-aap-configuration/environments/prod/config.backend
+skip_credentials_validation = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+skip_s3_checksum            = true
+use_lockfile                = true
+bucket    = "my-tf-state-bucket"
+key       = "ps-terraform-templates/aap/prod.tfstate"
+region    = "us-mia-1"
+endpoints = { s3 = "https://us-mia-1.linodeobjects.com" }
+access_key = "…"
+secret_key = "…"
+```
+
+```powershell
+.\deploy.ps1 aap -Env prod -Save -BackendType s3 -Notes "..."
+```
+
+Locking: for S3-compatible backends without DynamoDB, set `use_lockfile = true` in the backend config (Terraform ≥ 1.10 native S3 locking).
+
 ### Examples
 
 ```powershell

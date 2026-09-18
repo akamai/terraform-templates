@@ -225,7 +225,8 @@ function Get-PropertyManagerParamPolicy {
         RequiredHints = @{ Environment = "Use: -Env <environment>" }
         Allowed       = @(
             "Environment", "Save", "ActivateStaging", "ActivateProduction",
-            "Destroy", "VersionNotes", "SkipValidation", "Dry"
+            "Destroy", "VersionNotes", "SkipValidation", "Dry",
+            "BackendType"
         )
         MustHaveOneOf = @("Save", "ActivateStaging", "ActivateProduction", "Destroy")
     }

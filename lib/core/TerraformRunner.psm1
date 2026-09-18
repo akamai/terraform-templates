@@ -6,6 +6,34 @@ Core Terraform execution functions
 Provides shared functions for running Terraform commands across all templates
 #>
 
+# Meaningful (non-comment, non-blank) lines in a Terraform -backend-config file.
+function Get-BackendConfigMeaningfulLines {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][string]$Path)
+
+    if (-not (Test-Path $Path)) { return @() }
+    $result = @()
+    foreach ($line in (Get-Content -Path $Path)) {
+        $trimmed = $line.Trim()
+        if ($trimmed -eq '') { continue }
+        if ($trimmed.StartsWith('#') -or $trimmed.StartsWith('//')) { continue }
+        $result += $trimmed
+    }
+    return $result
+}
+
+# True when the only key present is `path` (i.e. a local backend config).
+function Test-BackendConfigIsLocalOnly {
+    [CmdletBinding()]
+    param([Parameter(Mandatory = $true)][AllowEmptyCollection()][string[]]$Lines)
+
+    if ($Lines.Count -eq 0) { return $true }
+    foreach ($line in $Lines) {
+        if ($line -notmatch '^\s*path\s*=') { return $false }
+    }
+    return $true
+}
+
 function Initialize-TerraformBackend {
     [CmdletBinding()]
     param(
@@ -28,7 +56,14 @@ function Initialize-TerraformBackend {
         [hashtable]$Variables = @{},
 
         [Parameter(Mandatory = $false)]
-        [bool]$Force = $false
+        [bool]$Force = $false,
+
+        # Backend type. Defaults to $env:TF_BACKEND_TYPE (set by deploy.ps1) or 'local'.
+        # For non-local backends the user must supply the config.backend file at the
+        # env-scoped path before invoking deploy.ps1.
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('local','s3','gcs','azurerm','remote','http','consul','pg','kubernetes','oss','cos')]
+        [string]$BackendType = $(if ($env:TF_BACKEND_TYPE) { $env:TF_BACKEND_TYPE } else { 'local' })
     )
     
     # Normalize ConfigPath: '.' or empty produces path="terraform.tfstate" (no './././' which confuses terraform's local backend into wiping state).
@@ -38,14 +73,45 @@ function Initialize-TerraformBackend {
     } else {
         "./$ConfigPath/$StateFileName"
     }
-    $backendConfig = "path=`"$stateRelPath`""
     $backendConfigPath = "./$TemplateFolder/$ConfigPath/config.backend"
     $stateFilePath = "./$TemplateFolder/$ConfigPath/$StateFileName"
+    $backendTfPath = "./$TemplateFolder/backend.tf"
     $stateFileExistedBeforeInit = Test-Path $stateFilePath
-    
-    $backendConfig | Out-File -FilePath $backendConfigPath -Force
-    
-    Write-Host "Initializing Terraform..." -ForegroundColor Cyan
+
+    # Ensure the env-scoped folder exists before writing config.backend.
+    $backendConfigDir = Split-Path -Parent $backendConfigPath
+    if ($backendConfigDir -and -not (Test-Path $backendConfigDir)) {
+        New-Item -ItemType Directory -Path $backendConfigDir -Force | Out-Null
+    }
+
+    # Validate and (only for local) auto-generate config.backend.
+    $existingLines = Get-BackendConfigMeaningfulLines -Path $backendConfigPath
+    if ($BackendType -eq 'local') {
+        if ($existingLines.Count -eq 0 -or (Test-BackendConfigIsLocalOnly -Lines $existingLines)) {
+            "path=`"$stateRelPath`"" | Out-File -FilePath $backendConfigPath -Force
+        }
+        else {
+            throw "config.backend at '$backendConfigPath' contains non-local backend configuration but -BackendType is 'local'. Delete the file to regenerate it, or pass -BackendType matching your backend."
+        }
+    }
+    else {
+        if ($existingLines.Count -eq 0) {
+            throw "-BackendType '$BackendType' requires config.backend to exist at '$backendConfigPath'. Create it with your $BackendType backend configuration before running deploy.ps1."
+        }
+        if (Test-BackendConfigIsLocalOnly -Lines $existingLines) {
+            throw "config.backend at '$backendConfigPath' contains only a local 'path=' entry but -BackendType is '$BackendType'. Populate the file with valid $BackendType backend configuration."
+        }
+    }
+
+    # Write backend.tf declaring the backend type; overwritten on every run.
+    $backendTfContent = @"
+terraform {
+  backend "$BackendType" {}
+}
+"@
+    $backendTfContent | Out-File -FilePath $backendTfPath -Force
+
+    Write-Host "Initializing Terraform (backend: $BackendType)..." -ForegroundColor Cyan
     terraform -chdir="./$TemplateFolder" init -upgrade `
         -backend-config "./$ConfigPath/config.backend" `
         -reconfigure | Out-Default
@@ -260,4 +326,4 @@ function Invoke-TerraformDriftCheck {
     }
 }
 
-Export-ModuleMember -Function Initialize-TerraformBackend, Invoke-TerraformPlan, Invoke-TerraformApply, Invoke-TerraformDestroy, Test-TerraformResourceExists, Get-TerraformOutput, Invoke-TerraformDriftCheck
+Export-ModuleMember -Function Initialize-TerraformBackend, Invoke-TerraformPlan, Invoke-TerraformApply, Invoke-TerraformDestroy, Test-TerraformResourceExists, Get-TerraformOutput, Invoke-TerraformDriftCheck, Get-BackendConfigMeaningfulLines, Test-BackendConfigIsLocalOnly
