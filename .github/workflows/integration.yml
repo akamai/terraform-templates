@@ -247,7 +247,7 @@ jobs:
 
   report:
     name: Report
-    needs: test
+    needs: [detect, test]
     if: |
       always() && 
       needs.detect.outputs.any == 'true' && 
