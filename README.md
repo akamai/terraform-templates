@@ -326,7 +326,7 @@ By default `deploy.ps1` uses Terraform's **local** backend and stores state unde
 
 **Rules for non-local backends:**
 
-- You must create `config.backend` in the target env folder **before** invoking `deploy.ps1`. The path is `./<template>/environments/<env>/config.backend` (or `./<template>/config.backend` for root-scoped templates like CPS/DOM).
+- You must create `config.backend` at the template's runtime configuration path **before** invoking `deploy.ps1`: `./<template>/environments/<env>/config.backend` for environment-scoped templates, `./new-dom/config.backend` for DOM, or `./new-{dv-san|third-party}-cert/certificates/<cert>/config.backend` for CPS.
 - The file uses Terraform's `-backend-config=<file>` HCL fragment format (`key = "value"` per line, `#` comments allowed).
 - `deploy.ps1` will validate the file exists and does not contain only a local `path=` entry. It never overwrites the file for remote backends.
 - `backend.tf` at the template root is regenerated on every run with the declared backend type; it is gitignored.
