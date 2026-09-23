@@ -83,10 +83,11 @@ prompts for confirmation. Pass -Force to bypass this prompt and continue automat
 Selects the Terraform backend to use. Defaults to 'local'.
 Supported values: local, s3, gcs, azurerm, remote, http, consul, pg, kubernetes, oss, cos.
 
-For any non-local backend the user must create a properly-formed config.backend file
-inside the target env folder (e.g. ./new-aap-configuration/environments/dev/config.backend)
-BEFORE invoking deploy.ps1. deploy.ps1 will validate the file and never overwrite it for
-non-local backends. For -BackendType local, config.backend is auto-generated as it always was.
+For any non-local backend the user must create a properly formed config.backend file
+at the template's runtime configuration path BEFORE invoking deploy.ps1. Environment-scoped
+templates use ./<template>/environments/<env>/config.backend; DOM uses the template root;
+CPS uses ./new-*-cert/certificates/<cert>/config.backend. deploy.ps1 validates this file
+and never overwrites it for non-local backends. For local, it is generated automatically.
 
 The value is exported as $env:TF_BACKEND_TYPE for the current process so shared modules
 (and CI scripts) can pick it up without threading it through every function.
