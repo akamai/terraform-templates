@@ -737,6 +737,7 @@ terraform plan -var-file="./environments/dev/dev.tfvars"
 
 - For `local` (default): `config.backend` is auto-generated per env, unchanged from previous behavior.
 - For any other value: the user MUST create `config.backend` in the env folder before running deploy.ps1. The file uses Terraform's `-backend-config=<file>` format. deploy.ps1 validates the file and never overwrites it.
+   - Use `config.backend` at the template root for DOM, and `certificates/<cert>/config.backend` for CPS.
 - `backend.tf` at the template root is regenerated on every run to declare the selected backend type. It is gitignored — never commit it.
 - Template `versions.tf`/`provider.tf` files must **not** declare their own `backend "…" {}` block. `deploy.ps1` owns backend selection.
 
