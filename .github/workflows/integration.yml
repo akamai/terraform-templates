@@ -181,7 +181,8 @@ jobs:
       - name: Deploy
         id: deploy
         if: |
-          steps.prep.outputs.skip != 'true'
+          steps.prep.outputs.skip != 'true' &&
+          (github.event_name == 'pull_request' || inputs.action == 'Deploy' || inputs.action == 'Deploy&Destroy')
         shell: pwsh
         run: |
           ./ci/run-lifecycle.ps1 `
