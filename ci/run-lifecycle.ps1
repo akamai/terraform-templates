@@ -81,7 +81,7 @@ function Invoke-Deploy {
         & ./deploy.ps1 ds2 @commonArgs -Save
     }
 
-    if ($Template -eq 'edns') {
+    elseif ($Template -eq 'edns') {
         # EDNS activation is driven by the tfvars 'activate_stream' value. Save-only is enough.
         & ./deploy.ps1 $Template @commonArgs -Save
 
