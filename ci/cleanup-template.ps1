@@ -60,8 +60,6 @@ function Remove-RemoteStateFromBackend {
     $secretKey = [regex]::Match($content, '(?m)^\s*secret_key\s*=\s*"([^\"]+)"').Groups[1].Value.Trim()
     $endpointUrl = [regex]::Match($content, '(?m)s3\s*=\s*"([^\"]+)"').Groups[1].Value.Trim()
 
-    Write-Host "$bucket/$key (region: $region, endpoint: $endpointUrl)"
-
     try {
         Import-Module 'AWS.Tools.S3' -ErrorAction Stop
 
