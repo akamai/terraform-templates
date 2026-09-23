@@ -135,8 +135,8 @@ class DS2Template {
   [void] Destroy([bool]$debug) {
     Write-Host "Destroying DataStream 2 configuration for environment: $($this.Environment)" -ForegroundColor Red
 
-    $this.ValidatePrerequisites()
     Confirm-DestroyOperation -ResourceDescription "DataStream 2 configuration for environment: $($this.Environment)"
+    $this.ValidatePrerequisites()
 
     $configPath = "environments/$($this.Environment)"
     $stateFileName = "$($this.Environment)-terraform.tfstate"
@@ -190,7 +190,7 @@ function Get-DS2ParamPolicy {
   return @{
     Required      = @("Environment")
     RequiredHints = @{ Environment = "Use: -Env <environment>" }
-    Allowed       = @("Environment", "Save", "ActivateProduction", "Destroy", "VersionNotes", "Dry")
+    Allowed       = @("Environment", "Save", "ActivateProduction", "Destroy", "VersionNotes", "Dry", "BackendType")
     MustHaveOneOf = @("Save", "ActivateProduction", "Destroy")
   }
 }

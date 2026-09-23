@@ -164,8 +164,11 @@ class AAPASMTemplate {
         $success = $false
         
         while (-not $success -and $retryCount -lt $maxRetries) {
-            $autoApprove = $retryCount -gt 0
-            $exitCode = Invoke-TerraformDestroy -TemplateFolder $this.TemplateFolder -VarFilePath $varFile -AutoApprove:$autoApprove
+            $exitCode = Invoke-TerraformDestroy `
+                -TemplateFolder $this.TemplateFolder `
+                -VarFilePath $varFile `
+                -AutoApprove `
+                -NoRefresh
             
             if ($exitCode -eq 0) {
                 $success = $true
@@ -206,7 +209,8 @@ function Get-AAPASMParamPolicy {
         RequiredHints = @{ Environment = "Use: -Env <environment>" }
         Allowed       = @(
             "Environment", "Save", "ActivateStaging", "ActivateProduction",
-            "Destroy", "VersionNotes", "SkipValidation", "Dry"
+            "Destroy", "VersionNotes", "SkipValidation", "Dry",
+            "BackendType"
         )
         MustHaveOneOf = @("Save", "ActivateStaging", "ActivateProduction", "Destroy")
     }

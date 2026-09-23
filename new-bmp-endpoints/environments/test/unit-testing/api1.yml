@@ -1,0 +1,32 @@
+openapi: 3.0.1
+
+info:
+  title: test-api-def-tf-templates                       # Your API's display name
+
+servers:
+- url: api.jaescalo.online/v1                   # Your API hostname + base path
+
+x-akamai-api-definitions:
+  contractId: 1-ABC123                       # Your Akamai contract ID (without ctr_ prefix)
+  groupId: 12345                             # Your Akamai group ID (without grp_ prefix)
+  matchCaseSensitive: false
+  constraints:                               # Required for AAP+ASM; remove if not needed
+    enforceOn:
+      request: true
+
+paths:
+  /login:                                    # Your API resource path
+    x-akamai-api-definitions-resource:
+      name: "login"                          # Resource name
+    post:                                    # HTTP method (get | post | put | delete | patch)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string

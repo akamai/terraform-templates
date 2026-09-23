@@ -6,5 +6,4 @@ terraform {
       version = ">= 9.2.0"
     }
   }
-  backend "local" {}
 }
