@@ -195,8 +195,10 @@ jobs:
       - name: Destroy (always)
         id: destroy
         if: |
-          always() && 
-          steps.prep.outputs.skip != 'true'
+          always() &&
+          steps.prep.outcome == 'success' &&
+          steps.prep.outputs.skip != 'true' &&
+          (github.event_name == 'pull_request' || inputs.action == 'Destroy' || inputs.action == 'Deploy&Destroy')
         shell: pwsh
         run: |
           ./ci/run-lifecycle.ps1 `
