@@ -250,7 +250,7 @@ function Get-EDNSParamPolicy {
             Environment = "Use: -Env <environment>"
             ZoneType    = "Use: -ZoneType primary|secondary"
         }
-        Allowed       = @("Environment", "ZoneType", "Save", "Destroy", "Dry")
+        Allowed       = @("Environment", "ZoneType", "Save", "Destroy", "Dry", "BackendType")
     }
 }
 

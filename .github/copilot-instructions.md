@@ -64,12 +64,13 @@ PS> .\deploy.ps1 pm -Env dev -Destroy
 
 The `deploy.ps1` script provides critical orchestration that cannot be achieved with plain Terraform:
 
-1. **State File Isolation**: Dynamically generates `config.backend` pointing to environment-specific state files (e.g., `dev-terraform.tfstate`) to prevent state file conflicts
+1. **State File Isolation**: Dynamically generates `config.backend` pointing to environment-specific state files (e.g., `dev-terraform.tfstate`) to prevent state file conflicts (local backend only; for remote backends the user maintains `config.backend`)
 2. **Drift Detection**: Runs `terraform plan -refresh-only` after init to detect out-of-band changes; prompts the user to confirm before continuing (bypass with `-Force`)
 3. **Activation Control**: Manages separate staging/production activation resources via runtime variables (`activate_to_staging`, `activation_to_staging_exists`)
 4. **AAP-Specific Workaround**: Auto-imports default Rate Control Policies on first run (AAP creates them automatically, causing Terraform conflicts)
 5. **Retry Logic**: Automatically retries failed applies with import operations for known AAP issues
 6. **Backend Reconfiguration**: Automatically runs `terraform init -reconfigure` with environment-specific backend config
+7. **Backend Selection**: The `-BackendType` parameter (default `local`) selects the Terraform backend at runtime. `deploy.ps1` writes `backend.tf` (gitignored) declaring the chosen backend and, for `local`, auto-generates `config.backend`. For remote backends the user must supply `config.backend` per env before running. Template `versions.tf`/`provider.tf` files must NOT declare their own `backend "…" {}` block.
 
 ### Template Types
 

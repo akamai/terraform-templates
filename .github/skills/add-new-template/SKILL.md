@@ -74,7 +74,9 @@ new-{name}/
 
 **Key rules:**
 - **Do not create `.tfvars` files** at scaffold time — those contain customer-specific values and are added later.
-- `config.backend` is **auto-generated** by `deploy.ps1` on every run — do not create it manually.
+- `config.backend` is **auto-generated** by `deploy.ps1` on every run for `-BackendType local` (default). For non-local backends the user supplies it per env.
+- `backend.tf` is **auto-generated** by `deploy.ps1` on every run and is gitignored — do not commit it or hand-edit.
+- The template's `versions.tf` must **not** declare a `backend "…" {}` block. `deploy.ps1` owns backend selection at runtime.
 - State files (`{env}-terraform.tfstate`) are local and environment-scoped — never at the template root.
 - `versions.tf` must pin the Akamai provider to `~> 9.0` and require Terraform `>= 1.9.0`.
 - The `.tfvars.dist` filename prefix **must** match the environment name (e.g. `prod.tfvars.dist` for `-Env prod`).

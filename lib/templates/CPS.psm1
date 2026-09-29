@@ -170,7 +170,7 @@ function Get-CPSParamPolicy {
     Note: CpsType presence is pre-validated in deploy.ps1 before this policy runs.
     #>
     return @{
-        Allowed       = @("CpsType", "CreateCert", "UploadCert", "DestroyCert", "Dry")
+        Allowed       = @("CpsType", "CreateCert", "UploadCert", "DestroyCert", "Dry", "BackendType")
         MustHaveOneOf = @("CreateCert", "UploadCert", "DestroyCert")
     }
 }
