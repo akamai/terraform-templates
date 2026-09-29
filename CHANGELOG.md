@@ -1,3 +1,30 @@
+# [2.3.0](https://github.com/akamai/terraform-templates/compare/v2.2.0...v2.3.0) (2026-09-29)
+
+
+### Features
+
+* Adding tests for AAP ([d48ff2d](https://github.com/akamai/terraform-templates/commit/d48ff2d4429e2bb7f01e8e88b92bc90c80c7db1a))
+* Adding tests for AAPASM ([28d39b9](https://github.com/akamai/terraform-templates/commit/28d39b94e0c39edce26d2d4e7806333b7de136b2))
+* auto-approve tf destroy for AAP AAPAS PM ([cc61acb](https://github.com/akamai/terraform-templates/commit/cc61acb166c779c8a319093f9c2bfd1d1cbf3d2a))
+* Automated tests. Initial test for EDNS ([412e507](https://github.com/akamai/terraform-templates/commit/412e5071072c2fd6f36a2bc9c6c8b79e034e0b43))
+* delete AAP remote tfstate because destroy is not possible ([ca538d0](https://github.com/akamai/terraform-templates/commit/ca538d02cb14b789f4c665c120e8e50bcc948f61))
+* fix for tfvars name for edns template ([8753bcd](https://github.com/akamai/terraform-templates/commit/8753bcd83e7178dbcf34b459cb0eb5333d160654))
+* force Powershell modules installation ([d0da8d7](https://github.com/akamai/terraform-templates/commit/d0da8d77e91b8160bc6d4dfd345e704310f5f1dc))
+* install Powershell Akamai.Contracts ([2918d7f](https://github.com/akamai/terraform-templates/commit/2918d7fa501c5105493eb3306ab60f3d01eb6b92))
+* remove -Dry from deploy/destroy ([71e29b3](https://github.com/akamai/terraform-templates/commit/71e29b3afaa7c906f40a27587867e7e188a8813e))
+* rename of remote tf state file ([994eefe](https://github.com/akamai/terraform-templates/commit/994eefe863800fa6bc1fcea43cc34b75fb2a42a2))
+* rename of remote tf state file -- fix ([3df1b4a](https://github.com/akamai/terraform-templates/commit/3df1b4a6725769379c1cfbad6cb68908f36f15f3))
+* support test for PM template ([1eee687](https://github.com/akamai/terraform-templates/commit/1eee687a33d116bc3ced16785715aca010dab948))
+* support test for PM template again ([fa328fc](https://github.com/akamai/terraform-templates/commit/fa328fc4f6051eee47fb7af07048413efaa8dab7))
+* testing for bmp phase 1 template ([0f19025](https://github.com/akamai/terraform-templates/commit/0f190254ea0066845f78574110baffac492e7a57))
+* testing for bmp phase 1 template - uploading api defs ([7db34a8](https://github.com/akamai/terraform-templates/commit/7db34a836f33ce84478d1a19b8bc7aa4d89d2dc9))
+* testing for ds2 template ([6bf163c](https://github.com/akamai/terraform-templates/commit/6bf163c3dd42d0906cf9678fa785a7115b1512d9))
+* Use of -Environment instead of alias -Env ([f209005](https://github.com/akamai/terraform-templates/commit/f209005935338696cd534a330791c80f6d06a803))
+* Use of -Environment instead of alias -Env again ([2751237](https://github.com/akamai/terraform-templates/commit/2751237d094fad507cec4540543fd92821ae7aa1))
+* use of powershell hashtables for CLI arguments ([4a91a89](https://github.com/akamai/terraform-templates/commit/4a91a895f72e360e290a05d34cd25c7d8be97a40))
+
+
+
 # [2.2.0](https://github.com/akamai/terraform-templates/compare/v2.1.0...v2.2.0) (2026-09-17)
 
 
