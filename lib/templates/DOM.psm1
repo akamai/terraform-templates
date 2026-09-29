@@ -146,7 +146,7 @@ function New-DOMTemplate {
 
 function Get-DOMParamPolicy {
     return @{
-        Allowed       = @("Run", "Dry", "Destroy")
+        Allowed       = @("Run", "Dry", "Destroy", "BackendType")
         MustHaveOneOf = @("Run", "Destroy")
     }
 }
