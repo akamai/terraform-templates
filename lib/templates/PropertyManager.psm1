@@ -79,7 +79,7 @@ function Test-DomainOwnership {
     }
 
     if (-not (Get-Command -Name Get-PropertyDomainOwnershipChallenge -ErrorAction SilentlyContinue)) {
-        throw "Get-PropertyDomainOwnershipChallenge cmdlet not found. Install the Akamai.Property PowerShell module (Install-Module Akamai.Property)."
+        throw "Get-PropertyDomainOwnershipChallenge cmdlet not found. Install Akamai.Property >= 3.0.0 (Install-Module Akamai.Property -MinimumVersion 3.0.0)."
     }
 
     Write-Host "Checking DOM status for $($hostnames.Count) hostname(s): $($hostnames -join ', ')" -ForegroundColor Gray

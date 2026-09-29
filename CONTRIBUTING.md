@@ -51,7 +51,7 @@ When contributing to this repository, please first discuss the change you wish t
 **Required:**
 * [Terraform >= 1.9.0](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform)
 * [PowerShell 7+](https://github.com/PowerShell/PowerShell) (not Windows PowerShell 5.1)
-* [Akamai PowerShell v2+](https://techdocs.akamai.com/powershell/docs/overview) - For testing with `deploy.ps1`
+* [Akamai PowerShell >= 3.0.0](https://techdocs.akamai.com/powershell/docs/overview) - For testing with `deploy.ps1` (the `new-property` DOM validation check requires `Get-PropertyDomainOwnershipChallenge`, added in `Akamai.Property` 3.0.0)
 * [`pre-commit`](https://pre-commit.com/) - Pre-commit hook framework
 * [`terraform-docs`](https://terraform-docs.io/) - Auto-generates module documentation
 * [`tflint`](https://github.com/terraform-linters/tflint) - Terraform linting
