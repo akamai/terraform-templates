@@ -63,7 +63,7 @@
  * - TrafficPeak / Hydrolix (`trafficpeak_connector`)
  */
 module "ds2" {
-  source = "git::https://github.com/akamai/terraform-templates-modules.git//ds2?ref=v1.5.0"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//ds2?ref=v2.0.4"
 
   # Scope
   name         = var.name
@@ -82,6 +82,7 @@ module "ds2" {
   interval_in_secs    = var.interval_in_secs
   upload_file_prefix  = var.upload_file_prefix
   upload_file_suffix  = var.upload_file_suffix
+  app_sec_configs     = var.app_sec_configs
 
   # Connectors (configure exactly one)
   s3_connector            = var.s3_connector
