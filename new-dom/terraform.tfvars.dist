@@ -1,0 +1,53 @@
+## ------------------------------------------------------------------------------------
+## EdgeGrid
+## ------------------------------------------------------------------------------------
+
+edgerc_path    = "~/.edgerc"
+edgerc_section = "default"
+
+## ------------------------------------------------------------------------------------
+## domain entries
+## ------------------------------------------------------------------------------------
+
+domain_validation_entries = [
+  {
+    domain_name       = "host.domtest.com"
+    validation_scope  = "HOST" 
+    validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
+  },
+  {
+    domain_name       = "tflab.com"
+    validation_scope  = "DOMAIN"
+    validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
+  },
+  {
+    domain_name       = "tfdom.com" # '*.' prefix is optional; UI takes the base only
+    validation_scope  = "WILDCARD"
+    validation_method = "DNS_TXT"  # Optional: Defaults to "DNS_TXT" if not specified
+  }
+  
+]
+
+## ------------------------------------------------------------------------------------------------------------
+## Enable validation
+## ------------------------------------------------------------------------------------------------------------
+
+enable_validation = false  # Set to true after DNS challenges are published to trigger immediate validation
+
+## ------------------------------------------------------------------------------------------------------------
+## Domain search 
+## ------------------------------------------------------------------------------------------------------------
+
+/*
+
+Ex: # Specify domains you want to search or leave blank []
+
+domain_search_entries = [
+  {
+    domain_name      = "test.example.com"
+    validation_scope = "HOST"
+  }
+]
+*/
+
+domain_search_entries = []

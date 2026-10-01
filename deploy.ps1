@@ -9,7 +9,7 @@ or activate to both networks simultaneously. Also supports certificate managemen
 This script uses a modular architecture with template handlers in lib/templates/ and shared functionality in lib/core/.
 
 .PARAMETER TemplateType
-Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2
+Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2 ,dom
 
 .PARAMETER CpsType
 Specifies the CPS certificate type when TemplateType is 'cps'. Available values: dv-san-cert, third-party-cert
@@ -79,6 +79,19 @@ Skips product ID validation. Use this if product IDs have changed or for testing
 Skips the drift-detection prompt. When drift is detected before applying changes, the script normally
 prompts for confirmation. Pass -Force to bypass this prompt and continue automatically.
 
+.PARAMETER BackendType
+Selects the Terraform backend to use. Defaults to 'local'.
+Supported values: local, s3, gcs, azurerm, remote, http, consul, pg, kubernetes, oss, cos.
+
+For any non-local backend the user must create a properly formed config.backend file
+at the template's runtime configuration path BEFORE invoking deploy.ps1. Environment-scoped
+templates use ./<template>/environments/<env>/config.backend; DOM uses the template root;
+CPS uses ./new-*-cert/certificates/<cert>/config.backend. deploy.ps1 validates this file
+and never overwrites it for non-local backends. For local, it is generated automatically.
+
+The value is exported as $env:TF_BACKEND_TYPE for the current process so shared modules
+(and CI scripts) can pick it up without threading it through every function.
+
 .PARAMETER Help
 Displays detailed help information about the script.
 
@@ -93,6 +106,14 @@ Create/Save AAP configuration for prod environment without activations
 .EXAMPLE
 PS> .\deploy.ps1 aapasm -Env dev -ActivateStaging -Debug
 Create and Activate to staging network an AAP+ASM configuration for the dev environment with debug logging
+
+.EXAMPLE
+PS> .\deploy.ps1 pm -Env prod -Save -Notes "Some user notes"
+Create/Save delivery configurations for prod environment without activations
+
+.EXAMPLE
+PS> .\deploy.ps1 pm -Env dev -ActivateStaging -Debug
+Create and Activate to staging network a delivery configuration for the dev environment with debug logging
 
 .EXAMPLE
 PS> .\deploy.ps1 pm -Env qa -ActivateProduction -Notes "Some user notes"
@@ -166,6 +187,26 @@ Deploy and activate the DataStream 2 stream in the prod environment
 PS> .\deploy.ps1 ds2 -Env dev -Destroy
 Tear down the DataStream 2 configuration for the dev environment
 
+.EXAMPLE
+PS> .\deploy.ps1 dom -Run -Dry 
+Safely execute DOM addition/validation/search to preview changes
+
+.EXAMPLE
+PS> .\deploy.ps1 dom -Run 
+Execute DOM addition/validation/search and see results in outputfiles (dom_*.txt)
+
+.EXAMPLE
+PS> .\deploy.ps1 dom -Destroy
+Tear down the DOM configuration (removes all domain ownership entries)
+
+.EXAMPLE
+PS> .\deploy.ps1 aap -Env dev -Save -BackendType s3
+Save changes using a remote S3 backend. Requires config.backend to already exist at
+./new-aap-configuration/environments/dev/config.backend with valid S3 backend keys
+(bucket, key, region, endpoints, access_key, secret_key, etc.). deploy.ps1 will validate
+the file and never overwrite it. For -BackendType local (default) config.backend is
+auto-generated as before.
+
 .LINK
 https://github.com/akamai/terraform-templates
 #>
@@ -173,7 +214,7 @@ https://github.com/akamai/terraform-templates
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
     [Parameter(Position = 0, Mandatory = $true)]
-    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2")]
+    [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2" , "dom")]
     [string]$TemplateType,
 
     # --- Common parameters ---
@@ -189,6 +230,10 @@ Param(
 
     [Parameter()]
     [switch]$Force,
+
+    [Parameter()]
+    [ValidateSet('local','s3','gcs','azurerm','remote','http','consul','pg','kubernetes','oss','cos')]
+    [string]$BackendType = 'local',
 
     [Parameter()]
     [switch]$Help,
@@ -220,7 +265,12 @@ Param(
     [Parameter(ParameterSetName = 'activate')]
     [Parameter(ParameterSetName = 'cps-create')]
     [Parameter(ParameterSetName = 'cps-upload')]
+    [Parameter(ParameterSetName = 'dom-run')]
     [switch]$Dry,
+
+      # --- DOM: Specific action ---
+    [Parameter(ParameterSetName = 'dom-run', Mandatory = $true)]
+    [switch]$Run,
 
     # --- EDNS parameters ---
     [Parameter(Mandatory = $false)]
@@ -276,6 +326,10 @@ if ($Help -or $args -contains "Help" -or $args -contains "-Help" -or $args -cont
     exit 0
 }
 
+# Backend type is surfaced via env var so Initialize-TerraformBackend picks it up
+# without every template module having to thread it through.
+$env:TF_BACKEND_TYPE = $BackendType
+
 # Import core modules
 Import-Module "$PSScriptRoot/lib/core/TerraformRunner.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Validation.psm1" -Force
@@ -290,6 +344,7 @@ $templateModuleMap = @{
     "bmp"    = "BMP" 
     "edns"   = "EDNS"
     "ds2"    = "DS2"
+    "dom"    = "DOM"
 }
 
 $moduleName = $templateModuleMap[$TemplateType]
@@ -311,6 +366,7 @@ $templateFolderMap = @{
     "bmp"    = "new-bmp-endpoints"
     "edns"   = "new-edns"
     "ds2"    = "new-ds2"
+    "dom"    = "new-dom"
 }
 
 $folderFnName = "Get-${moduleName}TemplateFolder"
@@ -341,11 +397,29 @@ try {
         throw "Template dispatch function not found: $invokeFnName. Ensure the module exports this function."
     }
     & $invokeFnName -TemplateFolder $TemplateFolder -BoundParams $PSBoundParameters
+    $deployFailed = $false
 }
 catch {
     Write-Error "Deployment failed: $_"
-    exit 1
+    $deployFailed = $true
 }
+finally {
+    # API rate summary is part of Debug mode: parses the Terraform DEBUG log
+    # and reports Akamai API call counts per endpoint prefix per minute.
+    if ($PSBoundParameters.ContainsKey('Debug')) {
+        $envLabel = if ($Environment) { $Environment }
+                    elseif ($CertNumber) { $CertNumber }
+                    else { 'unknown' }
+        try {
+            Write-ApiRateSummary -EnvironmentName $envLabel
+        }
+        catch {
+            Write-Warning "Failed to produce API rate summary: $_"
+        }
+    }
+}
+
+if ($deployFailed) { exit 1 }
 
 # Execution summary
 Write-ExecutionSummary -StartTime $ScriptStartTime

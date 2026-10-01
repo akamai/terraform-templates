@@ -1,0 +1,30 @@
+{
+  "operations": {
+    "/login": {
+      "login": {
+        "method": "POST",
+        "purpose": "LOGIN",
+        "parameters": {
+          "username": {
+            "path": ["application/json", "username"],
+            "location": "BODY"
+          }
+        },
+        "successConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["200"]
+          }
+        ],
+        "failureConditions": [
+          {
+            "positiveMatch": true,
+            "type": "HTTP_STATUS",
+            "values": ["401", "403"]
+          }
+        ]
+      }
+    }
+  }
+}

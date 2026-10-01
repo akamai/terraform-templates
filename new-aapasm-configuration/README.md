@@ -2,8 +2,24 @@
 
 # Onboarding: App & API Protector (AAP) and the Advanced Security Management (ASM)
 
-Supports the creation of multiple environments (e.g. dev, qa, prod) if required by the customer.
-Also supports creating the initial configuration for BVM (Bot Visibility and Management) or BMS (Bot Management Standard)
+This template creates a complete Akamai security configuration, consisting of:
+
+* **Client Lists** (optional) — IP block, geo block, ASN block and security bypass lists. You can also reuse existing lists by providing their IDs.
+* **Security Configuration** — the container for all policies, plus the config-level resources (advanced settings, rate policies, client reputation profiles).
+* **Security Policies** — one or **many** policies, each protecting its own hostnames with independently configurable protection actions (WAF, DoS, Client Reputation, Bot Manager).
+* **Activation** — pushes the configuration to the Akamai staging and/or production networks.
+
+It supports multiple environments (e.g. dev, qa, prod) if required by the customer, and the initial configuration for BVM (Bot Visibility and Management) or BMS (Bot Management Standard).
+
+## Prerequisites
+
+Before you start, make sure you have:
+
+* [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.9.0
+* [PowerShell](https://learn.microsoft.com/en-us/powershell/scripting/install/installing-powershell) 7+ to run the deployment script
+* Akamai API credentials (typically in `~/.edgerc`) with read-write access to the Application Security, Client Lists and Bot Manager APIs
+* The Akamai **group name** where the configuration will be created (visible in Akamai Control Center)
+* The **hostnames** you want to protect — they must already exist in a delivery property on the same contract
 
 ## Authentication
 
@@ -11,26 +27,62 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
 
 ## Usage
 
-1. Clone the repository, using following command:
+### Step 1 — Clone the repository
 
 ```bash
 > git clone <git url>
 > cd terraform-templates/new-aapasm-configuration/
 ```
 
-2. Inside the `./environments` folder is where you create/delete the subdirectories and files to support more environments if needed. Refer to the examples inside the `./environments` folder. If you only need a single environment just leave a single directory (you can name it "prod"). The environment name must also be used as prefix in the `tfvars` filename. In our example for "prod" the `tfvars` file will be `prod.tfvars`. Remove the .dist extension from the `tfvars` filenames you plan to reuse and specify the required values for the different parameters.
+### Step 2 — Set up your environment(s)
 
-   You'll find additional instructions inside the example `tfvars` files.
+The `./environments` folder holds one subdirectory per environment (e.g. `dev`, `qa`, `prod`), each with its own `tfvars` file and Terraform state, so environments never overwrite each other.
 
-3. Run the deployment script `../deploy.ps1`. This script is written in PowerShell and acts as an orchestrator for Terraform. It allows to perform individual save and activation actions, it handles the multi-environment directory and files to avoid overwriting the state file. A debug/log mode can also be enabled.
+1. Keep (or create) one subdirectory per environment you need. If you only need a single environment, keep just one directory (you can name it "prod") and delete the others.
+2. The `tfvars` filename must be prefixed with the environment name: for "prod" the file is `prod.tfvars`.
+3. Rename the example file by removing the `.dist` extension (e.g. `prod.tfvars.dist` → `prod.tfvars`) and fill in the required values. Each parameter is documented with inline instructions inside the file.
+
+### Step 3 — Define your security policies
+
+This template supports **multiple security policies** in a single security configuration. In your `tfvars` file:
+
+1. Set the baseline protection actions once in `policy_defaults`. These apply to every policy unless overridden.
+2. Define each policy in the `policies` map. A policy only needs `policy_name`, `policy_prefix` and `hostnames` — everything else is inherited from `policy_defaults`, and any field can be overridden per policy.
+
+```hcl
+policies = {
+  main = {
+    policy_name   = "main-website"
+    policy_prefix = "MN01"                      # exactly 4 uppercase alphanumeric characters, unique per policy
+    hostnames     = ["www.example.com"]
+  }
+  api = {
+    policy_name    = "api-policy"
+    policy_prefix  = "AP01"
+    hostnames      = ["api.example.com"]
+    waf_sql_action = "deny"                     # override: stricter WAF action for this policy only
+    enable_botman  = false                      # override: no Bot Manager for this policy
+  }
+}
+```
+
+Keep in mind:
+
+* Map keys (`main`, `api`, ...) are stable identifiers — renaming a key destroys and recreates that policy.
+* Hostnames must be lowercase and should not overlap between policies.
+* The security configuration automatically covers the union of all policy hostnames.
+
+### Step 4 — Deploy
+
+Run the deployment script `../deploy.ps1`. This script is written in PowerShell and acts as an orchestrator for Terraform. It performs the individual save and activation actions and handles the multi-environment directories and state files.
 
     A common flow is as follows (with "prod" as the environment):
-    1. Save the changes only:
+    1. Save the changes only (creates/updates the configuration without activating it):
     ```bash
-    PS> .\deploy.ps1 aapasm -Env prod -Save -Notes "Some user user notes"
+    PS> .\deploy.ps1 aapasm -Env prod -Save -Notes "Some user notes"
     ```
 
-    2. Activate to staging:
+    2. Activate to staging (test against the Akamai staging network before going live):
     ```bash
     PS> .\deploy.ps1 aapasm -Env prod -ActivateStaging
     ```
@@ -41,12 +93,16 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
     ```
 
     Options:
-    * Add the `-Debug` option to the command to log all the Terraform actions in a file stored in the specific environment directory.
-    * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
-    * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
+    * Add the `-Dry` option to any command to preview the changes without applying anything. Recommended for a first run.
+    * Add the `-Debug` option to log all the Terraform actions in a file stored in the specific environment directory.
+    * You can delete all the resources when you don't need them. Keep in mind some resources can't be deleted, in which case the `terraform destroy` operation will fail as a consequence.
     ```bash
     PS> .\deploy.ps1 aapasm -Env dev -Destroy
     ```
+
+### Step 5 — Verify
+
+After a successful run, Terraform outputs the security configuration ID (`config_id`) and a map of policy keys to policy IDs (`security_policy_ids`). You can review the resulting configuration in Akamai Control Center under Security Configurations.
 
 ## Known Errors
 ### Client Reputation
@@ -55,11 +111,7 @@ You may see the following error during the first terraform execution because Cli
 ```hcl
 │ Error: Provider produced inconsistent final plan
 │
-│ When expanding the plan for module.client-reputation[0].akamai_appsec_reputation_profile.web_attackers_high_threat to include new values learned so far during apply, provider
-│ "registry.terraform.io/akamai/akamai" produced an invalid new value for .reputation_profile: was cty.StringVal(""), but now
-│ cty.StringVal("{\"condition\":{\"atomicConditions\":[{\"checkIps\":\"connecting\",\"className\":\"NetworkListCondition\",\"index\":1,\"positiveMatch\":true,\"value\":[\"237955_DEVTFDEMOAPPSECREPUTATI\"]}],\"positiveMatch\":false},\"context\":\"WEBATCK\",\"name\":\"Web
-│ Attackers (High Threat)\",\"sharedIpHandling\":\"NON_SHARED\",\"threshold\":9}").
-│
+│ When expanding the plan for module.security-policy["main"].akamai_appsec_reputation_profile_action.web_attackers_high_threat[0]
 │ This is a bug in the provider, which should be reported in the provider's own issue tracker.
 ```
 
@@ -78,90 +130,202 @@ module "example" {
   	 source  = "<module-location>"
   
 	 # Required variables
-  	 add_akamai_bot_header  = <bool>
-  	 bot_academic_or_research  = <string>
-  	 bot_aggressive_web_crawlers  = <string>
-  	 bot_artificial_intelligence_ai  = <string>
-  	 bot_browser_impersonator  = <string>
-  	 bot_business_intelligence  = <string>
-  	 bot_client_disabled_javascript_noscript_triggered  = <string>
-  	 bot_cookie_integrity_failed  = <string>
-  	 bot_declared_bots_keyword_match  = <string>
-  	 bot_development_frameworks  = <string>
-  	 bot_ecommerce_search_engine  = <string>
-  	 bot_enterprise_data_aggregator  = <string>
-  	 bot_financial_account_aggregator  = <string>
-  	 bot_financial_services  = <string>
-  	 bot_headless_browsersautomation_tools  = <string>
-  	 bot_http_libraries  = <string>
-  	 bot_impersonators_of_known_bots  = <string>
-  	 bot_javascript_fingerprint_anomaly  = <string>
-  	 bot_javascript_fingerprint_not_received  = <string>
-  	 bot_job_search_engine  = <string>
-  	 bot_media_or_entertainment_search  = <string>
-  	 bot_news_aggregator  = <string>
-  	 bot_online_advertising  = <string>
-  	 bot_open_source_crawlersscraping_platforms  = <string>
-  	 bot_rss_feed_reader  = <string>
-  	 bot_seo_analytics_or_marketing  = <string>
-  	 bot_session_validation  = <string>
-  	 bot_site_monitoring_and_web_development  = <string>
-  	 bot_social_media_or_blog  = <string>
-  	 bot_web_archiver  = <string>
-  	 bot_web_scraper_reputation  = <string>
-  	 bot_web_search_engine  = <string>
-  	 bot_web_services_libraries  = <string>
-  	 botman_type  = <string>
   	 config_name  = <string>
   	 description  = <string>
-  	 dos_origin_error_action  = <string>
-  	 dos_page_view_requests_action  = <string>
-  	 dos_post_page_requests_action  = <string>
-  	 enable_active_detections  = <bool>
-  	 enable_botman  = <bool>
-  	 enable_browser_validation  = <bool>
-  	 enable_client_reputation  = <bool>
-  	 enable_ip_geo  = <bool>
-  	 enable_malware  = <bool>
-  	 enable_rate  = <bool>
-  	 enable_request_constraints  = <bool>
-  	 enable_slow_post  = <bool>
-  	 enable_waf  = <bool>
   	 environment  = <string>
   	 group_name  = <string>
-  	 hostnames  = <list(string)>
   	 inspection_size  = <number>
-  	 penalty_box_action  = <string>
-  	 policy_name  = <string>
-  	 policy_prefix  = <string>
-  	 remove_botman_cookies  = <bool>
-  	 rep_dos_attackers_high  = <string>
-  	 rep_dos_attackers_high_shared  = <string>
-  	 rep_dos_attackers_low  = <string>
-  	 rep_dos_attackers_low_shared  = <string>
-  	 rep_scanning_tools_high  = <string>
-  	 rep_scanning_tools_high_shared  = <string>
-  	 rep_scanning_tools_low  = <string>
-  	 rep_scanning_tools_low_shared  = <string>
-  	 rep_web_attackers_high  = <string>
-  	 rep_web_attackers_high_shared  = <string>
-  	 rep_web_attackers_low  = <string>
-  	 rep_web_attackers_low_shared  = <string>
-  	 rep_web_scrapers_high  = <string>
-  	 rep_web_scrapers_high_shared  = <string>
-  	 rep_web_scrapers_low  = <string>
-  	 rep_web_scrapers_low_shared  = <string>
-  	 slow_post_action  = <string>
-  	 third_party_proxy  = <bool>
-  	 waf_cmd_action  = <string>
-  	 waf_lfi_action  = <string>
-  	 waf_platform_action  = <string>
-  	 waf_policy_action  = <string>
-  	 waf_protocol_action  = <string>
-  	 waf_rfi_action  = <string>
-  	 waf_sql_action  = <string>
-  	 waf_wat_action  = <string>
-  	 waf_xss_action  = <string>
+  	 policies  = <map(object({
+	    # Required
+	    policy_name   = string
+	    policy_prefix = string
+	    hostnames     = list(string)
+	
+	    # Protection Toggles (optional overrides)
+	    enable_waf                 = optional(bool)
+	    enable_request_constraints = optional(bool)
+	    enable_ip_geo              = optional(bool)
+	    enable_malware             = optional(bool)
+	    enable_rate                = optional(bool)
+	    enable_slow_post           = optional(bool)
+	    enable_client_reputation   = optional(bool)
+	    enable_botman              = optional(bool)
+	
+	    # DoS Protection
+	    dos_origin_error_action       = optional(string)
+	    dos_post_page_requests_action = optional(string)
+	    dos_page_view_requests_action = optional(string)
+	    slow_post_action              = optional(string)
+	
+	    # WAF Actions
+	    waf_policy_action   = optional(string)
+	    waf_wat_action      = optional(string)
+	    waf_protocol_action = optional(string)
+	    waf_sql_action      = optional(string)
+	    waf_xss_action      = optional(string)
+	    waf_cmd_action      = optional(string)
+	    waf_lfi_action      = optional(string)
+	    waf_rfi_action      = optional(string)
+	    waf_platform_action = optional(string)
+	    penalty_box_action  = optional(string)
+	
+	    # Client Reputation Actions
+	    rep_web_attackers_high         = optional(string)
+	    rep_web_attackers_high_shared  = optional(string)
+	    rep_web_attackers_low          = optional(string)
+	    rep_web_attackers_low_shared   = optional(string)
+	    rep_dos_attackers_high         = optional(string)
+	    rep_dos_attackers_high_shared  = optional(string)
+	    rep_dos_attackers_low          = optional(string)
+	    rep_dos_attackers_low_shared   = optional(string)
+	    rep_scanning_tools_high        = optional(string)
+	    rep_scanning_tools_high_shared = optional(string)
+	    rep_scanning_tools_low         = optional(string)
+	    rep_scanning_tools_low_shared  = optional(string)
+	    rep_web_scrapers_high          = optional(string)
+	    rep_web_scrapers_high_shared   = optional(string)
+	    rep_web_scrapers_low           = optional(string)
+	    rep_web_scrapers_low_shared    = optional(string)
+	
+	    # Bot Manager General Settings
+	    botman_type               = optional(string)
+	    add_akamai_bot_header     = optional(bool)
+	    enable_active_detections  = optional(bool)
+	    enable_browser_validation = optional(bool)
+	    remove_botman_cookies     = optional(bool)
+	    third_party_proxy         = optional(bool)
+	
+	    # Bot Category Actions
+	    bot_site_monitoring_and_web_development = optional(string)
+	    bot_academic_or_research                = optional(string)
+	    bot_job_search_engine                   = optional(string)
+	    bot_artificial_intelligence_ai          = optional(string)
+	    bot_online_advertising                  = optional(string)
+	    bot_ecommerce_search_engine             = optional(string)
+	    bot_web_search_engine                   = optional(string)
+	    bot_enterprise_data_aggregator          = optional(string)
+	    bot_financial_services                  = optional(string)
+	    bot_social_media_or_blog                = optional(string)
+	    bot_web_archiver                        = optional(string)
+	    bot_business_intelligence               = optional(string)
+	    bot_news_aggregator                     = optional(string)
+	    bot_rss_feed_reader                     = optional(string)
+	    bot_financial_account_aggregator        = optional(string)
+	    bot_media_or_entertainment_search       = optional(string)
+	    bot_seo_analytics_or_marketing          = optional(string)
+	
+	    # Bot Transparent Detection Actions
+	    bot_impersonators_of_known_bots            = optional(string)
+	    bot_development_frameworks                 = optional(string)
+	    bot_http_libraries                         = optional(string)
+	    bot_web_services_libraries                 = optional(string)
+	    bot_open_source_crawlersscraping_platforms = optional(string)
+	    bot_headless_browsersautomation_tools      = optional(string)
+	    bot_declared_bots_keyword_match            = optional(string)
+	    bot_aggressive_web_crawlers                = optional(string)
+	    bot_browser_impersonator                   = optional(string)
+	    bot_web_scraper_reputation                 = optional(string)
+	
+	    # Bot Active Detection Actions
+	    bot_cookie_integrity_failed                       = optional(string)
+	    bot_session_validation                            = optional(string)
+	    bot_client_disabled_javascript_noscript_triggered = optional(string)
+	    bot_javascript_fingerprint_anomaly                = optional(string)
+	    bot_javascript_fingerprint_not_received           = optional(string)
+	  }))>
+  	 policy_defaults  = <object({
+	    # Protection Toggles
+	    enable_waf                 = bool
+	    enable_request_constraints = bool
+	    enable_ip_geo              = bool
+	    enable_malware             = bool
+	    enable_rate                = bool
+	    enable_slow_post           = bool
+	    enable_client_reputation   = bool
+	    enable_botman              = bool
+	
+	    # DoS Protection
+	    dos_origin_error_action       = string
+	    dos_post_page_requests_action = string
+	    dos_page_view_requests_action = string
+	    slow_post_action              = string
+	
+	    # WAF Actions
+	    waf_policy_action   = string
+	    waf_wat_action      = string
+	    waf_protocol_action = string
+	    waf_sql_action      = string
+	    waf_xss_action      = string
+	    waf_cmd_action      = string
+	    waf_lfi_action      = string
+	    waf_rfi_action      = string
+	    waf_platform_action = string
+	    penalty_box_action  = string
+	
+	    # Client Reputation Actions
+	    rep_web_attackers_high         = optional(string, "alert")
+	    rep_web_attackers_high_shared  = optional(string, "alert")
+	    rep_web_attackers_low          = optional(string, "none")
+	    rep_web_attackers_low_shared   = optional(string, "none")
+	    rep_dos_attackers_high         = optional(string, "alert")
+	    rep_dos_attackers_high_shared  = optional(string, "alert")
+	    rep_dos_attackers_low          = optional(string, "none")
+	    rep_dos_attackers_low_shared   = optional(string, "none")
+	    rep_scanning_tools_high        = optional(string, "alert")
+	    rep_scanning_tools_high_shared = optional(string, "alert")
+	    rep_scanning_tools_low         = optional(string, "none")
+	    rep_scanning_tools_low_shared  = optional(string, "none")
+	    rep_web_scrapers_high          = optional(string, "alert")
+	    rep_web_scrapers_high_shared   = optional(string, "alert")
+	    rep_web_scrapers_low           = optional(string, "none")
+	    rep_web_scrapers_low_shared    = optional(string, "none")
+	
+	    # Bot Manager General Settings
+	    botman_type               = optional(string, "bvm")
+	    add_akamai_bot_header     = optional(bool, false)
+	    enable_active_detections  = optional(bool, false)
+	    enable_browser_validation = optional(bool, false)
+	    remove_botman_cookies     = optional(bool, true)
+	    third_party_proxy         = optional(bool, false)
+	
+	    # Bot Category Actions
+	    bot_site_monitoring_and_web_development = optional(string, "alert")
+	    bot_academic_or_research                = optional(string, "alert")
+	    bot_job_search_engine                   = optional(string, "alert")
+	    bot_artificial_intelligence_ai          = optional(string, "alert")
+	    bot_online_advertising                  = optional(string, "alert")
+	    bot_ecommerce_search_engine             = optional(string, "alert")
+	    bot_web_search_engine                   = optional(string, "alert")
+	    bot_enterprise_data_aggregator          = optional(string, "alert")
+	    bot_financial_services                  = optional(string, "alert")
+	    bot_social_media_or_blog                = optional(string, "alert")
+	    bot_web_archiver                        = optional(string, "alert")
+	    bot_business_intelligence               = optional(string, "alert")
+	    bot_news_aggregator                     = optional(string, "alert")
+	    bot_rss_feed_reader                     = optional(string, "alert")
+	    bot_financial_account_aggregator        = optional(string, "alert")
+	    bot_media_or_entertainment_search       = optional(string, "alert")
+	    bot_seo_analytics_or_marketing          = optional(string, "alert")
+	
+	    # Bot Transparent Detection Actions
+	    bot_impersonators_of_known_bots            = optional(string, "alert")
+	    bot_development_frameworks                 = optional(string, "alert")
+	    bot_http_libraries                         = optional(string, "alert")
+	    bot_web_services_libraries                 = optional(string, "alert")
+	    bot_open_source_crawlersscraping_platforms = optional(string, "alert")
+	    bot_headless_browsersautomation_tools      = optional(string, "alert")
+	    bot_declared_bots_keyword_match            = optional(string, "alert")
+	    bot_aggressive_web_crawlers                = optional(string, "alert")
+	    bot_browser_impersonator                   = optional(string, "alert")
+	    bot_web_scraper_reputation                 = optional(string, "alert")
+	
+	    # Bot Active Detection Actions
+	    bot_cookie_integrity_failed                       = optional(string, "alert")
+	    bot_session_validation                            = optional(string, "alert")
+	    bot_client_disabled_javascript_noscript_triggered = optional(string, "alert")
+	    bot_javascript_fingerprint_anomaly                = optional(string, "alert")
+	    bot_javascript_fingerprint_not_received           = optional(string, "alert")
+	  })>
   
 	 # Optional variables
   	 activate_to_production  = <bool> | default: false
@@ -174,12 +338,12 @@ module "example" {
   	 akamai_client_secret  = <string> | default: ""
   	 akamai_client_token  = <string> | default: ""
   	 akamai_host  = <string> | default: ""
+  	 client_lists_asnblock  = <list(string)> | default: []
   	 client_lists_geoblock  = <list(string)> | default: []
   	 client_lists_ipblock  = <list(string)> | default: []
   	 client_lists_ipblock_exception  = <list(string)> | default: []
   	 client_lists_pragmabypass  = <list(string)> | default: []
   	 client_lists_rcbypass  = <list(string)> | default: []
-  	 client_lists_reputationbypass  = <list(string)> | default: []
   	 client_lists_securitybypass  = <list(string)> | default: []
   	 create_client_lists  = <bool> | default: true
   	 edgerc_path  = <string> | default: "~/.edgerc"
@@ -196,7 +360,7 @@ module "example" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
-| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 9.0 |
+| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 10.1 |
 
 ## Resources
 
@@ -208,100 +372,22 @@ module "example" {
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security | v1.3.3 |
-| <a name="module_botman"></a> [botman](#module\_botman) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/bot-manager | v1.3.3 |
-| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/client-lists | v1.3.3 |
-| <a name="module_client-reputation"></a> [client-reputation](#module\_client-reputation) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/client-reputation | v1.3.3 |
-| <a name="module_security"></a> [security](#module\_security) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/security | v1.3.3 |
+| <a name="module_activate-security"></a> [activate-security](#module\_activate-security) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security | v2.0.0 |
+| <a name="module_client-lists"></a> [client-lists](#module\_client-lists) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/client-lists | v2.0.0 |
+| <a name="module_security-config"></a> [security-config](#module\_security-config) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/security-config | v2.0.0 |
+| <a name="module_security-policy"></a> [security-policy](#module\_security-policy) | git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/security-policy | v2.0.0 |
 
 ## Inputs
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_add_akamai_bot_header"></a> [add\_akamai\_bot\_header](#input\_add\_akamai\_bot\_header) | Adds a header named Akamai-Bot to bot request forwarded to the origin. The header contains details like: bot type, Botnet ID, action, detection method, and bot score details, if applicable | `bool` | n/a | yes |
-| <a name="input_bot_academic_or_research"></a> [bot\_academic\_or\_research](#input\_bot\_academic\_or\_research) | Action for Akamai Bot Category: Academic or Research Bots | `string` | n/a | yes |
-| <a name="input_bot_aggressive_web_crawlers"></a> [bot\_aggressive\_web\_crawlers](#input\_bot\_aggressive\_web\_crawlers) | Action for Bot Transparent Detections: Aggressive Web Crawlers | `string` | n/a | yes |
-| <a name="input_bot_artificial_intelligence_ai"></a> [bot\_artificial\_intelligence\_ai](#input\_bot\_artificial\_intelligence\_ai) | Action for Akamai Bot Category: Artificial Intelligence (AI) Bots | `string` | n/a | yes |
-| <a name="input_bot_browser_impersonator"></a> [bot\_browser\_impersonator](#input\_bot\_browser\_impersonator) | Action for Bot Transparent Detections: Browser Impersonator | `string` | n/a | yes |
-| <a name="input_bot_business_intelligence"></a> [bot\_business\_intelligence](#input\_bot\_business\_intelligence) | Action for Akamai Bot Category: Business Intelligence Bots | `string` | n/a | yes |
-| <a name="input_bot_client_disabled_javascript_noscript_triggered"></a> [bot\_client\_disabled\_javascript\_noscript\_triggered](#input\_bot\_client\_disabled\_javascript\_noscript\_triggered) | Bot Active Detections Actions: Client Disabled JavaScript (Noscript Triggered) | `string` | n/a | yes |
-| <a name="input_bot_cookie_integrity_failed"></a> [bot\_cookie\_integrity\_failed](#input\_bot\_cookie\_integrity\_failed) | Bot Active Detections Actions: Cookie Integrity Failed | `string` | n/a | yes |
-| <a name="input_bot_declared_bots_keyword_match"></a> [bot\_declared\_bots\_keyword\_match](#input\_bot\_declared\_bots\_keyword\_match) | Action for Bot Transparent Detections: Declared Bots (Keyword Match) | `string` | n/a | yes |
-| <a name="input_bot_development_frameworks"></a> [bot\_development\_frameworks](#input\_bot\_development\_frameworks) | Action for Bot Transparent Detections: Development Frameworks | `string` | n/a | yes |
-| <a name="input_bot_ecommerce_search_engine"></a> [bot\_ecommerce\_search\_engine](#input\_bot\_ecommerce\_search\_engine) | Action for Akamai Bot Category: E-Commerce Search Engine Bots | `string` | n/a | yes |
-| <a name="input_bot_enterprise_data_aggregator"></a> [bot\_enterprise\_data\_aggregator](#input\_bot\_enterprise\_data\_aggregator) | Action for Akamai Bot Category: Enterprise Data Aggregator Bots | `string` | n/a | yes |
-| <a name="input_bot_financial_account_aggregator"></a> [bot\_financial\_account\_aggregator](#input\_bot\_financial\_account\_aggregator) | Action for Akamai Bot Category: Financial Account Aggregator Bots | `string` | n/a | yes |
-| <a name="input_bot_financial_services"></a> [bot\_financial\_services](#input\_bot\_financial\_services) | Action for Akamai Bot Category: Financial Services Bots | `string` | n/a | yes |
-| <a name="input_bot_headless_browsersautomation_tools"></a> [bot\_headless\_browsersautomation\_tools](#input\_bot\_headless\_browsersautomation\_tools) | Action for Bot Transparent Detections: Headless Browsers/Automation Tools | `string` | n/a | yes |
-| <a name="input_bot_http_libraries"></a> [bot\_http\_libraries](#input\_bot\_http\_libraries) | Action for Bot Transparent Detections: HTTP Libraries | `string` | n/a | yes |
-| <a name="input_bot_impersonators_of_known_bots"></a> [bot\_impersonators\_of\_known\_bots](#input\_bot\_impersonators\_of\_known\_bots) | Action for Bot Transparent Detections: Impersonators of Known Bots | `string` | n/a | yes |
-| <a name="input_bot_javascript_fingerprint_anomaly"></a> [bot\_javascript\_fingerprint\_anomaly](#input\_bot\_javascript\_fingerprint\_anomaly) | Bot Active Detections Actions: JavaScript Fingerprint Anomaly | `string` | n/a | yes |
-| <a name="input_bot_javascript_fingerprint_not_received"></a> [bot\_javascript\_fingerprint\_not\_received](#input\_bot\_javascript\_fingerprint\_not\_received) | Bot Active Detections Actions: JavaScript Fingerprint Not Received | `string` | n/a | yes |
-| <a name="input_bot_job_search_engine"></a> [bot\_job\_search\_engine](#input\_bot\_job\_search\_engine) | Action for Akamai Bot Category: Job Search Engine Bots | `string` | n/a | yes |
-| <a name="input_bot_media_or_entertainment_search"></a> [bot\_media\_or\_entertainment\_search](#input\_bot\_media\_or\_entertainment\_search) | Action for Akamai Bot Category: Media or Entertainment Search Bots | `string` | n/a | yes |
-| <a name="input_bot_news_aggregator"></a> [bot\_news\_aggregator](#input\_bot\_news\_aggregator) | Action for Akamai Bot Category: News Aggregator Bots | `string` | n/a | yes |
-| <a name="input_bot_online_advertising"></a> [bot\_online\_advertising](#input\_bot\_online\_advertising) | Action for Akamai Bot Category: Online Advertising Bots | `string` | n/a | yes |
-| <a name="input_bot_open_source_crawlersscraping_platforms"></a> [bot\_open\_source\_crawlersscraping\_platforms](#input\_bot\_open\_source\_crawlersscraping\_platforms) | Action for Bot Transparent Detections: Open Source Crawlers/Scraping Platforms | `string` | n/a | yes |
-| <a name="input_bot_rss_feed_reader"></a> [bot\_rss\_feed\_reader](#input\_bot\_rss\_feed\_reader) | Action for Akamai Bot Category: RSS Feed Reader Bots | `string` | n/a | yes |
-| <a name="input_bot_seo_analytics_or_marketing"></a> [bot\_seo\_analytics\_or\_marketing](#input\_bot\_seo\_analytics\_or\_marketing) | Action for Akamai Bot Category: SEO, Analytics or Marketing Bots | `string` | n/a | yes |
-| <a name="input_bot_session_validation"></a> [bot\_session\_validation](#input\_bot\_session\_validation) | Bot Active Detections Actions: Session Validation | `string` | n/a | yes |
-| <a name="input_bot_site_monitoring_and_web_development"></a> [bot\_site\_monitoring\_and\_web\_development](#input\_bot\_site\_monitoring\_and\_web\_development) | Action for Akamai Bot Category: Site Monitoring and Web Development Bots | `string` | n/a | yes |
-| <a name="input_bot_social_media_or_blog"></a> [bot\_social\_media\_or\_blog](#input\_bot\_social\_media\_or\_blog) | Action for Akamai Bot Category: Social Media or Blog Bots | `string` | n/a | yes |
-| <a name="input_bot_web_archiver"></a> [bot\_web\_archiver](#input\_bot\_web\_archiver) | Action for Akamai Bot Category: Web Archiver Bots | `string` | n/a | yes |
-| <a name="input_bot_web_scraper_reputation"></a> [bot\_web\_scraper\_reputation](#input\_bot\_web\_scraper\_reputation) | Action for Bot Transparent Detections: Web Scraper Reputation | `string` | n/a | yes |
-| <a name="input_bot_web_search_engine"></a> [bot\_web\_search\_engine](#input\_bot\_web\_search\_engine) | Action for Akamai Bot Category: Web Search Engine Bots | `string` | n/a | yes |
-| <a name="input_bot_web_services_libraries"></a> [bot\_web\_services\_libraries](#input\_bot\_web\_services\_libraries) | Action for Bot Transparent Detections: Web Services Libraries | `string` | n/a | yes |
-| <a name="input_botman_type"></a> [botman\_type](#input\_botman\_type) | Chose based on the available entitlement: BVM (Bot Visibility and Management) or BMS (Bot Management Standard) | `string` | n/a | yes |
 | <a name="input_config_name"></a> [config\_name](#input\_config\_name) | Security configuration name | `string` | n/a | yes |
 | <a name="input_description"></a> [description](#input\_description) | Security configuration description | `string` | n/a | yes |
-| <a name="input_dos_origin_error_action"></a> [dos\_origin\_error\_action](#input\_dos\_origin\_error\_action) | Action for the Origin Error | `string` | n/a | yes |
-| <a name="input_dos_page_view_requests_action"></a> [dos\_page\_view\_requests\_action](#input\_dos\_page\_view\_requests\_action) | Action for the Page View Requests | `string` | n/a | yes |
-| <a name="input_dos_post_page_requests_action"></a> [dos\_post\_page\_requests\_action](#input\_dos\_post\_page\_requests\_action) | Action for the POST Page Requests | `string` | n/a | yes |
-| <a name="input_enable_active_detections"></a> [enable\_active\_detections](#input\_enable\_active\_detections) | These methods interact with the requesting client using a combination of JavaScript and cookies to try to confirm that the request comes from a human using a real web browser | `bool` | n/a | yes |
-| <a name="input_enable_botman"></a> [enable\_botman](#input\_enable\_botman) | Enable Bot Management Protection | `bool` | n/a | yes |
-| <a name="input_enable_browser_validation"></a> [enable\_browser\_validation](#input\_enable\_browser\_validation) | Confirm that requests come from a browser. Enable use browser validation detection anywhere you expect browsers to visit the URL | `bool` | n/a | yes |
-| <a name="input_enable_client_reputation"></a> [enable\_client\_reputation](#input\_enable\_client\_reputation) | Enable Client Reputation Protection | `bool` | n/a | yes |
-| <a name="input_enable_ip_geo"></a> [enable\_ip\_geo](#input\_enable\_ip\_geo) | Enable IP/Geo Firewall Protection | `bool` | n/a | yes |
-| <a name="input_enable_malware"></a> [enable\_malware](#input\_enable\_malware) | Enable Malware Protection | `bool` | n/a | yes |
-| <a name="input_enable_rate"></a> [enable\_rate](#input\_enable\_rate) | Enable Rate Protection | `bool` | n/a | yes |
-| <a name="input_enable_request_constraints"></a> [enable\_request\_constraints](#input\_enable\_request\_constraints) | Enable API Requests Constraints Protection | `bool` | n/a | yes |
-| <a name="input_enable_slow_post"></a> [enable\_slow\_post](#input\_enable\_slow\_post) | Enable Slow POST Protection | `bool` | n/a | yes |
-| <a name="input_enable_waf"></a> [enable\_waf](#input\_enable\_waf) | Enable Web Application Firewall Protection | `bool` | n/a | yes |
 | <a name="input_environment"></a> [environment](#input\_environment) | Environment (e.g. dev, qa, prod) | `string` | n/a | yes |
 | <a name="input_group_name"></a> [group\_name](#input\_group\_name) | Akamai Group Name | `string` | n/a | yes |
-| <a name="input_hostnames"></a> [hostnames](#input\_hostnames) | Hostnames to protect by the security config | `list(string)` | n/a | yes |
 | <a name="input_inspection_size"></a> [inspection\_size](#input\_inspection\_size) | Request body inspection limit | `number` | n/a | yes |
-| <a name="input_penalty_box_action"></a> [penalty\_box\_action](#input\_penalty\_box\_action) | Action for WAF Penalty Box | `string` | n/a | yes |
-| <a name="input_policy_name"></a> [policy\_name](#input\_policy\_name) | Name for the security policy | `string` | n/a | yes |
-| <a name="input_policy_prefix"></a> [policy\_prefix](#input\_policy\_prefix) | Prefix for the security policy | `string` | n/a | yes |
-| <a name="input_remove_botman_cookies"></a> [remove\_botman\_cookies](#input\_remove\_botman\_cookies) | Remove Bot Manager cookies before sending request to origin | `bool` | n/a | yes |
-| <a name="input_rep_dos_attackers_high"></a> [rep\_dos\_attackers\_high](#input\_rep\_dos\_attackers\_high) | Action for Reputation Profile: DoS Attackers (High Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_dos_attackers_high_shared"></a> [rep\_dos\_attackers\_high\_shared](#input\_rep\_dos\_attackers\_high\_shared) | Action for Reputation Profile: DoS Attackers (High Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_dos_attackers_low"></a> [rep\_dos\_attackers\_low](#input\_rep\_dos\_attackers\_low) | Action for Reputation Profile: DoS Attackers (Low Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_dos_attackers_low_shared"></a> [rep\_dos\_attackers\_low\_shared](#input\_rep\_dos\_attackers\_low\_shared) | Action for Reputation Profile: DoS Attackers (Low Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_scanning_tools_high"></a> [rep\_scanning\_tools\_high](#input\_rep\_scanning\_tools\_high) | Action for Reputation Profile: Scanning Tools (High Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_scanning_tools_high_shared"></a> [rep\_scanning\_tools\_high\_shared](#input\_rep\_scanning\_tools\_high\_shared) | Action for Reputation Profile: Scanning Tools (High Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_scanning_tools_low"></a> [rep\_scanning\_tools\_low](#input\_rep\_scanning\_tools\_low) | Action for Reputation Profile: Scanning Tools (Low Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_scanning_tools_low_shared"></a> [rep\_scanning\_tools\_low\_shared](#input\_rep\_scanning\_tools\_low\_shared) | Action for Reputation Profile: Scanning Tools (Low Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_attackers_high"></a> [rep\_web\_attackers\_high](#input\_rep\_web\_attackers\_high) | Action for Reputation Profile:  Web Attackers (High Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_attackers_high_shared"></a> [rep\_web\_attackers\_high\_shared](#input\_rep\_web\_attackers\_high\_shared) | Action for Reputation Profile:  Web Attackers (High Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_attackers_low"></a> [rep\_web\_attackers\_low](#input\_rep\_web\_attackers\_low) | Action for Reputation Profile: Web Attackers (Low Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_attackers_low_shared"></a> [rep\_web\_attackers\_low\_shared](#input\_rep\_web\_attackers\_low\_shared) | Action for Reputation Profile: Web Attackers (Low Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_scrapers_high"></a> [rep\_web\_scrapers\_high](#input\_rep\_web\_scrapers\_high) | Action for Reputation Profile: Web Scrapers (High Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_scrapers_high_shared"></a> [rep\_web\_scrapers\_high\_shared](#input\_rep\_web\_scrapers\_high\_shared) | Action for Reputation Profile: Web Scrapers (High Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_scrapers_low"></a> [rep\_web\_scrapers\_low](#input\_rep\_web\_scrapers\_low) | Action for Reputation Profile: Web Scrapers (Low Threat) NON-SHARED IPs | `string` | n/a | yes |
-| <a name="input_rep_web_scrapers_low_shared"></a> [rep\_web\_scrapers\_low\_shared](#input\_rep\_web\_scrapers\_low\_shared) | Action for Reputation Profile: Web Scrapers (Low Threat) SHARED IPs | `string` | n/a | yes |
-| <a name="input_slow_post_action"></a> [slow\_post\_action](#input\_slow\_post\_action) | Action for the slow POST Protection | `string` | n/a | yes |
-| <a name="input_third_party_proxy"></a> [third\_party\_proxy](#input\_third\_party\_proxy) | If you use a third-party proxy service between two Akamai Edge servers for things like A/B testing, content translation, or content adaption engines, turn this on to improve detection accuracy | `bool` | n/a | yes |
-| <a name="input_waf_cmd_action"></a> [waf\_cmd\_action](#input\_waf\_cmd\_action) | Action for WAF attack group: Command Injection | `string` | n/a | yes |
-| <a name="input_waf_lfi_action"></a> [waf\_lfi\_action](#input\_waf\_lfi\_action) | Action for WAF attack group: Local File Inclusion | `string` | n/a | yes |
-| <a name="input_waf_platform_action"></a> [waf\_platform\_action](#input\_waf\_platform\_action) | Action for WAF attack group: Web Platform Attack | `string` | n/a | yes |
-| <a name="input_waf_policy_action"></a> [waf\_policy\_action](#input\_waf\_policy\_action) | Action for WAF attack group: Web Policy Violation | `string` | n/a | yes |
-| <a name="input_waf_protocol_action"></a> [waf\_protocol\_action](#input\_waf\_protocol\_action) | Action for WAF attack group: Web Protocol Attack | `string` | n/a | yes |
-| <a name="input_waf_rfi_action"></a> [waf\_rfi\_action](#input\_waf\_rfi\_action) | Action for WAF attack group: Remote File Inclusion | `string` | n/a | yes |
-| <a name="input_waf_sql_action"></a> [waf\_sql\_action](#input\_waf\_sql\_action) | Action for WAF attack group: SQL Injection | `string` | n/a | yes |
-| <a name="input_waf_wat_action"></a> [waf\_wat\_action](#input\_waf\_wat\_action) | Action for WAF attack group: Web Attack Tool | `string` | n/a | yes |
-| <a name="input_waf_xss_action"></a> [waf\_xss\_action](#input\_waf\_xss\_action) | Action for WAF attack group: Cross Site Scripting | `string` | n/a | yes |
+| <a name="input_policies"></a> [policies](#input\_policies) | Map of security policies to create. Each key is a stable identifier (renaming destroys/recreates). Required per entry: policy\_name, policy\_prefix, hostnames. All other fields are optional and override policy\_defaults when set. | <pre>map(object({<br/>    # Required<br/>    policy_name   = string<br/>    policy_prefix = string<br/>    hostnames     = list(string)<br/><br/>    # Protection Toggles (optional overrides)<br/>    enable_waf                 = optional(bool)<br/>    enable_request_constraints = optional(bool)<br/>    enable_ip_geo              = optional(bool)<br/>    enable_malware             = optional(bool)<br/>    enable_rate                = optional(bool)<br/>    enable_slow_post           = optional(bool)<br/>    enable_client_reputation   = optional(bool)<br/>    enable_botman              = optional(bool)<br/><br/>    # DoS Protection<br/>    dos_origin_error_action       = optional(string)<br/>    dos_post_page_requests_action = optional(string)<br/>    dos_page_view_requests_action = optional(string)<br/>    slow_post_action              = optional(string)<br/><br/>    # WAF Actions<br/>    waf_policy_action   = optional(string)<br/>    waf_wat_action      = optional(string)<br/>    waf_protocol_action = optional(string)<br/>    waf_sql_action      = optional(string)<br/>    waf_xss_action      = optional(string)<br/>    waf_cmd_action      = optional(string)<br/>    waf_lfi_action      = optional(string)<br/>    waf_rfi_action      = optional(string)<br/>    waf_platform_action = optional(string)<br/>    penalty_box_action  = optional(string)<br/><br/>    # Client Reputation Actions<br/>    rep_web_attackers_high         = optional(string)<br/>    rep_web_attackers_high_shared  = optional(string)<br/>    rep_web_attackers_low          = optional(string)<br/>    rep_web_attackers_low_shared   = optional(string)<br/>    rep_dos_attackers_high         = optional(string)<br/>    rep_dos_attackers_high_shared  = optional(string)<br/>    rep_dos_attackers_low          = optional(string)<br/>    rep_dos_attackers_low_shared   = optional(string)<br/>    rep_scanning_tools_high        = optional(string)<br/>    rep_scanning_tools_high_shared = optional(string)<br/>    rep_scanning_tools_low         = optional(string)<br/>    rep_scanning_tools_low_shared  = optional(string)<br/>    rep_web_scrapers_high          = optional(string)<br/>    rep_web_scrapers_high_shared   = optional(string)<br/>    rep_web_scrapers_low           = optional(string)<br/>    rep_web_scrapers_low_shared    = optional(string)<br/><br/>    # Bot Manager General Settings<br/>    botman_type               = optional(string)<br/>    add_akamai_bot_header     = optional(bool)<br/>    enable_active_detections  = optional(bool)<br/>    enable_browser_validation = optional(bool)<br/>    remove_botman_cookies     = optional(bool)<br/>    third_party_proxy         = optional(bool)<br/><br/>    # Bot Category Actions<br/>    bot_site_monitoring_and_web_development = optional(string)<br/>    bot_academic_or_research                = optional(string)<br/>    bot_job_search_engine                   = optional(string)<br/>    bot_artificial_intelligence_ai          = optional(string)<br/>    bot_online_advertising                  = optional(string)<br/>    bot_ecommerce_search_engine             = optional(string)<br/>    bot_web_search_engine                   = optional(string)<br/>    bot_enterprise_data_aggregator          = optional(string)<br/>    bot_financial_services                  = optional(string)<br/>    bot_social_media_or_blog                = optional(string)<br/>    bot_web_archiver                        = optional(string)<br/>    bot_business_intelligence               = optional(string)<br/>    bot_news_aggregator                     = optional(string)<br/>    bot_rss_feed_reader                     = optional(string)<br/>    bot_financial_account_aggregator        = optional(string)<br/>    bot_media_or_entertainment_search       = optional(string)<br/>    bot_seo_analytics_or_marketing          = optional(string)<br/><br/>    # Bot Transparent Detection Actions<br/>    bot_impersonators_of_known_bots            = optional(string)<br/>    bot_development_frameworks                 = optional(string)<br/>    bot_http_libraries                         = optional(string)<br/>    bot_web_services_libraries                 = optional(string)<br/>    bot_open_source_crawlersscraping_platforms = optional(string)<br/>    bot_headless_browsersautomation_tools      = optional(string)<br/>    bot_declared_bots_keyword_match            = optional(string)<br/>    bot_aggressive_web_crawlers                = optional(string)<br/>    bot_browser_impersonator                   = optional(string)<br/>    bot_web_scraper_reputation                 = optional(string)<br/><br/>    # Bot Active Detection Actions<br/>    bot_cookie_integrity_failed                       = optional(string)<br/>    bot_session_validation                            = optional(string)<br/>    bot_client_disabled_javascript_noscript_triggered = optional(string)<br/>    bot_javascript_fingerprint_anomaly                = optional(string)<br/>    bot_javascript_fingerprint_not_received           = optional(string)<br/>  }))</pre> | n/a | yes |
+| <a name="input_policy_defaults"></a> [policy\_defaults](#input\_policy\_defaults) | Default values for all security policies. Each policy inherits these unless it provides its own override. | <pre>object({<br/>    # Protection Toggles<br/>    enable_waf                 = bool<br/>    enable_request_constraints = bool<br/>    enable_ip_geo              = bool<br/>    enable_malware             = bool<br/>    enable_rate                = bool<br/>    enable_slow_post           = bool<br/>    enable_client_reputation   = bool<br/>    enable_botman              = bool<br/><br/>    # DoS Protection<br/>    dos_origin_error_action       = string<br/>    dos_post_page_requests_action = string<br/>    dos_page_view_requests_action = string<br/>    slow_post_action              = string<br/><br/>    # WAF Actions<br/>    waf_policy_action   = string<br/>    waf_wat_action      = string<br/>    waf_protocol_action = string<br/>    waf_sql_action      = string<br/>    waf_xss_action      = string<br/>    waf_cmd_action      = string<br/>    waf_lfi_action      = string<br/>    waf_rfi_action      = string<br/>    waf_platform_action = string<br/>    penalty_box_action  = string<br/><br/>    # Client Reputation Actions<br/>    rep_web_attackers_high         = optional(string, "alert")<br/>    rep_web_attackers_high_shared  = optional(string, "alert")<br/>    rep_web_attackers_low          = optional(string, "none")<br/>    rep_web_attackers_low_shared   = optional(string, "none")<br/>    rep_dos_attackers_high         = optional(string, "alert")<br/>    rep_dos_attackers_high_shared  = optional(string, "alert")<br/>    rep_dos_attackers_low          = optional(string, "none")<br/>    rep_dos_attackers_low_shared   = optional(string, "none")<br/>    rep_scanning_tools_high        = optional(string, "alert")<br/>    rep_scanning_tools_high_shared = optional(string, "alert")<br/>    rep_scanning_tools_low         = optional(string, "none")<br/>    rep_scanning_tools_low_shared  = optional(string, "none")<br/>    rep_web_scrapers_high          = optional(string, "alert")<br/>    rep_web_scrapers_high_shared   = optional(string, "alert")<br/>    rep_web_scrapers_low           = optional(string, "none")<br/>    rep_web_scrapers_low_shared    = optional(string, "none")<br/><br/>    # Bot Manager General Settings<br/>    botman_type               = optional(string, "bvm")<br/>    add_akamai_bot_header     = optional(bool, false)<br/>    enable_active_detections  = optional(bool, false)<br/>    enable_browser_validation = optional(bool, false)<br/>    remove_botman_cookies     = optional(bool, true)<br/>    third_party_proxy         = optional(bool, false)<br/><br/>    # Bot Category Actions<br/>    bot_site_monitoring_and_web_development = optional(string, "alert")<br/>    bot_academic_or_research                = optional(string, "alert")<br/>    bot_job_search_engine                   = optional(string, "alert")<br/>    bot_artificial_intelligence_ai          = optional(string, "alert")<br/>    bot_online_advertising                  = optional(string, "alert")<br/>    bot_ecommerce_search_engine             = optional(string, "alert")<br/>    bot_web_search_engine                   = optional(string, "alert")<br/>    bot_enterprise_data_aggregator          = optional(string, "alert")<br/>    bot_financial_services                  = optional(string, "alert")<br/>    bot_social_media_or_blog                = optional(string, "alert")<br/>    bot_web_archiver                        = optional(string, "alert")<br/>    bot_business_intelligence               = optional(string, "alert")<br/>    bot_news_aggregator                     = optional(string, "alert")<br/>    bot_rss_feed_reader                     = optional(string, "alert")<br/>    bot_financial_account_aggregator        = optional(string, "alert")<br/>    bot_media_or_entertainment_search       = optional(string, "alert")<br/>    bot_seo_analytics_or_marketing          = optional(string, "alert")<br/><br/>    # Bot Transparent Detection Actions<br/>    bot_impersonators_of_known_bots            = optional(string, "alert")<br/>    bot_development_frameworks                 = optional(string, "alert")<br/>    bot_http_libraries                         = optional(string, "alert")<br/>    bot_web_services_libraries                 = optional(string, "alert")<br/>    bot_open_source_crawlersscraping_platforms = optional(string, "alert")<br/>    bot_headless_browsersautomation_tools      = optional(string, "alert")<br/>    bot_declared_bots_keyword_match            = optional(string, "alert")<br/>    bot_aggressive_web_crawlers                = optional(string, "alert")<br/>    bot_browser_impersonator                   = optional(string, "alert")<br/>    bot_web_scraper_reputation                 = optional(string, "alert")<br/><br/>    # Bot Active Detection Actions<br/>    bot_cookie_integrity_failed                       = optional(string, "alert")<br/>    bot_session_validation                            = optional(string, "alert")<br/>    bot_client_disabled_javascript_noscript_triggered = optional(string, "alert")<br/>    bot_javascript_fingerprint_anomaly                = optional(string, "alert")<br/>    bot_javascript_fingerprint_not_received           = optional(string, "alert")<br/>  })</pre> | n/a | yes |
 | <a name="input_activate_to_production"></a> [activate\_to\_production](#input\_activate\_to\_production) | Set to true to directly activate on the production network. | `bool` | `false` | no |
 | <a name="input_activate_to_staging"></a> [activate\_to\_staging](#input\_activate\_to\_staging) | Set to true to directly activate on the staging network. | `bool` | `false` | no |
 | <a name="input_activation_notes"></a> [activation\_notes](#input\_activation\_notes) | Notes for the activation | `string` | `"Activated by Terraform"` | no |
@@ -312,14 +398,14 @@ module "example" {
 | <a name="input_akamai_client_secret"></a> [akamai\_client\_secret](#input\_akamai\_client\_secret) | Akamai client\_secret API credential | `string` | `""` | no |
 | <a name="input_akamai_client_token"></a> [akamai\_client\_token](#input\_akamai\_client\_token) | Akamai client\_token API credential | `string` | `""` | no |
 | <a name="input_akamai_host"></a> [akamai\_host](#input\_akamai\_host) | Akamai host API credential | `string` | `""` | no |
+| <a name="input_client_lists_asnblock"></a> [client\_lists\_asnblock](#input\_client\_lists\_asnblock) | ID(s) for the ASN Block Client List | `list(string)` | `[]` | no |
 | <a name="input_client_lists_geoblock"></a> [client\_lists\_geoblock](#input\_client\_lists\_geoblock) | ID(s) for the Geo Block Client List | `list(string)` | `[]` | no |
 | <a name="input_client_lists_ipblock"></a> [client\_lists\_ipblock](#input\_client\_lists\_ipblock) | ID(s) for the IP Block Client List | `list(string)` | `[]` | no |
 | <a name="input_client_lists_ipblock_exception"></a> [client\_lists\_ipblock\_exception](#input\_client\_lists\_ipblock\_exception) | ID(s) for the IP Block Exceptions Client List | `list(string)` | `[]` | no |
 | <a name="input_client_lists_pragmabypass"></a> [client\_lists\_pragmabypass](#input\_client\_lists\_pragmabypass) | ID(s) for the Pragma Bypass Client List | `list(string)` | `[]` | no |
 | <a name="input_client_lists_rcbypass"></a> [client\_lists\_rcbypass](#input\_client\_lists\_rcbypass) | ID(s) for the Rate Control Bypass Client List | `list(string)` | `[]` | no |
-| <a name="input_client_lists_reputationbypass"></a> [client\_lists\_reputationbypass](#input\_client\_lists\_reputationbypass) | ID(s) for the Reputation Bypass Client List | `list(string)` | `[]` | no |
 | <a name="input_client_lists_securitybypass"></a> [client\_lists\_securitybypass](#input\_client\_lists\_securitybypass) | ID(s) for the Security Bypass Client List | `list(string)` | `[]` | no |
-| <a name="input_create_client_lists"></a> [create\_client\_lists](#input\_create\_client\_lists) | Request body inspection limit | `bool` | `true` | no |
+| <a name="input_create_client_lists"></a> [create\_client\_lists](#input\_create\_client\_lists) | Set to true to create new client lists, false to use existing IDs | `bool` | `true` | no |
 | <a name="input_edgerc_path"></a> [edgerc\_path](#input\_edgerc\_path) | Specify path to the Akamai EdgeGrid authentication file that contains your Akamai API tokens. Typically ~/.edgerc. | `string` | `"~/.edgerc"` | no |
 | <a name="input_edgerc_section"></a> [edgerc\_section](#input\_edgerc\_section) | Specify the section inside the edgerc file which can contain multiple sets of Akamai API tokens. Typically default. | `string` | `"default"` | no |
 | <a name="input_emails"></a> [emails](#input\_emails) | List of emails for notifications | `list(string)` | <pre>[<br/>  "noreply@akamai.com"<br/>]</pre> | no |
@@ -330,5 +416,5 @@ module "example" {
 | Name | Description |
 |------|-------------|
 | <a name="output_config_id"></a> [config\_id](#output\_config\_id) | Security Configuration ID |
-| <a name="output_security_policy_id"></a> [security\_policy\_id](#output\_security\_policy\_id) | Security Policy ID |
+| <a name="output_security_policy_ids"></a> [security\_policy\_ids](#output\_security\_policy\_ids) | Map of policy keys to their Security Policy IDs |
 <!-- END_TF_DOCS -->

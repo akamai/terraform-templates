@@ -66,6 +66,14 @@ ps-terraform-templates/
 │   ├── main.tf
 │   ├── variables.tf
 │   └── README.md
+├── new-dom/                        # Domain Ownership Management template
+│   ├── files.tf                    # Generates challenge / validation / search output files
+│   ├── main.tf
+│   ├── provider.tf
+│   ├── terraform.tfvars.dist
+│   ├── variables.tf
+│   ├── outputs.tf
+│   └── versions.tf
 └── README.md
 ```
 
@@ -82,6 +90,7 @@ Navigate to **Akamai Control Center → Identity & Access Management**:
    - **Client Lists API** (for client lists)
    - **Edge DNS API** (for DNS zone management)
    - **DataStream API / Datastream Config** (for DataStream 2 log streaming)
+   - **Domain Ownership Manager API** (for DOM validation/search operations)
 2. Generate credentials: `client_secret`, `access_token`, `client_token`, `host`
 
 ### 2. Get Account Switch Key
@@ -167,6 +176,14 @@ DataStream 2 (DS-managed / Decoupled):
 - Support for 14+ destination connectors (AWS S3, Datadog, Splunk, Azure, GCS, TrafficPeak, and more)
 - Granular control over log formats (JSON or STRUCTURED), dataset fields, sampling percentages, and midgress tracking
 - Streamlined deployment with a single activation dimension directly driven by environment configurations
+
+### 🧾 new-dom
+Domain Ownership Management:
+- Create or update domain ownership validation requests
+- Optional immediate validation execution
+- Optional domain ownership search output generation
+- Outputs challenge/search files in template directory for operational use
+- WILDCARD entries accept either `example.com` or `*.example.com` — the `*.` prefix is optional
 
 ## Usage
 
@@ -261,6 +278,25 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `-Debug` | Enable detailed logging to `akamai_tf.log` |
 | `-Help` | Display detailed help information |
 
+#### Domain Ownership Management (DOM) Template
+
+> **Note:** DOM uses a single template-level tfvars file (`new-dom/terraform.tfvars`) instead of per-environment files.
+
+> **Note:** DOM supports `-Run` and `-Destroy`. It does not use `-Env`, `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Notes`, or `-SkipValidation`.
+
+> **Note:** `-Dry` shows the Terraform plan only. A full `-Run` can generate/update validation and search output files (for example, `dom_challenges.txt`, `dom_validation_entries.txt`, and `dom_search_results.txt`) in the template directory, and the same values are also printed to the terminal.
+
+| Parameter | Description |
+|-----------|-------------|
+| First Argument | `dom` - Domain Ownership Management |
+| `-Run` | Execute the DOM workflow (create/update, validate, and/or search per `terraform.tfvars`) |
+| `-Destroy` | Remove the DOM configuration and tear down existing domain ownership records |
+| `-Dry` | Show Terraform plan without applying changes |
+| `-Force` | Skip the drift-detection prompt and continue automatically |
+| `-Debug` | Enable detailed logging to `dom-akamai_tf.log` |
+| `-Help` | Display detailed help information |
+
+
 ### Configuration
 
 Each template has environment-specific configurations in `environments/{env}/{env}.tfvars` (or `environments/{env}/{zone_type}.tfvars` for EDNS):
@@ -283,6 +319,40 @@ enable_rate      = true
 
 Further environments can be created by replicating and adjusting each `environments/{env}/{env}.tfvars`.  
 Refer to each template's `README.md` for detailed configuration options.
+
+### Remote Backend (optional)
+
+By default `deploy.ps1` uses Terraform's **local** backend and stores state under `<template>/environments/<env>/{env}-terraform.tfstate`. To use any remote backend (S3, GCS, Azure Blob, Linode Object Storage, etc.) pass `-BackendType <type>` on the deploy command.
+
+**Rules for non-local backends:**
+
+- You must create `config.backend` at the template's runtime configuration path **before** invoking `deploy.ps1`: `./<template>/environments/<env>/config.backend` for environment-scoped templates, `./new-dom/config.backend` for DOM, or `./new-{dv-san|third-party}-cert/certificates/<cert>/config.backend` for CPS.
+- The file uses Terraform's `-backend-config=<file>` HCL fragment format (`key = "value"` per line, `#` comments allowed).
+- `deploy.ps1` will validate the file exists and does not contain only a local `path=` entry. It never overwrites the file for remote backends.
+- `backend.tf` at the template root is regenerated on every run with the declared backend type; it is gitignored.
+
+Example — Linode Object Storage:
+
+```hcl
+# ./new-aap-configuration/environments/prod/config.backend
+skip_credentials_validation = true
+skip_region_validation      = true
+skip_requesting_account_id  = true
+skip_s3_checksum            = true
+use_lockfile                = true
+bucket    = "my-tf-state-bucket"
+key       = "ps-terraform-templates/aap/prod.tfstate"
+region    = "us-mia-1"
+endpoints = { s3 = "https://us-mia-1.linodeobjects.com" }
+access_key = "…"
+secret_key = "…"
+```
+
+```powershell
+.\deploy.ps1 aap -Env prod -Save -BackendType s3 -Notes "..."
+```
+
+Locking: for S3-compatible backends without DynamoDB, set `use_lockfile = true` in the backend config (Terraform ≥ 1.10 native S3 locking).
 
 ### Examples
 
@@ -377,6 +447,17 @@ Refer to each template's `README.md` for detailed configuration options.
 
 # Safely tear down the DataStream 2 configuration for the dev environment
 .\deploy.ps1 ds2 -Env dev -Destroy
+
+# --- Domain Ownership Management (DOM) ---
+
+# Preview DOM plan only
+.\deploy.ps1 dom -Run -Dry
+
+# Execute DOM workflow
+.\deploy.ps1 dom -Run
+
+# Remove DOM configuration
+.\deploy.ps1 dom -Destroy
 ```
 
 ## Troubleshooting
@@ -423,6 +504,35 @@ Enable detailed logging:
 Logs are written to: `environments/{env}/{env}-akamai_tf.log`
 
 For EDNS, the zone type is included in the log filename: `environments/{env}/{env}-{zone_type}-akamai_tf.log` (e.g., `environments/dev/dev-primary-akamai_tf.log`)
+
+#### Log Rotation
+
+Every `-Debug` run starts with a fresh log file. If a debug log already exists at the target path, it is automatically renamed by appending the previous run's timestamp before the extension, so historical runs are preserved side by side:
+
+```
+environments/dev/dev-akamai_tf.log                   # current run
+environments/dev/dev-akamai_tf.20260907-091205.log   # previous run
+environments/dev/dev-akamai_tf.20260906-174233.log   # older run
+```
+
+The timestamp is taken from the previous file's last-write time (`yyyyMMdd-HHmmss`). Empty log files from aborted runs are removed instead of being archived. Rotated archives match the same `*akamai_tf*.log` `.gitignore` pattern, so they are not accidentally committed.
+
+#### API Call Rate Summary
+
+At the end of every `-Debug` run (whether the deployment succeeded or failed), an **API Call Rate Summary** is printed to the console. It parses the debug log, groups Akamai API calls (`*.luna.akamaiapis.net`) by minute and by endpoint prefix, and reports the call counts — useful for spotting rate-limit hotspots and understanding where a slow run is spending its time:
+
+```
+================================
+API Call Rate Summary - dev
+================================
+Minute            Endpoint prefix                 Calls
+----------------  ------------------------------  -----
+2026/09/07 09:12  /appsec                         14
+2026/09/07 09:12  /papi                           6
+2026/09/07 09:13  /appsec                         21
+```
+
+The summary is produced automatically — no extra flags required. It reads the log path that `-Debug` just wrote to, so the counts always correspond to the current run.
 
 ## Provider Information
 

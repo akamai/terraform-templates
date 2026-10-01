@@ -62,6 +62,10 @@ Describe "Template Modules - Module Loading" {
             { Import-Module "$PSScriptRoot/../lib/templates/DS2.psm1" -Force } | Should -Not -Throw
         }
 
+        It "Should load DOM module" {
+            { Import-Module "$PSScriptRoot/../lib/templates/DOM.psm1" -Force } | Should -Not -Throw
+        }
+
         It "Should load EDNS module" {
             { Import-Module "$PSScriptRoot/../lib/templates/EDNS.psm1" -Force } | Should -Not -Throw
         }
@@ -79,6 +83,7 @@ Describe "Template Modules - Param Policy Contract" {
         Import-Module "$PSScriptRoot/../lib/templates/BMP.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/CPS.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/DS2.psm1" -Force
+        Import-Module "$PSScriptRoot/../lib/templates/DOM.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/EDNS.psm1" -Force
         Import-Module "$PSScriptRoot/../lib/templates/PropertyManager.psm1" -Force
     }
@@ -102,6 +107,10 @@ Describe "Template Modules - Param Policy Contract" {
 
         It "DS2 module exports Get-DS2ParamPolicy" {
             Get-Command "Get-DS2ParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "DOM module exports Get-DOMParamPolicy" {
+            Get-Command "Get-DOMParamPolicy" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
 
         It "EDNS module exports Get-EDNSParamPolicy" {
@@ -144,6 +153,12 @@ Describe "Template Modules - Param Policy Contract" {
             $p.Allowed | Should -Not -BeNullOrEmpty
         }
 
+        It "Get-DOMParamPolicy returns a hashtable with Allowed" {
+            $p = Get-DOMParamPolicy
+            $p | Should -BeOfType [hashtable]
+            $p.Allowed | Should -Not -BeNullOrEmpty
+        }
+
         It "Get-EDNSParamPolicy returns a hashtable with Allowed" {
             $p = Get-EDNSParamPolicy
             $p | Should -BeOfType [hashtable]
@@ -175,6 +190,10 @@ Describe "Template Modules - Param Policy Contract" {
 
         It "DS2 module exports Invoke-DS2Template" {
             Get-Command "Invoke-DS2Template" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
+        }
+
+        It "DOM module exports Invoke-DOMTemplate" {
+            Get-Command "Invoke-DOMTemplate" -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
 
         It "EDNS module exports Invoke-EDNSTemplate" {
@@ -421,6 +440,145 @@ Describe "Logger Module - Get-Username Function" {
                 $result = Get-Username
                 $result | Should -Be $env:USER
             }
+        }
+    }
+}
+
+Describe "TerraformRunner Module - BackendType Function Logic" {
+    BeforeEach {
+        Push-Location $TestDrive
+        $script:OriginalBackendType = $env:TF_BACKEND_TYPE
+
+        function global:terraform {
+            param([Parameter(ValueFromRemainingArguments = $true)]$Args)
+            $global:LASTEXITCODE = 0
+            return ""
+        }
+    }
+
+    AfterEach {
+        if (Test-Path "function:/global:terraform") {
+            Remove-Item "function:/global:terraform" -Force
+        }
+        $env:TF_BACKEND_TYPE = $script:OriginalBackendType
+        Pop-Location
+    }
+
+    Context "Get-BackendConfigMeaningfulLines" {
+        It "Returns empty when file does not exist" {
+            $lines = Get-BackendConfigMeaningfulLines -Path "./missing/config.backend"
+            @($lines).Count | Should -Be 0
+        }
+
+        It "Filters comments and blank lines" {
+            New-Item -ItemType Directory -Path "./cfg" -Force | Out-Null
+            Set-Content -Path "./cfg/config.backend" -Value @(
+                "# comment"
+                ""
+                "  // comment"
+                'path="state.tfstate"'
+                'bucket="my-bucket"'
+                "   "
+            )
+
+            $lines = Get-BackendConfigMeaningfulLines -Path "./cfg/config.backend"
+
+            $lines.Count | Should -Be 2
+            $lines[0] | Should -Be 'path="state.tfstate"'
+            $lines[1] | Should -Be 'bucket="my-bucket"'
+        }
+    }
+
+    Context "Test-BackendConfigIsLocalOnly" {
+        It "Returns true for empty input" {
+            Test-BackendConfigIsLocalOnly -Lines @() | Should -BeTrue
+        }
+
+        It "Returns true for path-only entries" {
+            Test-BackendConfigIsLocalOnly -Lines @('path="one.tfstate"', 'path="two.tfstate"') | Should -BeTrue
+        }
+
+        It "Returns false when non-path keys are present" {
+            Test-BackendConfigIsLocalOnly -Lines @('path="one.tfstate"', 'bucket="tf-state"') | Should -BeFalse
+        }
+    }
+
+    Context "Initialize-TerraformBackend local backend behavior" {
+        It "Auto-generates local config.backend and backend.tf when missing" {
+            Initialize-TerraformBackend -TemplateFolder "template-local" -ConfigPath "environments/dev" -StateFileName "dev-terraform.tfstate" -BackendType "local"
+
+            $cfg = Get-Content -Raw -Path "./template-local/environments/dev/config.backend"
+            $cfg | Should -Match 'path="./environments/dev/dev-terraform.tfstate"'
+
+            $backendTf = Get-Content -Raw -Path "./template-local/backend.tf"
+            $backendTf | Should -Match 'backend "local" \{\}'
+        }
+
+        It "Throws when local backend is selected but config.backend contains remote keys" {
+            New-Item -ItemType Directory -Path "./template-local/environments/dev" -Force | Out-Null
+            Set-Content -Path "./template-local/environments/dev/config.backend" -Value 'bucket="remote-state"'
+
+            {
+                Initialize-TerraformBackend -TemplateFolder "template-local" -ConfigPath "environments/dev" -StateFileName "dev-terraform.tfstate" -BackendType "local"
+            } | Should -Throw -ExpectedMessage "*contains non-local backend configuration*"
+        }
+
+        It "Normalizes ConfigPath '.' to plain state file path" {
+            Initialize-TerraformBackend -TemplateFolder "template-root" -ConfigPath "." -StateFileName "terraform.tfstate" -BackendType "local"
+
+            $cfg = Get-Content -Raw -Path "./template-root/config.backend"
+            $cfg | Should -Match 'path="terraform.tfstate"'
+        }
+    }
+
+    Context "Initialize-TerraformBackend remote backend behavior" {
+        It "Throws when remote backend is selected and config.backend is missing" {
+            {
+                Initialize-TerraformBackend -TemplateFolder "template-remote" -ConfigPath "environments/dev" -StateFileName "dev-terraform.tfstate" -BackendType "s3"
+            } | Should -Throw -ExpectedMessage "*requires config.backend to exist*"
+        }
+
+        It "Throws when remote backend is selected and config.backend is local-only" {
+            New-Item -ItemType Directory -Path "./template-remote/environments/dev" -Force | Out-Null
+            Set-Content -Path "./template-remote/environments/dev/config.backend" -Value 'path="./environments/dev/dev-terraform.tfstate"'
+
+            {
+                Initialize-TerraformBackend -TemplateFolder "template-remote" -ConfigPath "environments/dev" -StateFileName "dev-terraform.tfstate" -BackendType "s3"
+            } | Should -Throw -ExpectedMessage "*contains only a local 'path=' entry*"
+        }
+
+        It "Accepts remote backend when config.backend contains remote config" {
+            New-Item -ItemType Directory -Path "./template-remote/environments/dev" -Force | Out-Null
+            Set-Content -Path "./template-remote/environments/dev/config.backend" -Value @(
+                'bucket="tf-state"'
+                'key="dev/state.tfstate"'
+                'region="us-east-1"'
+            )
+
+            {
+                Initialize-TerraformBackend -TemplateFolder "template-remote" -ConfigPath "environments/dev" -StateFileName "dev-terraform.tfstate" -BackendType "s3"
+            } | Should -Not -Throw
+
+            $backendTf = Get-Content -Raw -Path "./template-remote/backend.tf"
+            $backendTf | Should -Match 'backend "s3" \{\}'
+        }
+    }
+
+    Context "Initialize-TerraformBackend backend type defaulting" {
+        It "Uses TF_BACKEND_TYPE environment variable when BackendType is omitted" {
+            $env:TF_BACKEND_TYPE = "gcs"
+            New-Item -ItemType Directory -Path "./template-env/environments/dev" -Force | Out-Null
+            Set-Content -Path "./template-env/environments/dev/config.backend" -Value @(
+                'bucket="tf-state"'
+                'prefix="terraform/dev"'
+            )
+
+            {
+                Initialize-TerraformBackend -TemplateFolder "template-env" -ConfigPath "environments/dev" -StateFileName "dev-terraform.tfstate"
+            } | Should -Not -Throw
+
+            $backendTf = Get-Content -Raw -Path "./template-env/backend.tf"
+            $backendTf | Should -Match 'backend "gcs" \{\}'
         }
     }
 }
@@ -832,6 +990,46 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         }
     }
 
+    Context "Domain Ownership Management (dom) parameter validation" {
+        It "Should fail without -Run parameter" {
+            $r = Invoke-Deploy @("dom")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Please specify at least one parameter"
+        }
+
+        It "Should fail when -Env is passed" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Env", "dev")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-Environment' is not applicable for the 'dom' template"
+        }
+
+        It "Should fail when non-DOM template parameters are passed" {
+            $r = Invoke-Deploy @("dom", "-Run", "-CpsType", "dv-san-cert")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'dom' template"
+        }
+
+        It "Should accept -Run with -Dry (no parameter set conflict)" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Dry")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Match "Configuration file not found"
+        }
+
+        It "Should fail when -Run and -Destroy are combined" {
+            $r = Invoke-Deploy @("dom", "-Run", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should accept -Destroy alone (proceeds past parameter validation)" {
+            $r = Invoke-Deploy @("dom", "-Destroy")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+            $r.Output | Should -Not -Match "is not applicable for the 'dom' template"
+        }
+    }
+
     Context "Invalid TemplateType" {
         It "Should fail with an invalid TemplateType value" {
             $r = Invoke-Deploy @("invalid")
@@ -952,6 +1150,20 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         }
     }
 
+    Context "Global -BackendType option" {
+        It "Should be accepted alongside DOM -Run (no parameter set conflict)" {
+            $r = Invoke-Deploy @("dom", "-Run", "-BackendType", "local")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+        }
+
+        It "Should be accepted alongside DS2 -Save (no parameter set conflict)" {
+            $r = Invoke-Deploy @("ds2", "-Env", "nonexistent", "-Save", "-BackendType", "local")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Not -Match "Parameter set cannot be resolved"
+        }
+    }
+
     Context "Destroy confirmation prompt — stdin cancellation" {
         # These templates run the confirmation prompt before any file-system or
         # Terraform check, so piping a non-YES answer is sufficient to trigger
@@ -975,16 +1187,30 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
         }
 
-        It "PM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
-            $r = Invoke-DeployWithInput -Arguments @("pm", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
-            $r.ExitCode | Should -Not -Be 0
-            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
-        }
-
         It "CPS -DestroyCert: should exit non-zero with cancellation message when user enters 'no'" {
             $r = Invoke-DeployWithInput -Arguments @("cps", "-CpsType", "dv-san-cert", "-DestroyCert", "cert1") -StdinInput "no"
             $r.ExitCode | Should -Not -Be 0
             $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
         }
+
+        It "DOM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("dom", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "DS2 -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("ds2", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
+        It "PM -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("pm", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
     }
 }
+
+
