@@ -79,6 +79,7 @@ module "example" {
   
 	 # Optional variables
   	 activate_stream  = <bool> | default: true
+  	 app_sec_configs  = <list(number)> | default: []
   	 azure_connector  = <object({
 	    display_name   = string
 	    account_name   = string
@@ -238,7 +239,7 @@ module "example" {
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
-| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 10.1 |
+| <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 10.3 |
 
 ## Resources
 
@@ -248,7 +249,7 @@ No resources.
 
 | Name | Source | Version |
 |------|--------|---------|
-| <a name="module_ds2"></a> [ds2](#module\_ds2) | git::https://github.com/akamai/terraform-templates-modules.git//ds2 | v1.5.0 |
+| <a name="module_ds2"></a> [ds2](#module\_ds2) | git::https://github.com/akamai/terraform-templates-modules.git//ds2 | v2.0.4 |
 
 ## Inputs
 
@@ -260,6 +261,7 @@ No resources.
 | <a name="input_name"></a> [name](#input\_name) | Name of the DataStream 2 configuration and CP Code. | `string` | n/a | yes |
 | <a name="input_property_ids"></a> [property\_ids](#input\_property\_ids) | List of Akamai Property IDs to monitor (Decoupled architecture). | `list(string)` | n/a | yes |
 | <a name="input_activate_stream"></a> [activate\_stream](#input\_activate\_stream) | Whether to activate the stream upon creation. | `bool` | `true` | no |
+| <a name="input_app_sec_configs"></a> [app\_sec\_configs](#input\_app\_sec\_configs) | App & API Protector security config IDs to associate with the stream. | `list(number)` | `[]` | no |
 | <a name="input_azure_connector"></a> [azure\_connector](#input\_azure\_connector) | Configuration for Azure Storage destination. | <pre>object({<br/>    display_name   = string<br/>    account_name   = string<br/>    container_name = string<br/>    access_key     = string<br/>    path           = string<br/>  })</pre> | `null` | no |
 | <a name="input_datadog_connector"></a> [datadog\_connector](#input\_datadog\_connector) | Configuration for Datadog destination.<br/><br/>    NOTE: Akamai DataStream only supports Datadog v1 endpoints, not v2.<br/>    Akamai validates the API key with a live POST before creating the stream.<br/>    Correct endpoint format (include https:// scheme):<br/>      EU: https://http-intake.logs.datadoghq.eu/v1/input<br/>      US: https://http-intake.logs.datadoghq.com/v1/input | <pre>object({<br/>    display_name  = string<br/>    endpoint      = string<br/>    auth_token    = string<br/>    service       = optional(string)<br/>    source        = optional(string)<br/>    tags          = optional(string)<br/>    compress_logs = optional(bool)<br/>  })</pre> | `null` | no |
 | <a name="input_dataset_fields_ids"></a> [dataset\_fields\_ids](#input\_dataset\_fields\_ids) | List of dataset fields IDs to log. | `list(number)` | <pre>[<br/>  1000,<br/>  1002,<br/>  1015,<br/>  1037,<br/>  1100<br/>]</pre> | no |
