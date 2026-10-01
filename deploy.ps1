@@ -9,7 +9,8 @@ or activate to both networks simultaneously. Also supports certificate managemen
 This script uses a modular architecture with template handlers in lib/templates/ and shared functionality in lib/core/.
 
 .PARAMETER TemplateType
-Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2 ,dom
+Specifies the template type. Available values: aap, aapasm, pm, cps, bmp, edns, ds2, dom.
+Not required (and not applicable) when using the standalone -Download or -Restore options.
 
 .PARAMETER CpsType
 Specifies the CPS certificate type when TemplateType is 'cps'. Available values: dv-san-cert, third-party-cert
@@ -62,6 +63,24 @@ Destroys a certificate (CPS only).
 .PARAMETER ZoneType
 Specifies Edge DNS zone type. Available values: primary, secondary.
 Used only when TemplateType is 'edns'.
+
+.PARAMETER Download
+Core, standalone option (not tied to any TemplateType). Downloads (clones, or updates if already
+present) the terraform-templates-modules repository and rewrites the `source` argument in every
+new-*/main.tf to point at the local copy. The original git:: source line is kept, commented out,
+directly above the new local line. Usage: .\deploy.ps1 -Download
+
+.PARAMETER Restore
+Core, standalone option (not tied to any TemplateType). Reverts a previous -Download: removes the
+local source line from every new-*/main.tf and uncomments the original git:: source line above it.
+Usage: .\deploy.ps1 -Restore
+
+.PARAMETER ModulesPath
+Used with -Download. Destination path for the downloaded modules repository, relative to the
+terraform-templates/ directory. Defaults to '../terraform-templates-modules'.
+
+.PARAMETER ModulesRef
+Used with -Download. Branch or tag of terraform-templates-modules to clone/checkout. Defaults to 'main'.
 
 .PARAMETER Dry
 Outputs the terraform plan and performs no actions.
@@ -200,6 +219,23 @@ PS> .\deploy.ps1 dom -Destroy
 Tear down the DOM configuration (removes all domain ownership entries)
 
 .EXAMPLE
+PS> .\deploy.ps1 -Download
+Download/update the terraform-templates-modules repository into ../terraform-templates-modules and
+repoint every new-*/main.tf source argument at the local copy (original source kept, commented out).
+
+.EXAMPLE
+PS> .\deploy.ps1 -Download -ModulesPath ../my-modules-clone -ModulesRef v2.0.0
+Download a specific ref of the modules repository into a custom path and update references to it.
+
+.EXAMPLE
+PS> .\deploy.ps1 -Download -Dry
+Preview the download/update and the main.tf changes without modifying anything.
+
+.EXAMPLE
+PS> .\deploy.ps1 -Restore
+Revert every new-*/main.tf back to the original git:: source (undoes -Download).
+
+.EXAMPLE
 PS> .\deploy.ps1 aap -Env dev -Save -BackendType s3
 Save changes using a remote S3 backend. Requires config.backend to already exist at
 ./new-aap-configuration/environments/dev/config.backend with valid S3 backend keys
@@ -213,7 +249,7 @@ https://github.com/akamai/terraform-templates
 
 [CmdletBinding(DefaultParameterSetName = 'save-activate')]
 Param(
-    [Parameter(Position = 0, Mandatory = $true)]
+    [Parameter(Position = 0, Mandatory = $false)]
     [ValidateSet("aap", "aapasm", "pm", "cps", "bmp", "edns", "ds2" , "dom")]
     [string]$TemplateType,
 
@@ -266,6 +302,8 @@ Param(
     [Parameter(ParameterSetName = 'cps-create')]
     [Parameter(ParameterSetName = 'cps-upload')]
     [Parameter(ParameterSetName = 'dom-run')]
+    [Parameter(ParameterSetName = 'modules-download')]
+    [Parameter(ParameterSetName = 'modules-restore')]
     [switch]$Dry,
 
       # --- DOM: Specific action ---
@@ -276,6 +314,19 @@ Param(
     [Parameter(Mandatory = $false)]
     [ValidateSet("primary", "secondary")]
     [string]$ZoneType,
+
+    # --- Core modules-sync parameters (standalone, not tied to TemplateType) ---
+    [Parameter(ParameterSetName = 'modules-download', Mandatory = $true)]
+    [switch]$Download,
+
+    [Parameter(ParameterSetName = 'modules-restore', Mandatory = $true)]
+    [switch]$Restore,
+
+    [Parameter(Mandatory = $false)]
+    [string]$ModulesPath,
+
+    [Parameter(Mandatory = $false)]
+    [string]$ModulesRef,
 
     # --- BMP parameters ---
     # Phase 1: API-scope actions
@@ -334,6 +385,38 @@ $env:TF_BACKEND_TYPE = $BackendType
 Import-Module "$PSScriptRoot/lib/core/TerraformRunner.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Validation.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Logger.psm1" -Force
+Import-Module "$PSScriptRoot/lib/core/ModulesSync.psm1" -Force
+
+# -Download/-Restore are a core capability, standalone from the TemplateType dispatch below.
+if ($Download -or $Restore) {
+    if ($PSBoundParameters.ContainsKey('TemplateType')) {
+        throw "-Download/-Restore are standalone options and cannot be combined with a TemplateType. Usage: .\deploy.ps1 -Download  OR  .\deploy.ps1 -Restore"
+    }
+
+    try {
+        if ($Download) {
+            Invoke-ModulesDownload -ModulesPath $ModulesPath -ModulesRef $ModulesRef -Dry:$Dry
+        }
+        else {
+            Invoke-ModulesRestore -Dry:$Dry
+        }
+        $deployFailed = $false
+    }
+    catch {
+        Write-Error "Modules sync failed: $_"
+        $deployFailed = $true
+    }
+
+    Write-ExecutionSummary -StartTime $ScriptStartTime
+    if ($deployFailed) { exit 1 }
+    exit 0
+}
+
+# TemplateType is required for every other action.
+if (-not $PSBoundParameters.ContainsKey('TemplateType')) {
+    Get-Help $PSCommandPath -Full
+    exit 0
+}
 
 # Map template type to module name
 $templateModuleMap = @{

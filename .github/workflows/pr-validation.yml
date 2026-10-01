@@ -12,7 +12,7 @@ on:
       - '.github/workflows/**.yml'
 
 env:
-  TF_VERSION: '1.12.1'
+  TF_VERSION: '1.16.4'
 
 jobs:
   terraform-checks:
