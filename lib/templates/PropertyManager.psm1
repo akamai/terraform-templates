@@ -10,6 +10,146 @@ using module ../core/TerraformRunner.psm1
 using module ../core/Validation.psm1
 using module ../core/Logger.psm1
 
+function Get-TfVarList {
+    <#
+    .SYNOPSIS
+    Reads a Terraform list-of-strings variable from a tfvars file.
+
+    .DESCRIPTION
+    Parses simple HCL list literals of the form: name = ["a", "b", "c"].
+    Whitespace and newlines inside the brackets are tolerated. Returns an
+    empty array if the variable is not found.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$FilePath,
+
+        [Parameter(Mandatory = $true)]
+        [string]$VarName
+    )
+
+    if (-not (Test-Path $FilePath)) {
+        throw "File not found: $FilePath"
+    }
+
+    $content = Get-Content -Path $FilePath -Raw
+    $pattern = "(?ms)^\s*$([regex]::Escape($VarName))\s*=\s*\[(?<body>.*?)\]"
+
+    if ($content -notmatch $pattern) {
+        return @()
+    }
+
+    $body = $matches['body']
+    $items = [regex]::Matches($body, '"([^"]+)"') | ForEach-Object { $_.Groups[1].Value }
+    return @($items)
+}
+
+function Test-DomainOwnership {
+    <#
+    .SYNOPSIS
+    Verifies every hostname listed in tfvars has completed Akamai Domain Ownership validation.
+
+    .DESCRIPTION
+    Calls Get-PropertyDomainOwnershipChallenge (Akamai.Property module) and inspects
+    the domainValidationStatus field returned by POST /papi/v1/domain-challenges.
+    Any hostname whose status is not VALIDATED causes a hard failure.
+
+    .PARAMETER TfVarsPath
+    Path to the environment tfvars file containing edgerc_path, edgerc_section, and hostnames.
+    #>
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TfVarsPath
+    )
+
+    Write-Host "Validating Akamai Domain Ownership for configured hostnames..." -ForegroundColor Cyan
+
+    $edgercPath = Get-TfVarValue -FilePath $TfVarsPath -VarName "edgerc_path"
+    $edgercSection = Get-TfVarValue -FilePath $TfVarsPath -VarName "edgerc_section"
+
+    if (-not $edgercPath -or -not $edgercSection) {
+        throw "Missing edgerc_path or edgerc_section in tfvars file: $TfVarsPath"
+    }
+
+    $hostnames = @(Get-TfVarList -FilePath $TfVarsPath -VarName "hostnames")
+    if ($hostnames.Count -eq 0) {
+        throw "No hostnames found in tfvars file: $TfVarsPath. Add a 'hostnames = [`"...`"]' entry before deploying."
+    }
+
+    if (-not (Get-Command -Name Get-PropertyDomainOwnershipChallenge -ErrorAction SilentlyContinue)) {
+        throw "Get-PropertyDomainOwnershipChallenge cmdlet not found. Install Akamai.Property >= 3.0.0 (Install-Module Akamai.Property -MinimumVersion 3.0.0)."
+    }
+
+    Write-Host "Checking DOM status for $($hostnames.Count) hostname(s): $($hostnames -join ', ')" -ForegroundColor Gray
+
+    try {
+        $response = Get-PropertyDomainOwnershipChallenge `
+            -Hostname $hostnames `
+            -EdgeRCFile $edgercPath `
+            -Section $edgercSection
+    }
+    catch {
+        throw "Failed to query Akamai Domain Ownership status: $($_.Exception.Message)"
+    }
+
+    if (-not $response) {
+        throw "Akamai returned no Domain Ownership information for the requested hostnames."
+    }
+
+    $notValidated = @()
+    foreach ($hostname in $hostnames) {
+        $entry = $response | Where-Object { $_.hostname -eq $hostname } | Select-Object -First 1
+        $status = if ($entry) { [string]$entry.domainValidationStatus } else { "UNKNOWN" }
+
+        if ($status -eq "VALIDATED") {
+            Write-Host "  ✓ $hostname : VALIDATED" -ForegroundColor Green
+        }
+        else {
+            $notValidated += [pscustomobject]@{ Hostname = $hostname; Status = $status }
+        }
+    }
+
+    if ($notValidated.Count -gt 0) {
+        $pad = ($notValidated | ForEach-Object { $_.Hostname.Length } | Measure-Object -Maximum).Maximum
+        $affected = ($notValidated | ForEach-Object {
+            "  • {0}  (Status: {1})" -f $_.Hostname.PadRight($pad), $_.Status
+        }) -join "`n"
+
+        $statusHints = @{
+            "NOT_VALIDATED"          = "Run the DOM validation workflow for the first time."
+            "REQUEST_ACCEPTED"       = "Publish the DNS challenges (TXT/CNAME) and wait for validation, or trigger immediate validation."
+            "PENDING"                = "Validation is queued; publish the DNS challenges if not done, then wait or trigger immediate validation."
+            "VALIDATION_IN_PROGRESS" = "Validation is running; wait a few minutes and retry, or trigger immediate validation."
+            "TOKEN_EXPIRED"          = "Regenerate challenges via the DOM workflow, publish them to DNS, then re-run."
+            "INVALIDATED"            = "Domain was invalidated; re-onboard the domain via the DOM workflow."
+            "UNKNOWN"                = "Status could not be determined; check the DOM workflow output."
+        }
+
+        $grouped = $notValidated | Group-Object -Property Status | Sort-Object Name
+        $statusPad = ($grouped | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
+        $actions = ($grouped | ForEach-Object {
+            $hint = if ($statusHints.ContainsKey($_.Name)) { $statusHints[$_.Name] } else { "Run the DOM validation workflow, then re-run this deployment." }
+            "  • {0} ({1}): {2}" -f $_.Name.PadRight($statusPad), $_.Count, $hint
+        }) -join "`n"
+
+        throw @"
+DOM validation is not completed for the following hostname(s):
+
+
+Affected hostnames:
+$affected
+
+Action required:
+$actions
+"@
+    }
+
+    Write-Host "✓ All hostnames have completed Domain Ownership validation" -ForegroundColor Green
+    return $true
+}
+
 class PropertyManagerTemplate {
     [string]$Environment
     [string]$TemplateFolder
@@ -28,7 +168,10 @@ class PropertyManagerTemplate {
         if (-not (Test-Path $tfvarsPath)) {
             throw "Environment file not found: $tfvarsPath"
         }
-        
+
+        # DOM must be run before the property is created/activated; fail fast if any hostname is not VALIDATED.
+        Test-DomainOwnership -TfVarsPath $tfvarsPath
+
         # Only validate if secure_by_default is enabled and not skipped
         if (-not $this.DeployParams.SkipValidation) {
             $secureByDefaultValue = Get-TfVarValue -FilePath $tfvarsPath -VarName "secure_by_default"
