@@ -99,11 +99,10 @@ function Test-DomainOwnership {
             $ancestors += ($labels[$i..($labels.Count - 1)] -join '.')
         }
 
-        # HOST matches the hostname only; WILDCARD matches any ancestor (multi-level);
-        # DOMAIN matches the hostname itself or any ancestor.
+        # Supports HOST, WILDCARD and DOMAIN validation scopes.
         $candidatesByScope = [ordered]@{
             HOST     = @($hostname)
-            WILDCARD = $ancestors
+            WILDCARD = @($ancestors | Select-Object -First 1)
             DOMAIN   = @($hostname) + $ancestors
         }
 
