@@ -51,9 +51,10 @@ function Test-DomainOwnership {
     Verifies every hostname listed in tfvars has completed Akamai Domain Ownership validation.
 
     .DESCRIPTION
-    Calls Get-PropertyDomainOwnershipChallenge (Akamai.Property module) and inspects
-    the domainValidationStatus field returned by POST /papi/v1/domain-challenges.
-    Any hostname whose status is not VALIDATED causes a hard failure.
+    Calls Get-DOMDomain (Akamai.Property module) to query existing Domain Ownership 
+    validations. Checks each hostname against three validation scopes (HOST, WILDCARD, DOMAIN).
+    A hostname is considered validated if it is validated under any scope. Any hostname that
+    is not validated under any scope causes a hard failure.
 
     .PARAMETER TfVarsPath
     Path to the environment tfvars file containing edgerc_path, edgerc_section, and hostnames.
@@ -78,71 +79,81 @@ function Test-DomainOwnership {
         throw "No hostnames found in tfvars file: $TfVarsPath. Add a 'hostnames = [`"...`"]' entry before deploying."
     }
 
-    if (-not (Get-Command -Name Get-PropertyDomainOwnershipChallenge -ErrorAction SilentlyContinue)) {
-        throw "Get-PropertyDomainOwnershipChallenge cmdlet not found. Install Akamai.Property >= 3.0.0 (Install-Module Akamai.Property -MinimumVersion 3.0.0)."
+    if (-not (Get-Command -Name Get-DOMDomain -ErrorAction SilentlyContinue)) {
+        throw "Get-DOMDomain cmdlet not found. Install Akamai.Property >= 3.0.0 (Install-Module Akamai.Property -MinimumVersion 3.0.0)."
     }
 
     Write-Host "Checking DOM status for $($hostnames.Count) hostname(s): $($hostnames -join ', ')" -ForegroundColor Gray
 
-    try {
-        $response = Get-PropertyDomainOwnershipChallenge `
-            -Hostname $hostnames `
-            -EdgeRCFile $edgercPath `
-            -Section $edgercSection
-    }
-    catch {
-        throw "Failed to query Akamai Domain Ownership status: $($_.Exception.Message)"
-    }
-
-    if (-not $response) {
-        throw "Akamai returned no Domain Ownership information for the requested hostnames."
-    }
-
+    $validationScopes = @("HOST", "WILDCARD", "DOMAIN")
     $notValidated = @()
-    foreach ($hostname in $hostnames) {
-        $entry = $response | Where-Object { $_.hostname -eq $hostname } | Select-Object -First 1
-        $status = if ($entry) { [string]$entry.domainValidationStatus } else { "UNKNOWN" }
 
-        if ($status -eq "VALIDATED") {
-            Write-Host "  ✓ $hostname : VALIDATED" -ForegroundColor Green
+    foreach ($hostname in $hostnames) {
+        $isValidated = $false
+        $validatedScope = $null
+
+        # Ancestors of the hostname, nearest first, down to the registrable-level (two labels).
+        $labels = $hostname.ToLower().TrimEnd('.') -split '\.'
+        $ancestors = @()
+        for ($i = 1; $i -le $labels.Count - 2; $i++) {
+            $ancestors += ($labels[$i..($labels.Count - 1)] -join '.')
+        }
+
+        # HOST matches the hostname only; WILDCARD matches any ancestor (multi-level);
+        # DOMAIN matches the hostname itself or any ancestor.
+        $candidatesByScope = [ordered]@{
+            HOST     = @($hostname)
+            WILDCARD = $ancestors
+            DOMAIN   = @($hostname) + $ancestors
+        }
+
+        foreach ($scope in $validationScopes) {
+            foreach ($candidate in $candidatesByScope[$scope]) {
+                try {
+                    # Get-DOMDomain returns HTTP 404 when no entry exists
+                    $domEntry = Get-DOMDomain `
+                        -DomainName $candidate `
+                        -ValidationScope $scope `
+                        -EdgeRCFile $edgercPath `
+                        -Section $edgercSection `
+                        -ErrorAction Stop
+
+                    if ($domEntry -and $domEntry.domainStatus -eq "VALIDATED") {
+                        $isValidated = $true
+                        $validatedScope = "$scope ($candidate)"
+                        break
+                    }
+                }
+                catch {
+                    continue
+                }
+            }
+            if ($isValidated) { break }
+        }
+
+        if ($isValidated) {
+            Write-Host "  ✓ $hostname : VALIDATED (scope: $validatedScope)" -ForegroundColor Green
         }
         else {
-            $notValidated += [pscustomobject]@{ Hostname = $hostname; Status = $status }
+            $notValidated += [pscustomobject]@{ Hostname = $hostname; Scopes = $validationScopes -join ", " }
         }
     }
 
     if ($notValidated.Count -gt 0) {
         $pad = ($notValidated | ForEach-Object { $_.Hostname.Length } | Measure-Object -Maximum).Maximum
         $affected = ($notValidated | ForEach-Object {
-            "  • {0}  (Status: {1})" -f $_.Hostname.PadRight($pad), $_.Status
-        }) -join "`n"
-
-        $statusHints = @{
-            "NOT_VALIDATED"          = "Run the DOM validation workflow for the first time."
-            "REQUEST_ACCEPTED"       = "Publish the DNS challenges (TXT/CNAME) and wait for validation, or trigger immediate validation."
-            "PENDING"                = "Validation is queued; publish the DNS challenges if not done, then wait or trigger immediate validation."
-            "VALIDATION_IN_PROGRESS" = "Validation is running; wait a few minutes and retry, or trigger immediate validation."
-            "TOKEN_EXPIRED"          = "Regenerate challenges via the DOM workflow, publish them to DNS, then re-run."
-            "INVALIDATED"            = "Domain was invalidated; re-onboard the domain via the DOM workflow."
-            "UNKNOWN"                = "Status could not be determined; check the DOM workflow output."
-        }
-
-        $grouped = $notValidated | Group-Object -Property Status | Sort-Object Name
-        $statusPad = ($grouped | ForEach-Object { $_.Name.Length } | Measure-Object -Maximum).Maximum
-        $actions = ($grouped | ForEach-Object {
-            $hint = if ($statusHints.ContainsKey($_.Name)) { $statusHints[$_.Name] } else { "Run the DOM validation workflow, then re-run this deployment." }
-            "  • {0} ({1}): {2}" -f $_.Name.PadRight($statusPad), $_.Count, $hint
+            "  • {0}  (tried scopes: {1})" -f $_.Hostname.PadRight($pad), $_.Scopes
         }) -join "`n"
 
         throw @"
 DOM validation is not completed for the following hostname(s):
 
-
 Affected hostnames:
 $affected
 
 Action required:
-$actions
+Ensure these hostnames are validated in at least one validation scope (HOST, WILDCARD, or DOMAIN)
+via the Akamai Domain Ownership Manager (DOM) workflow before activating this property.
 "@
     }
 
@@ -169,8 +180,10 @@ class PropertyManagerTemplate {
             throw "Environment file not found: $tfvarsPath"
         }
 
-        # DOM must be run before the property is created/activated; fail fast if any hostname is not VALIDATED.
-        Test-DomainOwnership -TfVarsPath $tfvarsPath
+        # DOM must be run before the property is activated; fail fast if any hostname is not VALIDATED.
+        if ($this.DeployParams.ActivateStaging -or $this.DeployParams.ActivateProduction) {
+            Test-DomainOwnership -TfVarsPath $tfvarsPath
+        }
 
         # Only validate if secure_by_default is enabled and not skipped
         if (-not $this.DeployParams.SkipValidation) {

@@ -23,7 +23,7 @@ The contents of this repository enables rapid deployment of Akamai configuration
 **System Requirements:**
 - Terraform >= 1.9.0
 - PowerShell 7+ (for deployment automation)
-- Akamai PowerShell module >= 3.0.0 (the `new-property` template's Domain Ownership check calls `Get-PropertyDomainOwnershipChallenge`, first shipped in `Akamai.Property` 3.0.0)
+- Akamai PowerShell module >= 3.0.0
 - Git
 
 ## Repository Structure
