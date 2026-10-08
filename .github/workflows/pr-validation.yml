@@ -8,6 +8,7 @@ on:
       - '**.tf'
       - '**.tfvars'
       - '**.ps1'
+      - '**.psm1'
       - 'tests/**'
       - '.github/workflows/**.yml'
 
