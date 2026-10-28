@@ -21,7 +21,7 @@ The contents of this repository enables rapid deployment of Akamai configuration
 ### Prerequisites
 
 **System Requirements:**
-- Terraform >= 1.9.0
+- Terraform >= 1.14.0
 - PowerShell 7+ (for deployment automation)
 - Akamai PowerShell module >= 3.0.0
 - Git
@@ -540,7 +540,7 @@ Product validation failed: No valid product ID found
 Error: Failed to query available provider packages
 ```
 - Check internet connectivity
-- Verify Terraform version >= 1.9.0
+- Verify Terraform version >= 1.14.0
 - Run `terraform init -upgrade`
 
 **API authentication errors:**
@@ -609,7 +609,7 @@ terraform {
       version = "~> 9.0"
     }
   }
-  required_version = ">= 1.9.0"
+  required_version = ">= 1.14.0"
 }
 ```
 

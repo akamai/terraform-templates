@@ -15,14 +15,16 @@ This is a standalone CLI capability (-CredentialsCheck), not tied to any Templat
 # EDNS-specific log endpoint vs the base Datastream Config endpoint).
 $script:RequiredApiPolicy = @(
     @{ Label = "Property Manager (PAPI)";   EndPoint = "/papi";                      RequireReadWrite = $true;  Covers = "pm" }
+    @{ Label = "Edge Hostnames API (hapi)"; EndPoint = "/hapi";                      RequireReadWrite = $true;  Covers = "pm" }
     @{ Label = "Application Security";      EndPoint = "/appsec";                    RequireReadWrite = $true;  Covers = "aap, aapasm, bmp (Bot Manager shares this API)" }
+    @{ Label = "API Definition";            EndPoint = "/api-definitions";            RequireReadWrite = $true; Covers = "bmp" }
     @{ Label = "Client List";               EndPoint = "/client-list";               RequireReadWrite = $true;  Covers = "aap, aapasm (client lists)" }
-    @{ Label = "CPS";                       EndPoint = "/cps";               RequireReadWrite = $true;  Covers = "cps" }
+    @{ Label = "CPS";                       EndPoint = "/cps";                       RequireReadWrite = $true;  Covers = "cps" }
     @{ Label = "DNS—Zone Record Management"; EndPoint = "/config-dns";               RequireReadWrite = $true;  Covers = "edns" }
     @{ Label = "Datastream Config";         EndPoint = "/datastream-config-api/";    RequireReadWrite = $true;  Covers = "ds2" }
     @{ Label = "Domain Ownership Manager";  EndPoint = "/domain-validation/*";       RequireReadWrite = $true;  Covers = "dom" }
     @{ Label = "Contracts-API_Contracts";   EndPoint = "/contract-api/v1/contracts"; RequireReadWrite = $false; Covers = "product entitlement validation (all templates)" }
-    @{ Label = "API Client Administration";   EndPoint = "/identity-management/v*"; RequireReadWrite = $false; Covers = "API credentials access level" }
+    @{ Label = "API Client Administration"; EndPoint = "/identity-management/v*"; RequireReadWrite = $false; Covers = "API credentials access level" }
 )
 
 function Test-RequiredApiAccess {
