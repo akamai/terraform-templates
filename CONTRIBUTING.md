@@ -94,15 +94,19 @@ This repository uses a **modular PowerShell architecture** to manage Terraform d
 **Core Components:**
 - **`lib/core/`** - Shared functionality used across all templates
   - `TerraformRunner.psm1` - Terraform execution wrapper (init, plan, apply, destroy)
+  - `ModulesSync.psm1` - Modules download and source argument relevant updates
   - `Validation.psm1` - Product ID validation and tfvars parsing
   - `Logger.psm1` - Logging and output formatting
 
 - **`lib/templates/`** - Template-specific handlers (one per template type)
   - `AAP.psm1` - App & API Protector configuration handler
   - `AAPASM.psm1` - AAP + Advanced Security Management handler  
-  - `PropertyManager.psm1` - Property Manager configuration handler
+  - `BMP.psm1` - Bot Management handler
   - `CPS.psm1` - Certificate Provisioning System handler
+  - `DOM.ps1` - Domain Ownership Management handler
+  - `EDNS.psm` - Edge DNS handler
   - `DS2.psm1` - DataStream 2 configuration handler
+  - `PropertyManager.psm1` - Property Manager configuration handler
 
 - **`deploy.ps1`** - Main orchestration script
   - Maps template types to handlers via hashtables
@@ -123,22 +127,29 @@ terraform-templates/
 ├── lib/                          # PowerShell module library
 │   ├── core/                     # Shared functionality
 │   │   ├── TerraformRunner.psm1  # Terraform execution wrapper
+│   │   ├── ModulesSync.psm`      # Modules downloader
 │   │   ├── Validation.psm1       # Product/tfvars validation
 │   │   └── Logger.psm1           # Logging utilities
 │   └── templates/                # Template-specific handlers
 │       ├── AAP.psm1              # AAP template handler
 │       ├── AAPASM.psm1           # AAP+ASM template handler
-│       ├── PropertyManager.psm1  # Property Manager handler
+│       ├── BMP                   # Bot Manager handler
 │       ├── CPS.psm1              # CPS handler
-│       └── DS2.psm1              # DataStream 2 handler
+│       ├── DOM.psm1              # Domain Ownership Manager handler
+│       ├── EDNS.psm1             # Edge DNS handler
+│       ├── DS2.psm1              # DataStream 2 handler
+│       └── PropertyManager.psm1  # Property Manager handler
 ├── tests/
 │   ├── deploy.Tests.ps1          # Deploy script tests
-│   └── lib-modules.Tests.ps1     # Module unit tests
+│   └── pester.config.ps1         # Pester Module configuration settings
 ├── new-aap-configuration/        # AAP template files
 ├── new-aapasm-configuration/     # AAP+ASM template files
-├── new-property/                 # Property Manager template files
+├── new-bmp-endpoints/            # BMP template files
+├── new-*-cert/                   # CPS certificate templates
+├── new-dom/                      # Domain Ownership Manager template files
 ├── new-ds2/                      # DataStream 2 template files
-└── new-*-cert/                   # CPS certificate templates
+├── new-edns/                     # Edge DNS template files
+└── new-property/                 # Property Manager template files
 ```
 
 ## Development Workflow
