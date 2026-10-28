@@ -234,14 +234,18 @@ Credentials Check - jdoe
 Capability                   Endpoint                     Access Levels          Status
 ----------------------------------------------------------------------------------------
 Property Manager (PAPI)      /papi                        READ-ONLY, READ-WRITE  PASS
+Edge Hostnames API (hapi)    /hapi                        READ-WRITE, READ-ONLY  PASS
 Application Security         /appsec                      READ-WRITE, READ-ONLY  PASS
+API Definition               /api-definitions             READ-WRITE, READ-ONLY  PASS
 Client List                  /client-list                 READ-ONLY              FAIL
+CPS                          /cps                         READ-WRITE, READ-ONLY  PASS
 DNS—Zone Record Management   /config-dns                  READ-ONLY, READ-WRITE  PASS
 Datastream Config            /datastream-config-api/      READ-WRITE, READ-ONLY  PASS
 Domain Ownership Manager     /domain-validation/*         READ-ONLY, READ-WRITE  PASS
 Contracts-API_Contracts      /contract-api/v1/contracts   READ-ONLY              PASS
+API Client Administration    /identity-management/v*      READ-WRITE, READ-ONLY  PASS
 
-6/7 required permissions satisfied.
+10/11 required permissions satisfied.
 
 Action needed:
   - Client List (/client-list): Only READ-ONLY access. Upgrade 'Client List' to READ-WRITE in Identity & Access Management.
