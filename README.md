@@ -203,7 +203,7 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `aap` | `new-aap-configuration` | `-Env` | `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType` | |
 | `aapasm` | `new-aapasm-configuration` | `-Env` | same as `aap` | same as `aap` | |
 | `pm` | `new-property` | `-Env` | same as `aap` | same as `aap` | |
-| `ds2` | `new-ds2` | `-Env` | `-Save`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType`  | No `-ActivateStaging` |
+| `ds2` | `new-ds2` | `-Env` | `-Save`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipDriftDetection`, `-BackendType` | No `-ActivateStaging` |
 | `edns` | `new-edns` | `-Env`, `-ZoneType` | `-Save`, `-Destroy` | `-Dry`, `-Debug`, `-BackendType` | `-SkipDriftDetection`/drift-prompt is effectively always skipped internally |
 | `bmp` | `new-bmp-endpoints` | `-Env` | Phase 1: `-SaveApi` or `-ActivateStagingApi`/`-ActivateProductionApi` (combinable); Phase 2: `-SaveSec` or `-ActivateStagingSec`/`-ActivateProductionSec` (combinable); or `-Destroy` | `-Notes`, `-Dry`, `Debug`,  `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType` | Phase 2 requires Phase 1 activated first |
 | `cps` | `new-<CpsType>` | `-CpsType` | `-CreateCert`, `-UploadCert` (third-party only), `-DestroyCert` | `-Dry` (not for destroy), `Debug`, `-SkipDriftDetection`, `-BackendType` | No `-Env`, `-Notes`, or `-SkipValidation`; uses the `-CertNumber`/`-Cert` alias |
