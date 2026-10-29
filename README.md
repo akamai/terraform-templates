@@ -21,7 +21,7 @@ The contents of this repository enables rapid deployment of Akamai configuration
 ### Prerequisites
 
 **System Requirements:**
-- Terraform >= 1.9.0
+- Terraform >= 1.14.0
 - PowerShell 7+ (for deployment automation)
 - Akamai PowerShell module >= 3.0.0
 - Git
@@ -91,7 +91,12 @@ Navigate to **Akamai Control Center → Identity & Access Management**:
    - **Edge DNS API** (for DNS zone management)
    - **DataStream API / Datastream Config** (for DataStream 2 log streaming)
    - **Domain Ownership Manager API** (for DOM validation/search operations)
+   - **Contract API** (for product entitlement validations)
+   - **Identity and Access Management API** (OPTIONAL: for Credentials Check)
 2. Generate credentials: `client_secret`, `access_token`, `client_token`, `host`
+
+> **Tip:** Once your API client is created, verify it has all the permissions above with
+> `.\deploy.ps1 -CredentialsCheck -Username <your-username>` — see [Credentials Check](#credentials-check) below.
 
 ### 2. Get Account Switch Key
 
@@ -190,6 +195,68 @@ Domain Ownership Management:
 ### Deployment Workflow
 
 The `deploy.ps1` script automates the entire deployment lifecycle with built-in validation:
+
+#### Quick Reference
+
+| TemplateType | Folder | Required | Action (one of, unless noted) | Common extras | Notes |
+|---|---|---|---|---|---|
+| `aap` | `new-aap-configuration` | `-Env` | `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType` | |
+| `aapasm` | `new-aapasm-configuration` | `-Env` | same as `aap` | same as `aap` | |
+| `pm` | `new-property` | `-Env` | same as `aap` | same as `aap` | |
+| `ds2` | `new-ds2` | `-Env` | `-Save`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipDriftDetection`, `-BackendType` | No `-ActivateStaging` |
+| `edns` | `new-edns` | `-Env`, `-ZoneType` | `-Save`, `-Destroy` | `-Dry`, `-Debug`, `-BackendType` | `-SkipDriftDetection`/drift-prompt is effectively always skipped internally |
+| `bmp` | `new-bmp-endpoints` | `-Env` | Phase 1: `-SaveApi` or `-ActivateStagingApi`/`-ActivateProductionApi` (combinable); Phase 2: `-SaveSec` or `-ActivateStagingSec`/`-ActivateProductionSec` (combinable); or `-Destroy` | `-Notes`, `-Dry`, `Debug`,  `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType` | Phase 2 requires Phase 1 activated first |
+| `cps` | `new-<CpsType>` | `-CpsType` | `-CreateCert`, `-UploadCert` (third-party only), `-DestroyCert` | `-Dry` (not for destroy), `Debug`, `-SkipDriftDetection`, `-BackendType` | No `-Env`, `-Notes`, or `-SkipValidation`; uses the `-CertNumber`/`-Cert` alias |
+| `dom` | `new-dom` | — | `-Run`, `-Destroy` | `-Dry`, `Debug`, `-SkipDriftDetection`, `-BackendType` | No `-Env` |
+
+Standalone options (cannot be combined with a TemplateType):
+
+| Option | Description |
+|---|---|
+| `-Download` | Clone/update the `terraform-templates-modules` repo and repoint every `new-*/main.tf` source at the local copy. Accepts `-ModulesPath`, `-ModulesRef`, `-Dry`. |
+| `-Restore` | Revert a previous `-Download`: restore the original `git::` source in every `new-*/main.tf`. Accepts `-Dry`. |
+| `-CredentialsCheck` | Check the API client's permissions against this project's required Akamai APIs (via `Get-IAMAllowedAPIs`). Requires `-Username`; accepts `-ClientType` (`CLIENT`, `USER_CLIENT` default, or `SERVICE_ACCOUNT`), `-EdgeRCFile`, `-Section`. Report-only — always exits `0`. |
+
+#### Credentials Check
+
+`.\deploy.ps1 -CredentialsCheck -Username <your-username>` verifies the API client has every
+permission this project needs (see [Akamai API Configuration](#akamai-api-configuration)), and
+whether it has the right access level — some APIs only need READ-ONLY, most need READ-WRITE.
+`-ClientType` defaults to `USER_CLIENT`; pass `-EdgeRCFile`/`-Section` if your credentials aren't
+in the default `~/.edgerc` `default` section.
+
+```powershell
+.\deploy.ps1 -CredentialsCheck -Username jdoe
+
+================================
+Credentials Check - jdoe
+================================
+Capability                   Endpoint                     Access Levels          Status
+----------------------------------------------------------------------------------------
+Property Manager (PAPI)      /papi                        READ-ONLY, READ-WRITE  PASS
+Edge Hostnames API (hapi)    /hapi                        READ-WRITE, READ-ONLY  PASS
+Application Security         /appsec                      READ-WRITE, READ-ONLY  PASS
+API Definition               /api-definitions             READ-WRITE, READ-ONLY  PASS
+Client List                  /client-list                 READ-ONLY              FAIL
+CPS                          /cps                         READ-WRITE, READ-ONLY  PASS
+DNS—Zone Record Management   /config-dns                  READ-ONLY, READ-WRITE  PASS
+Datastream Config            /datastream-config-api/      READ-WRITE, READ-ONLY  PASS
+Domain Ownership Manager     /domain-validation/*         READ-ONLY, READ-WRITE  PASS
+Contracts-API_Contracts      /contract-api/v1/contracts   READ-ONLY              PASS
+API Client Administration    /identity-management/v*      READ-WRITE, READ-ONLY  PASS
+
+10/11 required permissions satisfied.
+
+Action needed:
+  - Client List (/client-list): Only READ-ONLY access. Upgrade 'Client List' to READ-WRITE in Identity & Access Management.
+```
+
+> **Note:** The **Application Security** row covers both the "Application Security API" and "Bot
+> Manager API" requirements — Bot Manager (used by the `bmp` template) shares the same `/appsec`
+> API client permission.
+
+
+= @("Environment", "Save", "ActivateProduction", "Destroy", "VersionNotes", "Dry", "BackendType")
 
 #### Security and Delivery Templates (AAP, AAP+ASM, PM)
 
@@ -477,7 +544,7 @@ Product validation failed: No valid product ID found
 Error: Failed to query available provider packages
 ```
 - Check internet connectivity
-- Verify Terraform version >= 1.9.0
+- Verify Terraform version >= 1.14.0
 - Run `terraform init -upgrade`
 
 **API authentication errors:**
@@ -485,7 +552,7 @@ Error: Failed to query available provider packages
 Error: API authentication failed
 ```
 - Verify `.edgerc` credentials are correct
-- Check API client permissions in Identity & Access Management
+- Check API client permissions in Identity & Access Management, or run `.\deploy.ps1 -CredentialsCheck -Username <you>` (see [Credentials Check](#credentials-check))
 - Ensure `edgerc_path` in tfvars points to correct file
 
 **State file conflicts:**
@@ -546,7 +613,7 @@ terraform {
       version = "~> 9.0"
     }
   }
-  required_version = ">= 1.9.0"
+  required_version = ">= 1.14.0"
 }
 ```
 
