@@ -90,9 +90,21 @@ function Sync-ModulesRepository {
         throw "git is required to download the modules repository but was not found in PATH."
     }
 
+    $fullRepoPath = [System.IO.Path]::GetFullPath($RepoPath, (Get-Location).Path).TrimEnd('/', '\')
+    $fullCwd = (Get-Location).Path.TrimEnd('/', '\')
+    if ([string]::Equals($fullRepoPath, $fullCwd, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "-ModulesPath '$RepoPath' resolves to the templates repository itself. Choose a separate directory (default: ../terraform-templates-modules)."
+    }
+
     $gitDir = Join-Path $RepoPath ".git"
 
     if (Test-Path $gitDir) {
+        $originUrl = git -C $RepoPath remote get-url origin 2>$null
+        # Accepts HTTPS/SSH URLs and forks; only the repository name must match.
+        if ($LASTEXITCODE -ne 0 -or $originUrl -notmatch '[:/][^/:]+/terraform-templates-modules(\.git)?/?$') {
+            throw "'$RepoPath' is a git repository but not terraform-templates-modules (origin: '$originUrl'). Choose a different -ModulesPath."
+        }
+
         if ($Dry) {
             Write-Host "[DRY] Would update existing modules repository at '$RepoPath' (fetch + checkout '$Ref')" -ForegroundColor Yellow
             return
