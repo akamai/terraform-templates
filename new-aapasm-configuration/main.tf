@@ -138,10 +138,10 @@ module "client-lists" {
   contract_id         = trimprefix(data.akamai_contract.contract.id, "ctr_")
   group_id            = trimprefix(data.akamai_contract.contract.group_id, "grp_")
 
-  client_list_entries        = var.client_list_entries
-  activation_networks        = var.client_list_activation_networks
-  version_notes              = var.client_list_version_notes
-  notification_emails        = var.client_list_emails
+  client_list_entries = var.client_list_entries
+  activation_networks = var.client_list_activation_networks
+  version_notes       = var.client_list_version_notes
+  notification_emails = var.client_list_emails
 }
 
 # -------------------------------------------------
