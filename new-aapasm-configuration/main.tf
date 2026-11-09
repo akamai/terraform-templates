@@ -425,8 +425,7 @@ module "security-policy" {
 # Activation (called once, after all policies)
 # -------------------------------------------------
 module "activate-security" {
-  source              = "../../terraform-modules/terraform-templates-modules/aap-asm/activate-security"  
-  #source                          = "git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security?ref=v2.0.0"
+  source                          = "git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security?ref=v2.0.0"
   config_name                     = module.security-config.config_name
   config_id                       = module.security-config.config_id
   activate_to_staging             = var.activate_to_staging
