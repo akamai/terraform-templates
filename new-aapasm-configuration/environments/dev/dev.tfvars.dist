@@ -8,6 +8,7 @@ group_name     = "My Group"
 config_name    = "dev-tf-demo-appsec"
 description    = "Application security configuration"
 
+
 # -------------------------------------------------
 # Advanced settings
 # -------------------------------------------------
@@ -26,6 +27,43 @@ inspection_size = 32
 # will be ignored
 # -------------------------------------------------
 create_client_lists = true
+
+client_list_activation_networks = [] #Can be set as - ["STAGING"], ["PRODUCTION"], ["STAGING","PRODUCTION"]
+
+client_list_entries = {
+  #ipblock = [
+  #  {
+  #    value       = "192.0.113.101"
+  #    description = "Trusted office address"
+  #    tags        = ["office2", "trusted"]
+  #  },
+  #  {
+  #    value       = "192.51.100.0/24"
+  #    description = "Corporate network"
+  #    tags        = ["corporate", "network"]
+  #  }
+  #]
+
+  #ipblock_exceptions = [
+  #  {
+  #    value       = "198.51.100.25"
+  #    description = "Allow specific exception"
+  #    tags        = ["exception", "allow"]
+  #  }
+  #]
+
+  #Optionally add entries to other lists - geoblock,asnblock,securitybypass,rcbypass,pragmabypass
+  
+}
+
+client_list_version_notes = "Initial client list configuration for STAGING and PRODUCTION"
+
+client_list_emails = [
+  "temp@akamai.com"
+]
+
+
+
 # IP/Geo Firewall
 client_lists_ipblock           = ["215434_MYTFWAFIPBLO"]
 client_lists_ipblock_exception = ["214942_MYTFWAFSECURIT"]

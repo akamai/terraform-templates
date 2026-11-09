@@ -137,6 +137,11 @@ module "client-lists" {
   config_name         = var.config_name
   contract_id         = trimprefix(data.akamai_contract.contract.id, "ctr_")
   group_id            = trimprefix(data.akamai_contract.contract.group_id, "grp_")
+
+  client_list_entries        = var.client_list_entries
+  activation_networks        = var.client_list_activation_networks
+  version_notes              = var.client_list_version_notes
+  notification_emails        = var.client_list_emails
 }
 
 # -------------------------------------------------
@@ -420,7 +425,8 @@ module "security-policy" {
 # Activation (called once, after all policies)
 # -------------------------------------------------
 module "activate-security" {
-  source                          = "git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security?ref=v2.0.0"
+  source              = "../../terraform-modules/terraform-templates-modules/aap-asm/activate-security"  
+  #source                          = "git::https://github.com/akamai/terraform-templates-modules.git//aap-asm/activate-security?ref=v2.0.0"
   config_name                     = module.security-config.config_name
   config_id                       = module.security-config.config_id
   activate_to_staging             = var.activate_to_staging
