@@ -235,13 +235,13 @@ variable "client_list_activation_networks" {
 }
 
 variable "client_list_version_notes" {
-  description = "Property version notes."
+  description = "Client list version notes."
   type        = string
   default     = "Initial Config"
 }
 
 variable "client_list_emails" {
-  description = "List of emails for notifications"
+  description = "List of emails for notifications for client list activation"
   type        = list(string)
   default     = ["noreply@akamai.com"]
 }
