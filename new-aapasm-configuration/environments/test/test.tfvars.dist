@@ -22,8 +22,7 @@ inspection_size = 32
 # Get-ClientList -section {edgerc_section} | Select-Object listId
 #
 # If you need to create all new lists
-# set create_client_lists=true. The other input parameters
-# will be ignored
+# set create_client_lists=true. 
 # -------------------------------------------------
 create_client_lists = true
 
@@ -59,7 +58,7 @@ client_list_entries = {
 client_list_version_notes = "Initial client list configuration for STAGING and PRODUCTION"
 
 client_list_emails = [
-  #"temp@akamai.com"
+  #"noreply@akamai.com"
 ]
 
 # IP/Geo Firewall
