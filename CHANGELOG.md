@@ -1,3 +1,20 @@
+# [2.4.0](https://github.com/akamai/terraform-templates/compare/v2.3.0...v2.4.0) (2026-11-12)
+
+
+### Bug Fixes
+
+* check for git projects before downloading ([92a2020](https://github.com/akamai/terraform-templates/commit/92a202096a77ad0e3b421ea6b0b398f51be5a4e6))
+* read-write strict match for certain API endpoints ([d52d58a](https://github.com/akamai/terraform-templates/commit/d52d58a8b32a696a1c0d2c92c50d2be8153d2f18))
+
+
+### Features
+
+* Added api definition and hapi endpoints to cred checker ([f487859](https://github.com/akamai/terraform-templates/commit/f4878599cd5557bb40c581f3493ab9a74d443b99))
+* Akamai requirede API credentials checker ([0d975e4](https://github.com/akamai/terraform-templates/commit/0d975e41acbc0d41f18c4332e31786cd7a1137a3))
+* Credential checker support for edgerc and section ([5dce243](https://github.com/akamai/terraform-templates/commit/5dce2431ee76bb40e2d15c4959a369e71cb11d3d))
+
+
+
 # [2.3.0](https://github.com/akamai/terraform-templates/compare/v2.2.0...v2.3.0) (2026-09-29)
 
 
