@@ -246,7 +246,7 @@ module "example" {
 
 | Name | Version |
 |------|---------|
-| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.9.0 |
+| <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.14.0 |
 | <a name="requirement_akamai"></a> [akamai](#requirement\_akamai) | ~> 9.2 |
 | <a name="requirement_dns"></a> [dns](#requirement\_dns) | ~> 3.4 |
 
