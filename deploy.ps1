@@ -82,6 +82,24 @@ terraform-templates/ directory. Defaults to '../terraform-templates-modules'.
 .PARAMETER ModulesRef
 Used with -Download. Branch or tag of terraform-templates-modules to clone/checkout. Defaults to 'main'.
 
+.PARAMETER CredentialsCheck
+Core, standalone option (not tied to any TemplateType). Calls Get-IAMAllowedAPIs and reports
+whether the API client has the permissions this project needs, including required READ-WRITE
+vs READ-ONLY access levels. Report-only: always exits 0, even when permissions are missing.
+Usage: .\deploy.ps1 -CredentialsCheck -Username <user>
+
+.PARAMETER Username
+Used with -CredentialsCheck. The Akamai Identity & Access Management username to check.
+
+.PARAMETER ClientType
+Used with -CredentialsCheck. Filters by client type: CLIENT, USER_CLIENT (default), or SERVICE_ACCOUNT.
+
+.PARAMETER EdgeRCFile
+Used with -CredentialsCheck. Path to the EdgeGrid resource file to authenticate with. Defaults to ~/.edgerc.
+
+.PARAMETER Section
+Used with -CredentialsCheck. The section name in the EdgeGrid resource file to read credentials from. Defaults to 'default'.
+
 .PARAMETER Dry
 Outputs the terraform plan and performs no actions.
 
@@ -92,11 +110,11 @@ Deactivates and destroys all the resources.
 Enables debug logging. Saved in ./akamai_tf.log
 
 .PARAMETER SkipValidation
-Skips product ID validation. Use this if product IDs have changed or for testing purposes.
+Skips product ID validation. Use this if product IDs have changed or for testing purposes. Alias: SkipProductValidation
 
 .PARAMETER Force
 Skips the drift-detection prompt. When drift is detected before applying changes, the script normally
-prompts for confirmation. Pass -Force to bypass this prompt and continue automatically.
+prompts for confirmation. Pass -Force to bypass this prompt and continue automatically. Alias: SkipDriftDetection
 
 .PARAMETER BackendType
 Selects the Terraform backend to use. Defaults to 'local'.
@@ -236,6 +254,18 @@ PS> .\deploy.ps1 -Restore
 Revert every new-*/main.tf back to the original git:: source (undoes -Download).
 
 .EXAMPLE
+PS> .\deploy.ps1 -CredentialsCheck -Username jdoe
+Check the API client's permissions against this project's required Akamai APIs.
+
+.EXAMPLE
+PS> .\deploy.ps1 -CredentialsCheck -Username jdoe -ClientType SERVICE_ACCOUNT
+Check permissions for a service-account-type API client.
+
+.EXAMPLE
+PS> .\deploy.ps1 -CredentialsCheck -Username jdoe -EdgeRCFile ~/.edgerc -Section tf-prod
+Check permissions using a non-default edgerc section.
+
+.EXAMPLE
 PS> .\deploy.ps1 aap -Env dev -Save -BackendType s3
 Save changes using a remote S3 backend. Requires config.backend to already exist at
 ./new-aap-configuration/environments/dev/config.backend with valid S3 backend keys
@@ -262,9 +292,11 @@ Param(
     [switch]$Destroy,
 
     [Parameter()]
+    [Alias("SkipProductValidation")]
     [switch]$SkipValidation,
 
     [Parameter()]
+    [Alias("SkipDriftDetection")]
     [switch]$Force,
 
     [Parameter()]
@@ -328,6 +360,23 @@ Param(
     [Parameter(Mandatory = $false)]
     [string]$ModulesRef,
 
+    # --- Core credentials-check parameters (standalone, not tied to TemplateType) ---
+    [Parameter(ParameterSetName = 'credentials-check', Mandatory = $true)]
+    [switch]$CredentialsCheck,
+
+    [Parameter(ParameterSetName = 'credentials-check', Mandatory = $true)]
+    [string]$Username,
+
+    [Parameter(ParameterSetName = 'credentials-check')]
+    [ValidateSet('CLIENT', 'USER_CLIENT', 'SERVICE_ACCOUNT')]
+    [string]$ClientType,
+
+    [Parameter(ParameterSetName = 'credentials-check')]
+    [string]$EdgeRCFile,
+
+    [Parameter(ParameterSetName = 'credentials-check')]
+    [string]$Section,
+
     # --- BMP parameters ---
     # Phase 1: API-scope actions
     [Parameter(ParameterSetName = 'bmp-api-save')]
@@ -386,6 +435,29 @@ Import-Module "$PSScriptRoot/lib/core/TerraformRunner.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Validation.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/Logger.psm1" -Force
 Import-Module "$PSScriptRoot/lib/core/ModulesSync.psm1" -Force
+Import-Module "$PSScriptRoot/lib/core/CredentialsCheck.psm1" -Force
+
+# -CredentialsCheck is a core capability, standalone from the TemplateType dispatch below.
+if ($CredentialsCheck) {
+    if ($PSBoundParameters.ContainsKey('TemplateType')) {
+        throw "-CredentialsCheck is a standalone option and cannot be combined with a TemplateType. Usage: .\deploy.ps1 -CredentialsCheck -Username <user>"
+    }
+
+    try {
+        $credArgs = @{ Username = $Username }
+        if ($PSBoundParameters.ContainsKey('ClientType')) { $credArgs['ClientType'] = $ClientType }
+        if ($PSBoundParameters.ContainsKey('EdgeRCFile')) { $credArgs['EdgeRCFile'] = $EdgeRCFile }
+        if ($PSBoundParameters.ContainsKey('Section')) { $credArgs['Section'] = $Section }
+        Invoke-CredentialsCheck @credArgs
+    }
+    catch {
+        Write-Error "Credentials check failed: $_"
+    }
+
+    # Report-only: always exits 0, even when required permissions are missing.
+    Write-ExecutionSummary -StartTime $ScriptStartTime
+    exit 0
+}
 
 # -Download/-Restore are a core capability, standalone from the TemplateType dispatch below.
 if ($Download -or $Restore) {

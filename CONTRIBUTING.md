@@ -49,7 +49,7 @@ When contributing to this repository, please first discuss the change you wish t
 ## Prerequisites
 
 **Required:**
-* [Terraform >= 1.9.0](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform)
+* [Terraform >= 1.14.0](https://developer.hashicorp.com/terraform/downloads?product_intent=terraform)
 * [PowerShell 7+](https://github.com/PowerShell/PowerShell) (not Windows PowerShell 5.1)
 * [Akamai PowerShell >= 3.0.0](https://techdocs.akamai.com/powershell/docs/overview)
 * [`pre-commit`](https://pre-commit.com/) - Pre-commit hook framework
