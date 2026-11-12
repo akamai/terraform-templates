@@ -172,6 +172,80 @@ variable "client_lists_pragmabypass" {
   default     = []
 }
 
+variable "client_list_entries" {
+  type = object({
+    ipblock = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+
+    ipblock_exceptions = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+
+    geoblock = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+
+    asnblock = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+
+    securitybypass = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+
+    rcbypass = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+
+    pragmabypass = optional(list(object({
+      value       = string
+      description = optional(string, "")
+      tags        = optional(list(string), [])
+    })), [])
+  })
+
+  default = {}
+}
+
+variable "client_list_activation_networks" {
+  description = "Networks where client list activation is enabled."
+  type        = list(string)
+  default     = []
+
+  validation {
+    condition = alltrue([
+      for network in var.client_list_activation_networks :
+      contains(["STAGING", "PRODUCTION"], network)
+    ])
+    error_message = "Allowed values are STAGING and PRODUCTION only."
+  }
+}
+
+variable "client_list_version_notes" {
+  description = "Client list version notes."
+  type        = string
+  default     = "Initial Config"
+}
+
+variable "client_list_emails" {
+  description = "List of emails for notifications for client list activation"
+  type        = list(string)
+  default     = ["noreply@akamai.com"]
+}
+
 # -------------------------------------------------
 # Policy Defaults
 # -------------------------------------------------

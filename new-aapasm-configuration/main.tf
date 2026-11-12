@@ -3,7 +3,7 @@
  *
  * This template creates a complete Akamai security configuration, consisting of:
  *
- * * **Client Lists** (optional) — IP block, geo block, ASN block and security bypass lists. You can also reuse existing lists by providing their IDs.
+ * * **Client Lists** (optional) — IP block, IP block exceptions, geo block, ASN block and the security, rate control and pragma bypass lists, with optional entries and activation on staging and/or production. You can also reuse existing lists by providing their IDs.
  * * **Security Configuration** — the container for all policies, plus the config-level resources (advanced settings, rate policies, client reputation profiles).
  * * **Security Policies** — one or **many** policies, each protecting its own hostnames with independently configurable protection actions (WAF, DoS, Client Reputation, Bot Manager).
  * * **Activation** — pushes the configuration to the Akamai staging and/or production networks.
@@ -71,6 +71,37 @@
  * * Hostnames must be lowercase and should not overlap between policies.
  * * The security configuration automatically covers the union of all policy hostnames.
  *
+ * ### Client lists (optional)
+ *
+ * With `create_client_lists = true`, the template creates seven client lists and can fill and activate them. In your `tfvars` file:
+ *
+ * 1. Add entries per list in `client_list_entries`. Each entry needs a `value`. `description` and `tags` are optional.
+ * 2. Choose where to activate the lists in `client_list_activation_networks`: `["STAGING"]`, `["PRODUCTION"]` or both. Leave it empty (`[]`) to save without activating.
+ * 3. Optionally set `client_list_version_notes` and `client_list_emails` for the activation comments and notifications.
+ *
+ * ```hcl
+ * client_list_activation_networks = ["STAGING"]
+ *
+ * client_list_entries = {
+ *   ipblock = [
+ *     { value = "203.0.113.10", description = "Known bad actor", tags = ["abuse"] }
+ *   ]
+ *   geoblock = [
+ *     { value = "XX" }
+ *   ]
+ * }
+ * ```
+ *
+ * To reuse existing lists instead, set `create_client_lists = false` and provide their IDs in the `client_lists_*` variables. The `client_list_*` inputs are ignored in that case.
+ *
+ * Keep in mind:
+ *
+ * * `client_list_entries` is the **complete desired content** of each list. Entries you remove from the file are removed from the list.
+ * * The activation networks apply to **all** seven lists. Removing a network from `client_list_activation_networks` deactivates the lists there.
+ * * Client list activation is independent of `-ActivateStaging` and `-ActivateProduction`. Those flags only activate the security configuration.
+ * * Changing only the entries of an already-activated list updates the list but does not re-activate it. Re-activate the lists manually or via the Akamai Control Center for the change to take effect on the network. This is a known limitation of the current module.
+ * * Switching `create_client_lists` from `true` to `false` removes the lists from Terraform and can destroy them. Review the plan with `-Dry` first.
+ *
  * ### Step 4 — Deploy
  *
  * Run the deployment script `../deploy.ps1`. This script is written in PowerShell and acts as an orchestrator for Terraform. It performs the individual save and activation actions and handles the multi-environment directories and state files.
@@ -137,6 +168,11 @@ module "client-lists" {
   config_name         = var.config_name
   contract_id         = trimprefix(data.akamai_contract.contract.id, "ctr_")
   group_id            = trimprefix(data.akamai_contract.contract.group_id, "grp_")
+
+  client_list_entries = var.client_list_entries
+  activation_networks = var.client_list_activation_networks
+  version_notes       = var.client_list_version_notes
+  notification_emails = var.client_list_emails
 }
 
 # -------------------------------------------------
