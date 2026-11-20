@@ -56,10 +56,4 @@ lib/**/.cache/
 *.pem
 dom_challenges.txt
 dom_search_results.txt
-dom_validation_entries.txt.terraform/
-*.tfstate
-*.tfstate.*
-*.tfplan
-*.plan
-.DS_Store
-*.tfvars
+dom_validation_entries.txt

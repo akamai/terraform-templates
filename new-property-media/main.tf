@@ -47,19 +47,40 @@
  *  #### Notification Email
  *  `emails         = ["<Your Email ID>"]`
  *
- * Select the edge-hostname mode and matching TLS settings:
+ *  #### Edge hostname mode and TLS settings
+ *  Select `edge_hostname_type` and the matching `etls` value:
  *
- * - `SBD`: `etls=true` uses edgekey.net; `etls=false` uses edgesuite.net.
- * - `EDGESUITE`: Standard TLS; requires `etls=false`.
- * - `EDGEKEY`: Enhanced TLS; requires `etls=true` and `certificate_id`.
- * - `AKAMAIZED_HOSTNAME`: Shared certificate; provide only the hostname label. The pre-activation Domain Ownership check is skipped for this mode.
+ *  - `SBD`: Secure By Default. With `etls = true`, Akamai provisions the `edgekey.net` hostname automatically. With `etls = false`, Terraform creates an `edgesuite.net` hostname.
+ *  - `EDGESUITE`: Creates a Standard TLS `edgesuite.net` edge hostname; requires `etls = false`.
+ *  - `EDGEKEY`: Creates an Enhanced TLS `edgekey.net` edge hostname; requires `etls = true` and `certificate_id`.
+ *  - `AKAMAIZED_HOSTNAME`: Creates an `akamaized.net` Shared Cert edge hostname. Supply only the label in `hostnames`; do not include the suffix.
+ *
+ *  `etls` controls the AMD default rule's secure-delivery setting. The edge-hostname network is selected by `edge_hostname_type` and, for SBD, by `etls`.
  *
  *  #### AMD-specific behaviors
  *  Set `segmented_media_optimization_behavior` to `LIVE` for live streams or `ON_DEMAND` for video on demand.
- *  Use `additional_origins` for hostname- or path-based origin routing.
+ *
+ *  #### Additional origins
+ *  Set `additional_origins` to a map when requests need to route to origins other than `default_origin`. Each entry requires `origin_name`, `forward_host_header`, `hostname_match`, and `path_match`. Either match list may be `null`; at least one must be non-empty to identify the requests for that origin. An empty map keeps all requests on `default_origin`.
+ *
+ *  ```hcl
+ *  additional_origins = {
+ *    api = {
+ *      origin_name         = "api-origin.example.com"
+ *      forward_host_header = "REQUEST_HOST_HEADER"
+ *      hostname_match      = ["api.example.com"]
+ *      path_match          = ["/api/*"]
+ *    }
+ *  }
+ *  ```
+ *
+ *  #### Debugging
+ *  Enhanced debug is disabled by default. Set `enable_debug = true` to enable it. Leave `debug_key = null` for a stable auto-generated key, or supply a 64-character hexadecimal value to pin one.
  *
  *  ### Step 3: Run Terraform
  *  Run the deployment script `../deploy.ps1`. This script is written in PowerShell and acts as an orchestrator for Terraform. It allows to perform individual save and activation actions, it handles the multi-environment directory and files to avoid overwriting the state file. A debug/log mode can also be enabled.
+ *
+ *  This template is registered under the `pm-media` template key and reuses the same PowerShell handler as `pm` (`lib/templates/PropertyManager.psm1`). Web-only product-ID checks (`secure_by_default`, `enable_mPulse`) are skipped automatically.
  *
  * A common flow is as follows (with "prod" as the environment):
  * 1. Save the changes only (no activations) using the pm-media template:
@@ -80,10 +101,16 @@
  * Options:
  * * Add the `-Debug` option to the command to log all the Terraform actions in a file stored in the specific environment directory.
  * * Add the `-Dry` option to the command to do a dry-run (nothing is applied).
+ * * Add the `-Force` option to skip the drift-detection prompt.
  * * You can delete all the resources when you don't need them. Keep in mind some resource can't be deleted in which cases the `terraform destroy` operation will fail as a consequence.
  *     ```bash
  *     PS> .\deploy.ps1 pm-media -Env dev -Destroy
  *     ```
+ *
+ * Notes:
+ * * Before any activation, the script verifies Domain Ownership (DOM) validation for every hostname. This check is skipped when `edge_hostname_type = "AKAMAIZED_HOSTNAME"`, because those hostnames are on Akamai's shared `akamaized.net` domain.
+ * * Keep `activate_to_staging` and `activate_to_production` false in the tfvars; the deployment script supplies the activation flags.
+ * * `activation_to_staging_exists` and `activation_to_production_exists` preserve existing activations during refreshes. Do not change them manually.
  */
 
 module "property" {
