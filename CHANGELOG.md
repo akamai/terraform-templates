@@ -1,3 +1,96 @@
+# [2.4.0](https://github.com/akamai/terraform-templates/compare/v2.3.0...v2.4.0) (2026-11-12)
+
+
+### Bug Fixes
+
+* check for git projects before downloading ([92a2020](https://github.com/akamai/terraform-templates/commit/92a202096a77ad0e3b421ea6b0b398f51be5a4e6))
+* read-write strict match for certain API endpoints ([d52d58a](https://github.com/akamai/terraform-templates/commit/d52d58a8b32a696a1c0d2c92c50d2be8153d2f18))
+
+
+### Features
+
+* Added api definition and hapi endpoints to cred checker ([f487859](https://github.com/akamai/terraform-templates/commit/f4878599cd5557bb40c581f3493ab9a74d443b99))
+* Akamai requirede API credentials checker ([0d975e4](https://github.com/akamai/terraform-templates/commit/0d975e41acbc0d41f18c4332e31786cd7a1137a3))
+* Credential checker support for edgerc and section ([5dce243](https://github.com/akamai/terraform-templates/commit/5dce2431ee76bb40e2d15c4959a369e71cb11d3d))
+
+
+
+# [2.3.0](https://github.com/akamai/terraform-templates/compare/v2.2.0...v2.3.0) (2026-09-29)
+
+
+### Features
+
+* Adding tests for AAP ([d48ff2d](https://github.com/akamai/terraform-templates/commit/d48ff2d4429e2bb7f01e8e88b92bc90c80c7db1a))
+* Adding tests for AAPASM ([28d39b9](https://github.com/akamai/terraform-templates/commit/28d39b94e0c39edce26d2d4e7806333b7de136b2))
+* auto-approve tf destroy for AAP AAPAS PM ([cc61acb](https://github.com/akamai/terraform-templates/commit/cc61acb166c779c8a319093f9c2bfd1d1cbf3d2a))
+* Automated tests. Initial test for EDNS ([412e507](https://github.com/akamai/terraform-templates/commit/412e5071072c2fd6f36a2bc9c6c8b79e034e0b43))
+* delete AAP remote tfstate because destroy is not possible ([ca538d0](https://github.com/akamai/terraform-templates/commit/ca538d02cb14b789f4c665c120e8e50bcc948f61))
+* fix for tfvars name for edns template ([8753bcd](https://github.com/akamai/terraform-templates/commit/8753bcd83e7178dbcf34b459cb0eb5333d160654))
+* force Powershell modules installation ([d0da8d7](https://github.com/akamai/terraform-templates/commit/d0da8d77e91b8160bc6d4dfd345e704310f5f1dc))
+* install Powershell Akamai.Contracts ([2918d7f](https://github.com/akamai/terraform-templates/commit/2918d7fa501c5105493eb3306ab60f3d01eb6b92))
+* remove -Dry from deploy/destroy ([71e29b3](https://github.com/akamai/terraform-templates/commit/71e29b3afaa7c906f40a27587867e7e188a8813e))
+* rename of remote tf state file ([994eefe](https://github.com/akamai/terraform-templates/commit/994eefe863800fa6bc1fcea43cc34b75fb2a42a2))
+* rename of remote tf state file -- fix ([3df1b4a](https://github.com/akamai/terraform-templates/commit/3df1b4a6725769379c1cfbad6cb68908f36f15f3))
+* support test for PM template ([1eee687](https://github.com/akamai/terraform-templates/commit/1eee687a33d116bc3ced16785715aca010dab948))
+* support test for PM template again ([fa328fc](https://github.com/akamai/terraform-templates/commit/fa328fc4f6051eee47fb7af07048413efaa8dab7))
+* testing for bmp phase 1 template ([0f19025](https://github.com/akamai/terraform-templates/commit/0f190254ea0066845f78574110baffac492e7a57))
+* testing for bmp phase 1 template - uploading api defs ([7db34a8](https://github.com/akamai/terraform-templates/commit/7db34a836f33ce84478d1a19b8bc7aa4d89d2dc9))
+* testing for ds2 template ([6bf163c](https://github.com/akamai/terraform-templates/commit/6bf163c3dd42d0906cf9678fa785a7115b1512d9))
+* Use of -Environment instead of alias -Env ([f209005](https://github.com/akamai/terraform-templates/commit/f209005935338696cd534a330791c80f6d06a803))
+* Use of -Environment instead of alias -Env again ([2751237](https://github.com/akamai/terraform-templates/commit/2751237d094fad507cec4540543fd92821ae7aa1))
+* use of powershell hashtables for CLI arguments ([4a91a89](https://github.com/akamai/terraform-templates/commit/4a91a895f72e360e290a05d34cd25c7d8be97a40))
+
+
+
+# [2.2.0](https://github.com/akamai/terraform-templates/compare/v2.1.0...v2.2.0) (2026-09-17)
+
+
+### Features
+
+* API Call Rate Summary ([734c40f](https://github.com/akamai/terraform-templates/commit/734c40fef765dd1a104db76ea32c8d499e2a53de))
+* Updated with API call summary and log rotation ([c9a9795](https://github.com/akamai/terraform-templates/commit/c9a97954a287221d1b1a3d760c30e8ab3235f12f))
+
+
+
+# [2.1.0](https://github.com/akamai/terraform-templates/compare/v2.0.0...v2.1.0) (2026-09-09)
+
+
+### Features
+
+* **dom:** fixing wildcard to accept any levels and also made * prefix optional for wildcard ([b87c41f](https://github.com/akamai/terraform-templates/commit/b87c41fc55c39a4f63fd8f52d2f78bac7c3d6548))
+* **dom:** formatting main.tf ([5462d7e](https://github.com/akamai/terraform-templates/commit/5462d7ee62bb32af35d6c51dcc920a766a6914ba))
+* **dom:** updating dom template with new changes ([82366fd](https://github.com/akamai/terraform-templates/commit/82366fd2a5674ea6cb3663f05f1a7963de165330))
+
+
+
+# [2.0.0](https://github.com/akamai/terraform-templates/compare/v1.5.0...v2.0.0) (2026-09-02)
+
+
+### Features
+
+* **aapasm:** add multi-policy support with policy_defaults and policies map ([0860522](https://github.com/akamai/terraform-templates/commit/0860522ec29d1964bdca179544d1dd492237cdc3))
+
+
+### BREAKING CHANGES
+
+* **aapasm:** the aapasm template is incompatible with v1.x on every
+surface. To upgrade, users must:
+1. Rewrite tfvars: the ~80 flat policy variables are replaced by
+   policy_defaults (baseline) plus a policies map; each policy requires
+   policy_name, policy_prefix (4 uppercase alphanumerics, unique) and
+   hostnames. Follow the new *.tfvars.dist examples.
+2. Update output references: security_policy_id is now security_policy_ids,
+   a map keyed by policy name.
+3. Migrate existing Terraform state: resource addresses moved from
+   module.security / module.client-reputation / module.bot-manager to
+   module.security-config and module.security-policy["<key>"]. Without
+   state migration, terraform will plan a destroy and recreate of the
+   security configuration.
+The old aap-asm/security, client-reputation and bot-manager modules were
+removed from terraform-templates-modules in v2.0.0.
+
+
+
 # [1.5.0](https://github.com/akamai/terraform-templates/compare/v1.4.0...v1.5.0) (2026-07-15)
 
 

@@ -16,6 +16,7 @@ BeforeAll {
     Import-Module "$PSScriptRoot/../lib/core/TerraformRunner.psm1" -Force
     Import-Module "$PSScriptRoot/../lib/core/Validation.psm1" -Force
     Import-Module "$PSScriptRoot/../lib/core/Logger.psm1" -Force
+    Import-Module "$PSScriptRoot/../lib/core/CredentialsCheck.psm1" -Force
 
     # Path used by CLI parameter-validation tests
     $Script:DeployScript = Join-Path $PSScriptRoot "../deploy.ps1"
@@ -36,6 +37,15 @@ Describe "Core Modules - Module Loading" {
         It "Should have Logger module" {
             $modulePath = "$PSScriptRoot/../lib/core/Logger.psm1"
             Test-Path $modulePath | Should -Be $true
+        }
+
+        It "Should have CredentialsCheck module" {
+            $modulePath = "$PSScriptRoot/../lib/core/CredentialsCheck.psm1"
+            Test-Path $modulePath | Should -Be $true
+        }
+
+        It "CredentialsCheck module exports Invoke-CredentialsCheck" {
+            Get-Command Invoke-CredentialsCheck -ErrorAction SilentlyContinue | Should -Not -BeNullOrEmpty
         }
     }
 }
