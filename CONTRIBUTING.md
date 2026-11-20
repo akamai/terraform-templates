@@ -106,7 +106,7 @@ This repository uses a **modular PowerShell architecture** to manage Terraform d
   - `DOM.ps1` - Domain Ownership Management handler
   - `EDNS.psm` - Edge DNS handler
   - `DS2.psm1` - DataStream 2 configuration handler
-  - `PropertyManager.psm1` - Property Manager configuration handler
+  - `PropertyManager.psm1` - Property Manager configuration handler (serves both `pm` → `new-property` and `pm-media` → `new-property-media`)
 
 - **`deploy.ps1`** - Main orchestration script
   - Maps template types to handlers via hashtables
@@ -138,7 +138,7 @@ terraform-templates/
 │       ├── DOM.psm1              # Domain Ownership Manager handler
 │       ├── EDNS.psm1             # Edge DNS handler
 │       ├── DS2.psm1              # DataStream 2 handler
-│       └── PropertyManager.psm1  # Property Manager handler
+│       └── PropertyManager.psm1  # Property Manager handler (pm + pm-media)
 ├── tests/
 │   ├── deploy.Tests.ps1          # Deploy script tests
 │   └── pester.config.ps1         # Pester Module configuration settings
@@ -149,7 +149,8 @@ terraform-templates/
 ├── new-dom/                      # Domain Ownership Manager template files
 ├── new-ds2/                      # DataStream 2 template files
 ├── new-edns/                     # Edge DNS template files
-└── new-property/                 # Property Manager template files
+├── new-property/                 # Property Manager template files (web delivery)
+└── new-property-media/           # Property Manager template files (Adaptive Media Delivery)
 ```
 
 ## Development Workflow
@@ -557,7 +558,8 @@ git commit -m "feat: require PowerShell 7+" -m "BREAKING CHANGE: PowerShell 5.1 
 Use scopes to indicate which template is affected:
 - `(aap)` - App & API Protector template
 - `(aapasm)` - AAP+ASM template  
-- `(pm)` - Property Manager template
+- `(pm)` - Property Manager template (web delivery, `new-property`)
+- `(pm-media)` - Property Manager template (Adaptive Media Delivery, `new-property-media`)
 - `(deploy)` - deploy.ps1 script
 - `(ci)` - CI/CD workflows
 - `(docs)`: Documentation
@@ -719,6 +721,7 @@ PS> .\deploy.ps1 <template> -Env dev -Save -Dry
 PS> .\deploy.ps1 aap -Env dev -Save -Dry
 PS> .\deploy.ps1 aapasm -Env qa -Save -Dry
 PS> .\deploy.ps1 pm -Env dev -Save -Dry
+PS> .\deploy.ps1 pm-media -Env dev -Save -Dry
 ```
 
 ### Debug Mode

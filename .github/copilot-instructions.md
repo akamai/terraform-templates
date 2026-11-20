@@ -77,7 +77,8 @@ The `deploy.ps1` script provides critical orchestration that cannot be achieved 
 The `-TemplateType` parameter maps to directory names:
 - `aap` → `new-aap-configuration/`
 - `aapasm` → `new-aapasm-configuration/`
-- `pm` → `new-property/`
+- `pm` → `new-property/` (web delivery)
+- `pm-media` → `new-property-media/` (Adaptive Media Delivery; reuses the `PropertyManager` handler)
 - `cps` → `new-dv-san-cert/` or `new-third-party-cert/` (determined by `-CpsType dv-san-cert|third-party-cert`)
 - `bmp` → `new-bmp-endpoints/`
 - `edns` → `new-edns/`

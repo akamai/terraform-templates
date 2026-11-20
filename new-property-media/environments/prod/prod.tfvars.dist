@@ -1,0 +1,61 @@
+## ----------------------------------------------------------------------------
+## EdgeGrid Variables
+## ----------------------------------------------------------------------------
+edgerc_path    = "<path-to-edgerc>"
+edgerc_section = "<prod-edgerc-section>"
+
+## ----------------------------------------------------------------------------
+## Scope
+## ----------------------------------------------------------------------------
+contract_id = "<prod-contract-id>"
+group_id    = "<prod-group-id>"
+
+## ----------------------------------------------------------------------------
+## Configuration settings | Property
+## ----------------------------------------------------------------------------
+product_id    = "prd_Adaptive_Media_Delivery"
+name          = "amd-prod-property"
+version_notes = "AMD production configuration"
+
+# Select the edge-hostname mode and matching TLS profile.
+# EDGEKEY (Enhanced TLS) requires etls=true; EDGESUITE (Standard TLS) requires etls=false.
+# For AKAMAIZED_HOSTNAME (Shared Cert hostname), set etls=false
+# and provide only the label without .akamaized.net.
+# SBD uses edgekey.net with etls=true and edgesuite.net with etls=false.
+etls               = false
+hostnames          = ["prod-media.example.com"]
+edge_hostname_type = "EDGESUITE"
+
+# Required for EDGEKEY; use the CPS certificate enrollment ID.
+certificate_id = null
+
+# Valid values: IPV4 or IPV6_COMPLIANCE (dual-stack).
+ip_behavior = "IPV6_COMPLIANCE"
+
+# Valid values: REQUEST_HOST_HEADER, ORIGIN_HOSTNAME, or a custom hostname.
+default_origin      = "prod-origin.example.com"
+forward_host_header = "REQUEST_HOST_HEADER"
+
+# Optional origins selected by hostname or path. Leave empty to use default_origin.
+# Each entry requires origin_name, forward_host_header, and hostname_match or path_match.
+additional_origins = {}
+
+# Reuse an existing CP code name or provide a new name to create one.
+cpcode_name = "amd-prod-cpcode"
+
+## ----------------------------------------------------------------------------
+## AMD behaviors
+## ----------------------------------------------------------------------------
+# Media optimization mode. Use LIVE for live streams or ON_DEMAND for Video on Demand (VOD).
+segmented_media_optimization_behavior = "ON_DEMAND"
+
+# Enhanced debug is disabled by default; set enable_debug=true to enable it.
+# Leave debug_key = null for a generated stable key, or provide a 64-character hexadecimal key.
+enable_debug = false
+debug_key    = null
+
+## ----------------------------------------------------------------------------
+## Activation
+## ----------------------------------------------------------------------------
+emails           = ["<prod-notification-email>"]
+activation_notes = "Activated via Terraform"

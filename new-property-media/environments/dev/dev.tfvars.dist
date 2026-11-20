@@ -1,0 +1,83 @@
+## ----------------------------------------------------------------------------
+## EdgeGrid Variables
+## ----------------------------------------------------------------------------
+edgerc_path    = "~/.edgerc"
+edgerc_section = "default"
+
+## ----------------------------------------------------------------------------
+## Scope
+## ----------------------------------------------------------------------------
+contract_id = "ctr_contactID"
+group_id    = "grp_groupID"
+
+## ----------------------------------------------------------------------------
+## Configuration settings | Property
+## ----------------------------------------------------------------------------
+product_id    = "prd_Adaptive_Media_Delivery"
+name          = "amd-dev"
+version_notes = "AMD development configuration"
+
+# SBD + etls=true   -> edgekey.net / Enhanced TLS profile
+# SBD + etls=false  -> edgesuite.net / Standard TLS profile
+# EDGESUITE         -> edgesuite.net / Standard TLS profile / etls=false
+# EDGEKEY           -> edgekey.net / Enhanced TLS profile / etls=true
+# AKAMAIZED_HOSTNAME -> akamaized.net Shared Cert EHN; set etls=false
+# For AKAMAIZED_HOSTNAME, provide only the label and omit .akamaized.net.
+edge_hostname_type = "SBD"
+certificate_id     = null
+ip_behavior        = "IPV4"
+etls               = true
+
+hostnames = ["dev-media.example.com"]
+
+default_origin      = "dev-origin.example.com"
+forward_host_header = "REQUEST_HOST_HEADER"
+additional_origins  = {}
+cpcode_name = "cpcode_name_dev"
+
+## ----------------------------------------------------------------------------
+## AMD behaviors
+## ----------------------------------------------------------------------------
+segmented_media_optimization_behavior = "ON_DEMAND"
+origin_authentication_method          = "AUTOMATIC"
+origin_country                        = "UNKNOWN"
+client_country                        = "UNKNOWN"
+
+content_catalog_size            = "UNKNOWN"
+content_type                    = "HD"
+content_popularity_distribution = "UNKNOWN"
+enable_dash                     = true
+enable_hds                      = true
+enable_hls                      = true
+enable_smooth                   = true
+segment_duration_dash           = "SEGMENT_DURATION_6S"
+segment_duration_hds            = "SEGMENT_DURATION_6S"
+segment_duration_hls            = "SEGMENT_DURATION_10S"
+segment_duration_smooth         = "SEGMENT_DURATION_2S"
+
+cache_key_query_params_behavior        = "IGNORE_ALL"
+enable_dynamic_throughput_optimization = true
+enable_http3                           = true
+
+# Enhanced debug is disabled by default; set enable_debug=true to enable it.
+# Leave debug_key = null for a generated stable key, or provide a 64-character hexadecimal key.
+enable_debug = false
+debug_key    = null
+
+## ----------------------------------------------------------------------------
+## Activation
+## ----------------------------------------------------------------------------
+emails                 = ["emails for notifications"]
+activate_to_staging    = false
+activate_to_production = false
+
+# Only required when activate_to_production = true. See main.tf docstring /
+# module README for the noncompliance_reason -> required-fields mapping.
+noncompliance_reason       = []
+ticket_id                  = null
+other_noncompliance_reason = null
+peer_reviewed_by           = null
+customer_email             = null
+unit_tested                = null
+
+activation_notes = "Activated via Terraform"

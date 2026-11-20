@@ -121,7 +121,7 @@ The test suite is organized into the following sections:
 ### 4. **Product ID Validation Tests**
 - AAP product ID validation
 - AAPASM product ID validation
-- PM (Property Manager) product ID validation
+- PM (Property Manager) product ID validation (web / `new-property` only; skipped for `pm-media` / `new-property-media`)
 
 ### 5. **Feature Tests**
 - Retry mechanism logic

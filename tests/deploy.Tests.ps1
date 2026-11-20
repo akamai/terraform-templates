@@ -231,6 +231,49 @@ Describe "Template Modules - Param Policy Contract" {
     }
 }
 
+Describe "PropertyManager - Domain Ownership check before activation" {
+    BeforeAll {
+        Import-Module "$PSScriptRoot/../lib/templates/PropertyManager.psm1" -Force
+
+        function New-ActivationTemplate {
+            param([string[]]$TfVarsLines)
+
+            $envDir = Join-Path $TestDrive "tmpl/environments/t"
+            New-Item -ItemType Directory -Path $envDir -Force | Out-Null
+            Set-Content -Path (Join-Path $envDir "t.tfvars") -Value (@('hostnames = ["label-only"]') + $TfVarsLines)
+
+            $template = New-PropertyManagerTemplate -Environment "t" -TemplateFolder "tmpl"
+            $template.DeployParams = @{ ActivateStaging = $true }
+            return $template
+        }
+    }
+
+    BeforeEach {
+        Mock Test-DomainOwnership -ModuleName PropertyManager { }
+        Push-Location $TestDrive
+    }
+
+    AfterEach {
+        Pop-Location
+    }
+
+    It "Skips the check when edge_hostname_type is AKAMAIZED_HOSTNAME" {
+        (New-ActivationTemplate 'edge_hostname_type = "AKAMAIZED_HOSTNAME"').ValidatePrerequisites()
+        Should -Invoke Test-DomainOwnership -ModuleName PropertyManager -Times 0 -Exactly
+    }
+
+    It "Runs the check for other edge hostname types" {
+        (New-ActivationTemplate 'edge_hostname_type = "EDGESUITE"').ValidatePrerequisites()
+        Should -Invoke Test-DomainOwnership -ModuleName PropertyManager -Times 1 -Exactly
+    }
+
+    It "Runs the check when the AKAMAIZED_HOSTNAME assignment is commented out" {
+        $lines = '# edge_hostname_type = "AKAMAIZED_HOSTNAME"', 'edge_hostname_type = "EDGEKEY"'
+        (New-ActivationTemplate $lines).ValidatePrerequisites()
+        Should -Invoke Test-DomainOwnership -ModuleName PropertyManager -Times 1 -Exactly
+    }
+}
+
 Describe "Validation Module - Assert-TemplateParameters Function" {
 
     Context "Allowed parameter checking" {
@@ -760,6 +803,57 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         }
     }
 
+    Context "Property Manager - Media (pm-media) parameter validation" {
+        It "Should reject the old media command key" {
+            $r = Invoke-Deploy @("media", "-Env", "dev", "-Save")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "ValidateSet"
+        }
+
+        It "Should fail without -Env parameter" {
+            $r = Invoke-Deploy @("pm-media")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Environment parameter required"
+        }
+
+        It "Should fail without an action parameter" {
+            $r = Invoke-Deploy @("pm-media", "-Env", "dev")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Please specify at least one parameter"
+        }
+
+        It "Should fail when -Save and -ActivateStaging are combined" {
+            $r = Invoke-Deploy @("pm-media", "-Env", "dev", "-Save", "-ActivateStaging")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should fail when -Save and -ActivateProduction are combined" {
+            $r = Invoke-Deploy @("pm-media", "-Env", "dev", "-Save", "-ActivateProduction")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "One or more parameters issued cannot be used together"
+        }
+
+        It "Should fail when CPS parameters are passed" {
+            $r = Invoke-Deploy @("pm-media", "-Env", "dev", "-Save", "-CpsType", "dv-san-cert")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-CpsType' is not applicable for the 'pm-media' template"
+        }
+
+        It "Should fail when EDNS parameters are passed" {
+            $r = Invoke-Deploy @("pm-media", "-Env", "dev", "-Save", "-ZoneType", "primary")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-ZoneType' is not applicable for the 'pm-media' template"
+        }
+
+        It "Should fail when BMP parameters are passed" {
+            # -SaveApi without -Save avoids a PowerShell param-set conflict
+            $r = Invoke-Deploy @("pm-media", "-Env", "dev", "-SaveApi")
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "Parameter '-SaveApi' is not applicable for the 'pm-media' template"
+        }
+    }
+
     Context "BMP (bmp) parameter validation" {
         It "Should fail without -Env parameter" {
             $r = Invoke-Deploy @("bmp")
@@ -1197,6 +1291,12 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
             $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
         }
 
+        It "PM-Media -Destroy: should exit non-zero with cancellation message when user enters 'no'" {
+            $r = Invoke-DeployWithInput -Arguments @("pm-media", "-Env", "nonexistent", "-Destroy") -StdinInput "no"
+            $r.ExitCode | Should -Not -Be 0
+            $r.Output | Should -Match "WARNING: You are about to DESTROY the following resource!"
+        }
+
         It "CPS -DestroyCert: should exit non-zero with cancellation message when user enters 'no'" {
             $r = Invoke-DeployWithInput -Arguments @("cps", "-CpsType", "dv-san-cert", "-DestroyCert", "cert1") -StdinInput "no"
             $r.ExitCode | Should -Not -Be 0
@@ -1222,5 +1322,3 @@ Describe "deploy.ps1 - CLI Parameter Validation" {
         }
     }
 }
-
-

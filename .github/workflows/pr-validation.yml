@@ -82,6 +82,12 @@ jobs:
           terraform init -backend=false
           terraform validate
 
+      - name: Terraform Validate - Property (Media)
+        working-directory: ./new-property-media
+        run: |
+          terraform init -backend=false
+          terraform validate
+
       - name: Terraform Validate - CPS - Third Party Cert
         working-directory: ./new-third-party-cert
         run: |
@@ -128,6 +134,10 @@ jobs:
 
       - name: Run TFLint - Property
         working-directory: ./new-property
+        run: tflint --recursive
+
+      - name: Run TFLint - Property (Media)
+        working-directory: ./new-property-media
         run: tflint --recursive
 
       - name: Run TFLint - CPS - Third Party Cert

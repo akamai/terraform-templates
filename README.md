@@ -40,7 +40,22 @@ ps-terraform-templates/
 │   ├── variables.tf
 │   └── README.md
 ├── new-aapasm-configuration/       # AAP+ASM security template
-├── new-property/                   # Delivery configuration template
+├── new-property/                   # Delivery configuration template (web)
+│   ├── environments/               # Support for multiple environments
+│   │   ├── dev/
+│   │   ├── qa/
+│   │   └── prod/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── README.md
+├── new-property-media/             # Delivery configuration template (Adaptive Media Delivery)
+│   ├── environments/               # Support for multiple environments
+│   │   ├── dev/
+│   │   ├── qa/
+│   │   └── prod/
+│   ├── main.tf
+│   ├── variables.tf
+│   └── README.md
 ├── new-bmp-endpoints/              # Bot Manager Premier template
 │   ├── environments/               # Support for multiple environments
 │   │   ├── dev/
@@ -160,6 +175,11 @@ Delivery configuration templates for:
 - ION Standard (product_id: Fresca)
 - ION Premier (product_id: SPM)
 
+### 🎬 new-property-media
+Delivery configuration template for media workloads:
+- Adaptive Media Delivery (product_id: Adaptive_Media_Delivery)
+- Same activation workflow as `new-property`, with a media-oriented rule tree and edge-hostname options (SBD / EDGESUITE / EDGEKEY / AKAMAIZED_HOSTNAME)
+
 ### 🔑 new-dv-san-cert
 Certificate Provisioning System for:
 - DV San Certificate
@@ -203,6 +223,7 @@ The `deploy.ps1` script automates the entire deployment lifecycle with built-in 
 | `aap` | `new-aap-configuration` | `-Env` | `-Save`, `-ActivateStaging`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType` | |
 | `aapasm` | `new-aapasm-configuration` | `-Env` | same as `aap` | same as `aap` | |
 | `pm` | `new-property` | `-Env` | same as `aap` | same as `aap` | |
+| `pm-media` | `new-property-media` | `-Env` | same as `aap` | same as `aap` | Adaptive Media Delivery |
 | `ds2` | `new-ds2` | `-Env` | `-Save`, `-ActivateProduction`, `-Destroy` | `-Notes`, `-Dry`, `-Debug`, `-SkipDriftDetection`, `-BackendType` | No `-ActivateStaging` |
 | `edns` | `new-edns` | `-Env`, `-ZoneType` | `-Save`, `-Destroy` | `-Dry`, `-Debug`, `-BackendType` | `-SkipDriftDetection`/drift-prompt is effectively always skipped internally |
 | `bmp` | `new-bmp-endpoints` | `-Env` | Phase 1: `-SaveApi` or `-ActivateStagingApi`/`-ActivateProductionApi` (combinable); Phase 2: `-SaveSec` or `-ActivateStagingSec`/`-ActivateProductionSec` (combinable); or `-Destroy` | `-Notes`, `-Dry`, `Debug`,  `-SkipProductValidation`, `-SkipDriftDetection`, `-BackendType` | Phase 2 requires Phase 1 activated first |
@@ -258,11 +279,11 @@ Action needed:
 
 = @("Environment", "Save", "ActivateProduction", "Destroy", "VersionNotes", "Dry", "BackendType")
 
-#### Security and Delivery Templates (AAP, AAP+ASM, PM)
+#### Security and Delivery Templates (AAP, AAP+ASM, PM, PM-Media)
 
 | Parameter | Description |
 |-----------|-------------|
-| First Argument | Template to deploy: `aap`, `aapasm`, or `pm` |
+| First Argument | Template to deploy: `aap`, `aapasm`, `pm` (web delivery, `new-property`), or `pm-media` (Adaptive Media Delivery, `new-property-media`) |
 | `-Env` | Target environment: `dev`, `qa`, `prod`, etc. |
 | `-Save` | Save configuration without activation |
 | `-ActivateStaging` | Activate to Akamai staging network |
@@ -449,6 +470,20 @@ Locking: for S3-compatible backends without DynamoDB, set `use_lockfile = true` 
 
 # Skip drift-detection prompt
 .\deploy.ps1 aap -Env prod -Save -Force
+
+# --- Property Manager (Media / AMD) ---
+
+# Save an Adaptive Media Delivery property without activation
+.\deploy.ps1 pm-media -Env dev -Save -Notes "Initial AMD config"
+
+# Activate a media property to staging
+.\deploy.ps1 pm-media -Env qa -ActivateStaging
+
+# Activate a media property to production
+.\deploy.ps1 pm-media -Env prod -ActivateProduction -Notes "AMD go-live"
+
+# Destroy a media property
+.\deploy.ps1 pm-media -Env dev -Destroy
 
 # --- CPS (Certificate Provisioning System) ---
 

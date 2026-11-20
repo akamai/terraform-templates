@@ -93,6 +93,15 @@ jobs:
           output-method: inject
           git-push: true
 
+      - name: Generate terraform-docs for Property (Media)
+        uses: terraform-docs/gh-actions@v1.4.1
+        with:
+          working-dir: ./new-property-media
+          config-file: ../.terraform-docs.yaml
+          output-file: README.md
+          output-method: inject
+          git-push: true
+
       - name: Generate terraform-docs for CPS - Third Party Cert
         uses: terraform-docs/gh-actions@v1.4.1
         with:

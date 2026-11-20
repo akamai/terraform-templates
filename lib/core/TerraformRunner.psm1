@@ -161,23 +161,18 @@ function Invoke-TerraformPlan {
         [Parameter(Mandatory = $true)]
         [string]$OutFile
     )
-    
-    # Build variable arguments
-    $varArgs = @()
+
+    # -var-file first so per-run -var entries below override tfvars values.
+    $varArgs = @("-var-file", $VarFilePath)
+
     foreach ($key in $Variables.Keys) {
-        $value = $Variables[$key]
         $varArgs += "-var"
-        $varArgs += "$key=$value"
+        $varArgs += "$key=$($Variables[$key])"
     }
-    
-    # Add var-file
-    $varArgs += "-var-file"
-    $varArgs += $VarFilePath
-    
-    # Add output file
+
     $varArgs += "-out"
     $varArgs += $OutFile
-    
+
     Write-Host "Running Terraform plan..." -ForegroundColor Cyan
     terraform -chdir="./$TemplateFolder" plan @varArgs | Out-Default
     
@@ -221,19 +216,15 @@ function Invoke-TerraformDestroy {
         [Parameter(Mandatory = $false)]
         [switch]$NoRefresh
     )
-    
-    # Build variable arguments
-    $varArgs = @()
+
+    # -var-file first so per-run -var entries below override tfvars values.
+    $varArgs = @("-var-file", $VarFilePath)
+
     foreach ($key in $Variables.Keys) {
-        $value = $Variables[$key]
         $varArgs += "-var"
-        $varArgs += "$key=$value"
+        $varArgs += "$key=$($Variables[$key])"
     }
-    
-    # Add var-file
-    $varArgs += "-var-file"
-    $varArgs += $VarFilePath
-    
+
     if ($AutoApprove) {
         $varArgs += "-auto-approve"
     }
@@ -297,14 +288,13 @@ function Invoke-TerraformDriftCheck {
         [hashtable]$Variables = @{}
     )
 
-    # Build variable arguments
-    $varArgs = @()
+    # -var-file first so per-run -var entries below override tfvars values.
+    $varArgs = @("-var-file", $VarFilePath)
+
     foreach ($key in $Variables.Keys) {
         $varArgs += "-var"
         $varArgs += "$key=$($Variables[$key])"
     }
-    $varArgs += "-var-file"
-    $varArgs += $VarFilePath
 
     Write-Host "Checking for configuration drift (refresh-only)..." -ForegroundColor Cyan
 
