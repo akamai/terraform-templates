@@ -221,6 +221,49 @@ Describe "Template Modules - Param Policy Contract" {
     }
 }
 
+Describe "PropertyManager - Domain Ownership check before activation" {
+    BeforeAll {
+        Import-Module "$PSScriptRoot/../lib/templates/PropertyManager.psm1" -Force
+
+        function New-ActivationTemplate {
+            param([string[]]$TfVarsLines)
+
+            $envDir = Join-Path $TestDrive "tmpl/environments/t"
+            New-Item -ItemType Directory -Path $envDir -Force | Out-Null
+            Set-Content -Path (Join-Path $envDir "t.tfvars") -Value (@('hostnames = ["label-only"]') + $TfVarsLines)
+
+            $template = New-PropertyManagerTemplate -Environment "t" -TemplateFolder "tmpl"
+            $template.DeployParams = @{ ActivateStaging = $true }
+            return $template
+        }
+    }
+
+    BeforeEach {
+        Mock Test-DomainOwnership -ModuleName PropertyManager { }
+        Push-Location $TestDrive
+    }
+
+    AfterEach {
+        Pop-Location
+    }
+
+    It "Skips the check when edge_hostname_type is AKAMAIZED_HOSTNAME" {
+        (New-ActivationTemplate 'edge_hostname_type = "AKAMAIZED_HOSTNAME"').ValidatePrerequisites()
+        Should -Invoke Test-DomainOwnership -ModuleName PropertyManager -Times 0 -Exactly
+    }
+
+    It "Runs the check for other edge hostname types" {
+        (New-ActivationTemplate 'edge_hostname_type = "EDGESUITE"').ValidatePrerequisites()
+        Should -Invoke Test-DomainOwnership -ModuleName PropertyManager -Times 1 -Exactly
+    }
+
+    It "Runs the check when the AKAMAIZED_HOSTNAME assignment is commented out" {
+        $lines = '# edge_hostname_type = "AKAMAIZED_HOSTNAME"', 'edge_hostname_type = "EDGEKEY"'
+        (New-ActivationTemplate $lines).ValidatePrerequisites()
+        Should -Invoke Test-DomainOwnership -ModuleName PropertyManager -Times 1 -Exactly
+    }
+}
+
 Describe "Validation Module - Assert-TemplateParameters Function" {
 
     Context "Allowed parameter checking" {

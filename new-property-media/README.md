@@ -1,8 +1,8 @@
 # AMD Property Template
 
-This root module deploys an Akamai Adaptive Media Delivery (AMD) property through `../../modules-contribution/delivery-media`.
+This root module deploys an Akamai Adaptive Media Delivery (AMD) property through the `delivery-media` module from [terraform-templates-modules](https://github.com/akamai/terraform-templates-modules), pinned to release `v2.1.0`.
 
-Requires Terraform >= 1.14.0 and Akamai provider ~> 11.1. The local module source is for development; replace it with a pinned Akamai module release before merging.
+Requires Terraform >= 1.14.0 and Akamai provider ~> 11.1.
 
 ## Deployment via `deploy.ps1`
 
@@ -35,6 +35,8 @@ PS> ../deploy.ps1 pm-media -Env dev -Destroy
 ```
 
 > **Note:** `pm-media` reuses the same PowerShell handler as `pm` (`lib/templates/PropertyManager.psm1`). Web-only product-ID checks (`secure_by_default`, `enable_mPulse`) are skipped automatically for the `pm-media` template.
+
+> **Note:** Before any activation, the script verifies Domain Ownership (DOM) validation for every hostname. This check is skipped when `edge_hostname_type = "AKAMAIZED_HOSTNAME"`, because those hostnames are on Akamai's shared `akamaized.net` domain.
 
 ## Workflow
 

@@ -52,7 +52,7 @@
  * - `SBD`: `etls=true` uses edgekey.net; `etls=false` uses edgesuite.net.
  * - `EDGESUITE`: Standard TLS; requires `etls=false`.
  * - `EDGEKEY`: Enhanced TLS; requires `etls=true` and `certificate_id`.
- * - `AKAMAIZED_HOSTNAME`: Shared certificate; provide only the hostname label.
+ * - `AKAMAIZED_HOSTNAME`: Shared certificate; provide only the hostname label. The pre-activation Domain Ownership check is skipped for this mode.
  *
  *  #### AMD-specific behaviors
  *  Set `segmented_media_optimization_behavior` to `LIVE` for live streams or `ON_DEMAND` for video on demand.
@@ -87,7 +87,7 @@
  */
 
 module "property" {
-  source = "../../modules-contribution/delivery-media"
+  source = "git::https://github.com/akamai/terraform-templates-modules.git//delivery-media?ref=v2.1.0"
 
   contract_id   = var.contract_id
   group_id      = var.group_id

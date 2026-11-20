@@ -181,7 +181,16 @@ class PropertyManagerTemplate {
 
         # DOM must be run before the property is activated; fail fast if any hostname is not VALIDATED.
         if ($this.DeployParams.ActivateStaging -or $this.DeployParams.ActivateProduction) {
-            Test-DomainOwnership -TfVarsPath $tfvarsPath
+            # Anchored to the start of a line so a commented-out assignment cannot disable the check.
+            $edgeHostnameType = if ((Get-Content -Path $tfvarsPath -Raw) -match '(?m)^\s*edge_hostname_type\s*=\s*"([^"]+)"') { $matches[1] } else { $null }
+
+            # akamaized.net hostnames sit on Akamai's shared domain, so there is no customer domain to validate.
+            if ($edgeHostnameType -eq "AKAMAIZED_HOSTNAME") {
+                Write-Host "edge_hostname_type is AKAMAIZED_HOSTNAME - skipping Domain Ownership validation" -ForegroundColor Yellow
+            }
+            else {
+                Test-DomainOwnership -TfVarsPath $tfvarsPath
+            }
         }
 
         # The web (new-property) template exposes secure_by_default and enable_mPulse and
