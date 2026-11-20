@@ -104,7 +104,7 @@ variable "edge_hostname_type" {
       (var.edge_hostname_type == "EDGEKEY" && var.etls) ||
       var.edge_hostname_type == "AKAMAIZED_HOSTNAME"
     )
-    error_message = "Use etls=false with EDGESUITE, etls=true with EDGEKEY, and either value with SBD or AKAMAIZED_HOSTNAME."
+    error_message = "Use etls=false with EDGESUITE and etls=true with EDGEKEY. SBD accepts either value. For AKAMAIZED_HOSTNAME, set it to false."
   }
 }
 
@@ -131,7 +131,7 @@ variable "ip_behavior" {
 }
 
 variable "etls" {
-  description = "Security profile selector: SBD uses edgekey.net when true or edgesuite.net when false; EDGEKEY and AKAMAIZED_HOSTNAME require true; EDGESUITE requires false."
+  description = "Security profile selector: SBD uses edgekey.net when true or edgesuite.net when false; EDGEKEY requires true; EDGESUITE requires false. For AKAMAIZED_HOSTNAME, set it to false."
   type        = bool
   default     = true
 }

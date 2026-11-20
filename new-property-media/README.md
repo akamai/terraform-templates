@@ -54,7 +54,7 @@ Please refer to [Terraform Overview](https://techdocs.akamai.com/terraform/docs/
  - `SBD`: Secure By Default. With `etls = true`, Akamai provisions the `edgekey.net` hostname automatically. With `etls = false`, Terraform creates an `edgesuite.net` hostname.
  - `EDGESUITE`: Creates a Standard TLS `edgesuite.net` edge hostname; requires `etls = false`.
  - `EDGEKEY`: Creates an Enhanced TLS `edgekey.net` edge hostname; requires `etls = true` and `certificate_id`.
- - `AKAMAIZED_HOSTNAME`: Creates an `akamaized.net` Shared Cert edge hostname. Supply only the label in `hostnames`; do not include the suffix.
+ - `AKAMAIZED_HOSTNAME`: Creates an `akamaized.net` Shared Cert edge hostname. Supply only the label in `hostnames`; do not include the suffix. Set `etls = false`.
 
  `etls` controls the AMD default rule's secure-delivery setting. The edge-hostname network is selected by `edge_hostname_type` and, for SBD, by `etls`.
 
@@ -239,7 +239,7 @@ No resources.
 | <a name="input_enable_http3"></a> [enable\_http3](#input\_enable\_http3) | Enable HTTP/3 (QUIC) support. | `bool` | `true` | no |
 | <a name="input_enable_segmented_content_protection"></a> [enable\_segmented\_content\_protection](#input\_enable\_segmented\_content\_protection) | Master toggle for segmented content protection (token auth, media encryption). | `bool` | `false` | no |
 | <a name="input_enable_smooth"></a> [enable\_smooth](#input\_enable\_smooth) | Whether Smooth Streaming is a delivery format for this property. | `bool` | `true` | no |
-| <a name="input_etls"></a> [etls](#input\_etls) | Security profile selector: SBD uses edgekey.net when true or edgesuite.net when false; EDGEKEY and AKAMAIZED\_HOSTNAME require true; EDGESUITE requires false. | `bool` | `true` | no |
+| <a name="input_etls"></a> [etls](#input\_etls) | Security profile selector: SBD uses edgekey.net when true or edgesuite.net when false; EDGEKEY requires true; EDGESUITE requires false. For AKAMAIZED\_HOSTNAME, set it to false. | `bool` | `true` | no |
 | <a name="input_forward_host_header"></a> [forward\_host\_header](#input\_forward\_host\_header) | Value forwarded as the Host header to origin. Use REQUEST\_HOST\_HEADER, ORIGIN\_HOSTNAME, or a custom hostname. | `string` | `"REQUEST_HOST_HEADER"` | no |
 | <a name="input_hls_media_encryption"></a> [hls\_media\_encryption](#input\_hls\_media\_encryption) | Enable HLS media encryption. Only applies when enable\_segmented\_content\_protection is true. | `bool` | `false` | no |
 | <a name="input_http2_enabled"></a> [http2\_enabled](#input\_http2\_enabled) | Enable HTTP/2 between edge and origin. | `bool` | `true` | no |

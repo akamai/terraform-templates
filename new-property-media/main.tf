@@ -53,7 +53,7 @@
  *  - `SBD`: Secure By Default. With `etls = true`, Akamai provisions the `edgekey.net` hostname automatically. With `etls = false`, Terraform creates an `edgesuite.net` hostname.
  *  - `EDGESUITE`: Creates a Standard TLS `edgesuite.net` edge hostname; requires `etls = false`.
  *  - `EDGEKEY`: Creates an Enhanced TLS `edgekey.net` edge hostname; requires `etls = true` and `certificate_id`.
- *  - `AKAMAIZED_HOSTNAME`: Creates an `akamaized.net` Shared Cert edge hostname. Supply only the label in `hostnames`; do not include the suffix.
+ *  - `AKAMAIZED_HOSTNAME`: Creates an `akamaized.net` Shared Cert edge hostname. Supply only the label in `hostnames`; do not include the suffix. Set `etls = false`.
  *
  *  `etls` controls the AMD default rule's secure-delivery setting. The edge-hostname network is selected by `edge_hostname_type` and, for SBD, by `etls`.
  *

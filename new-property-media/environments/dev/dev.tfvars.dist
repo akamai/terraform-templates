@@ -21,7 +21,7 @@ version_notes = "AMD development configuration"
 # SBD + etls=false  -> edgesuite.net / Standard TLS profile
 # EDGESUITE         -> edgesuite.net / Standard TLS profile / etls=false
 # EDGEKEY           -> edgekey.net / Enhanced TLS profile / etls=true
-# AKAMAIZED_HOSTNAME -> akamaized.net Shared Cert EHN; etls may be true or false
+# AKAMAIZED_HOSTNAME -> akamaized.net Shared Cert EHN; set etls=false
 # For AKAMAIZED_HOSTNAME, provide only the label and omit .akamaized.net.
 edge_hostname_type = "SBD"
 certificate_id     = null
